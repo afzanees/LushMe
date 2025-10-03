@@ -1,0 +1,357 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.5;
+    color: #333;
+  }
+  
+  /* Top Navbar (white, sticky) */
+  .nav {
+    margin: 0 auto; /* centers the UL inside header */
+  }
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 60px;
+    border: 2px solid white;  /* white border */
+    border-radius: 50%;       /* round button */
+    color: rgb(15, 15, 15);             /* white icon */
+    font-size: 18px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  
+  .icon-btn:hover {
+    background: white;
+    color: #222121;  /* black icon when hovered */
+  }
+
+/* Hero Section */
+.hero {
+  position: relative; /* important so bottom-navbar can be positioned */
+  background: url("/images/banner1.jpg") center/cover no-repeat;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+ 
+
+
+
+/* Bottom Navbar (sticky under top navbar) */
+.bottom-navbar {
+  position: sticky;
+  top: 60px; /* equal to height of top navbar */
+  z-index: 999;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(6px); /* gives ne frosted-glass effect */
+  height: 40px; /* same as top navbar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Align menu items */
+.bottom-navbar ul {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bottom-navbar a {
+  text-decoration: none;
+  color: #000; /* dark text on transparent white */
+  font-weight: 500;
+  font-size: 18px;
+  transition: color 0.3s;
+}
+
+.bottom-navbar a:hover {
+  color: #e91e63; /* pink highlight on hover (example) */
+}
+
+/* Make it responsive */
+@media (max-width: 768px) {
+  .bottom-navbar ul {
+    gap: 20px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bottom-navbar ul {
+    flex-direction: column;
+    gap: 20;
+    
+  }
+  .bottom-navbar {
+    height: auto;
+    padding: 10px;
+  }
+}
+  
+  /* .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: bold;
+    color: crimson;
+  } */
+  .logo img {
+    height: 40px;   /* adjust as needed */
+    width: auto;    /* keeps aspect ratio */
+    object-fit: contain; /* ensures image scales nicely */
+    margin : 0px;
+    padding : 0px;
+  }
+  
+  .nav-links {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+  }
+  
+  .nav-links a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+  }
+  .nav-links li a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    font-size: 16px;
+  }
+  
+  /* Right section */
+  .right-section {
+    display: flex;
+    align-items:end;
+    gap: 20px;
+  }
+  
+  /* Search bar */
+  .search-container {
+    position: relative;
+  }
+  
+  .search-bar {
+    padding: 8px 12px 8px 35px;
+    border-radius: 25px;
+    border: 1px solid #c5c5c5;
+    outline: none;
+    width: 200px;
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  
+  /* Profile & cart icons */
+  .profile-icon img,
+  .cart-icon img {
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+  }
+  
+  .icons span {
+    margin-left: 15px;
+    cursor: pointer;
+  }
+ 
+  
+  
+  .hero-text h1 {
+    font-size: 48px;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .hero-text p {
+    font-size: 20px;
+    margin-top: 10px;
+  }
+  
+  /* Categories */
+  .categories {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 80px 10px;
+    flex-wrap: wrap;
+  }
+  
+  .categories .cat {
+    text-align: center;
+   
+  }
+  
+  .categories img {
+    width: 225px;
+    height: 225px;
+    border-radius: 5px;
+    object-fit: cover;
+  }
+  
+  /* Offers */
+  .offer-card {
+    border: 1px solid #eee;
+    overflow: hidden;
+    text-align: center;
+    background: #fff;
+    height: 100%;  /* ensures equal height inside bootstrap col */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .offer-card img {
+    width: 100%;
+    height: 250px;        /* uniform image height */
+    object-fit: cover;    /* keeps proportions */
+  }
+  
+  .offer-text {
+    background: rgb(184, 8, 8);
+    color: white;
+    padding: 10px;
+    font-weight: bold;
+  }
+  
+  .card img {
+    width: 100%;
+    border-radius: 10px;
+  }
+  
+  /* Giveaway */
+  .giveaway {
+    background:url("/images/banner2.png");
+    color: white;
+    text-align: center;
+    padding: 40px;
+    margin-top: 40px;
+    height: 300px;
+  }
+  
+  .giveaway h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  .top-products img {
+    width: 100%;
+    border-radius: 8px;
+  }
+  .top-products .card {
+    border: none;
+    background: #fff;
+  }
+  .top-products .card-text {
+    text-align: center;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+
+  /* Features section */
+  .features {
+    background-color: #fff5f5;
+    padding: 40px 0;
+  }
+  .features .feature-box {
+    text-align: center;
+    padding: 20px;
+  }
+  .features .feature-box i {
+    font-size: 2rem;
+    color: #d33f3f;
+    margin-bottom: 10px;
+  }
+  .features .feature-box h5 {
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+  .features .feature-box p {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  footer {
+    background-color: #fff;
+    border-top: 1px solid #ddd;
+    padding: 40px 0;
+  }
+  .footer-logo {
+    font-size: 32px;
+    font-weight: bold;
+    color: #b22234;
+  }
+  .footer-logo i {
+    color: #b22234;
+    margin-right: 5px;
+  }
+  .footer-title {
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+  .footer-link {
+    color: #000;
+    text-decoration: none;
+  }
+  .footer-link:hover {
+    text-decoration: underline;
+  }
+  .newsletter-input {
+    max-width: 350px;
+  }
+  .footer-bottom {
+    border-top: 1px solid #ccc;
+    margin-top: 30px;
+    padding-top: 15px;
+    font-size: 14px;
+    color: #555;
+  }
+  .social-icons a {
+    color: #000;
+    font-size: 18px;
+    margin-right: 15px;
+  }
+  /* PSGENOTFOUND */
+  
+
+.error-container {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
+  padding: 20px;
+}
+.error-code {
+  font-size: 8rem;
+  font-weight: bold;
+  color: #343a40;
+}
+.error-message {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+}
+.btn-home {
+  padding: 10px 25px;
+  font-size: 1rem;
+}
