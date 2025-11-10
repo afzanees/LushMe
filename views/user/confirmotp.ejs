@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/login.css" rel="stylesheet">
+  <link rel="stylesheet" href="sweetalert2.min.css">
+
+
+</head>
+<body>
+
+  <div class="container login-container row">
+    <!-- Left Form Section -->
+    <div class="col-md-6 form-section ">
+      <div class="text-center mb-4">
+        <img class="p-0 " src="./images/logo.png" width="auto" height="40px"><use xlink:href=""></use> </a>
+      </div>
+        <div class="text-center mt-5 mb-5">
+            <div class="h2">Confirm with OTP</div>
+          </div>
+
+
+      <!-- Email/Password Form -->
+      
+        <div class="signup1 text-left" >
+            Please check your mail address for OTP</a>
+          </div>
+          <form id="otpForm"  action="/confirmotp" method="post" onsubmit="return validateOTPForm()">
+            <div class="d-flex justify-content-center mt-3 mb-3">
+              <input type="number" maxlength="1" class="form-control otp-input" />
+              <input type="number" maxlength="1" class="form-control otp-input" />
+              <input type="number" maxlength="1" class="form-control otp-input" />
+              <input type="number" maxlength="1" class="form-control otp-input" />
+              <input type="number" maxlength="1" class="form-control otp-input" />
+              <input type="number" maxlength="1" class="form-control otp-input" />
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+              <p class="text-decoration-none" style="cursor:pointer;" onclick="resendOTP()">Resend OTP</p>
+              <p id="timer" class="text-decoration-none">0:00<p>
+            </div>
+            <button type="submit" class="login-btn">Confirm</button>
+          </form>
+
+        
+
+        <div class="signup text-center">
+        <a href="#">Go back to Login page</a>
+        </div>
+      
+
+      
+    </div>
+
+    <!-- Right Image Section -->
+    <div class="col-md-6 image-section p-0 ">
+      <img src="./images/login3.jpg" alt="Beauty Model" />
+    </div>
+  </div>
+
+</body>
+</html>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  let time = 60;       // total time in seconds
+  let interval;        // global timer reference
+  const timerElement = document.getElementById("timer");
+
+  // Start timer
+  function startTimer() {
+    clearInterval(interval); // clear any previous timer
+
+    interval = setInterval(() => {
+      let minutes = Math.floor(time / 60);
+      let seconds = time % 60;
+      timerElement.textContent = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+      time--;
+
+      if (time < 0) {
+        clearInterval(interval);
+        timerElement.textContent = "0:00";
+      }
+    }, 1000);
+  }
+
+  // Start timer when page loads
+  startTimer();
+
+  // Validate OTP form
+  function validateOTPForm() {
+    let otpInput = "";
+    document.querySelectorAll(".otp-input").forEach((input) => {
+      otpInput += input.value.trim();
+    });
+
+    $.ajax({
+      type: "POST",
+      url: "/confirmotp",
+      data: JSON.stringify({ otp: otpInput }),
+      contentType: "application/json",
+      xhrFields: { withCredentials: true },
+      success: function (response) {
+        if (response.success) {
+          Swal.fire({
+            icon: "success",
+            title: "OTP verified Successfully",
+            showConfirmButton: false,
+            timer: 1500,
+          }).then(() => { 
+            window.location.href = response.redirectUrl;
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: response.message,
+          });
+        }
+      },
+      error: function () {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid OTP",
+          text: "Please try again",
+        });
+      },
+    });
+
+    return false;
+  }
+
+  // Resend OTP
+  function resendOTP() {
+    console.log("Resend OTP clicked");
+
+    // reset and restart timer
+    clearInterval(interval);
+    time = 60;
+    timerElement.classList.remove("expired");
+    startTimer();
+
+    $.ajax({
+      type: "POST",
+      url: "/resend-otp",
+      xhrFields: { withCredentials: true },
+      success: function (response) {
+        console.log("Server response:", response);
+        if (response.success) {
+          Swal.fire({
+            icon: "success",
+            title: "OTP Resent Successfully",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: response.message || "Failed to resend OTP. Please try again.",
+          });
+        }
+      },
+      error: function (xhr, status, error) {
+        console.error("AJAX Error:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Server Error",
+          text: "Something went wrong. Please try again later.",
+        });
+      },
+    });
+
+    return false;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Step	What Happens
+1️⃣	Page loads → Timer starts from 1:00
+2️⃣	User enters OTP digits
+3️⃣	Click “Confirm” → AJAX sends OTP to /confirmotp
+4️⃣	If success → SweetAlert shows success + redirect
+5️⃣	If invalid → Error popup
+6️⃣	Click “Resend OTP” → AJAX calls /resend-otp
+7️⃣	Backend sends new OTP mail, timer resets to 1:00
+8️⃣	Popup shows “OTP Resent Successfully” -->

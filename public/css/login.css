@@ -1,0 +1,133 @@
+body {
+    background-color: #f8f9fa;
+  }
+
+  .login-container {
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 900px;
+    margin: 50px auto;
+    display: flex;            /* make row flex */
+    align-items: stretch;     /* columns stretch equally */
+  }
+  
+ 
+
+  .logo {
+    font-family: sans-serif;
+    font-size: 32px;
+    color: #f44336;
+    font-weight: bold;
+  }
+
+  .google-btn {
+    background-color: #f5f5f5;
+    border: none;
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .form-control {
+    height: 45px;
+  }
+
+  .login-btn {
+    background-color: #4e4444;
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+  .login-btn:hover {
+    background-color: #3a3232;
+  }
+
+  .form-section {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;  /* vertical center */
+  }
+
+  .image-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .image-section img {
+    max-width: 100%;
+    height: auto;
+    padding:50px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .divider:not(:empty)::before {
+    margin-right: .5em;
+  }
+
+  .divider:not(:empty)::after {
+    margin-left: .5em;
+  }
+
+  .forgot-password {
+    font-size: 0.9rem;
+    text-align: right;
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 15px;
+  }
+
+  .signup {
+    text-align: center;
+    margin-top: 15px;
+  }
+  
+
+  .signup a {
+    color: #3a38e4;
+    text-decoration: none;
+  }
+
+  .signup a:hover {
+    text-decoration: underline;
+  }
+  
+  .otp-input {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    font-size: 20px;
+    margin: 5px;
+    border-radius: 8px;
+  }
+  .error-message{
+    color:red;
+    font-size: 0.75rem;
+    display:none
+  }
+  

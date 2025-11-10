@@ -1,0 +1,12 @@
+<%- include('partials/header', { title: 'Dashboard' }) %>
+<%- include('partials/sidebar', { admin }) %>
+
+
+<div class="card shadow text-center p-5">
+<h1 class="text-danger display-1">Oops!</h1>
+<h3 class="mb-3">Something went wrong in the admin panel.</h3>
+<p class="mb-4">Please try again or contact the system administrator.</p>
+<a href="/admin/login" class="btn btn-danger btn-lg">Back to Login</a>
+</div>
+
+<%- include('partials/footer') %>
