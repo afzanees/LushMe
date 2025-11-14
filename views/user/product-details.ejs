@@ -43,8 +43,15 @@
         <div class="row g-3 align-items-start">
           <!-- Thumbnails -->
           <div class="col-3 thumbs-col">
-            <% if (product.productImage && product.productImage.length) { %>
-              <% product.productImage.forEach(function(img){ %>
+            <% 
+              // Get first variant's images or empty array
+              let displayImages = [];
+              if (product.variants && product.variants.length > 0 && product.variants[0].productImage) {
+                displayImages = product.variants[0].productImage;
+              }
+            %>
+            <% if (displayImages && displayImages.length) { %>
+              <% displayImages.forEach(function(img){ %>
                 <img
                   src="/<%= img %>"
                   alt="thumb"
@@ -58,10 +65,16 @@
 
           <!-- Main image (hover zoom) -->
           <div class="col-9">
+            <% 
+              let mainImageUrl = 'images/placeholder-800x800.png';
+              if (displayImages && displayImages.length > 0) {
+                mainImageUrl = displayImages[0];
+              }
+            %>
             <img
               id="main-image"
-              src="/<%= (product.productImage && product.productImage[0]) ? product.productImage[0] : 'images/placeholder-800x800.png' %>"
-              data-zoom-image="/<%= (product.productImage && product.productImage[0]) ? product.productImage[0] : 'images/placeholder-800x800.png' %>"
+              src="/<%= mainImageUrl %>"
+              data-zoom-image="/<%= mainImageUrl %>"
               alt="<%= product.name %>"
               class="img-fluid shadow-sm"
             />
@@ -206,6 +219,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevateZoom.min.js"></script>
 
 <script>
+  // Store all variants data for quick access
+  const allVariants = <%- JSON.stringify(product.variants || []) %>;
+  
   // Init lens-zoom on main image
   $(function(){
      $('#main-image').removeData('elevateZoom');
@@ -217,6 +233,29 @@
       borderSize: 1,
       cursor: "crosshair"
     });
+  });
+
+  // Update images when color is selected
+  document.getElementById('colorSelect').addEventListener('change', function() {
+    const selectedColor = this.value;
+    const variant = allVariants.find(v => v.color === selectedColor);
+    
+    if (variant && variant.productImage && variant.productImage.length > 0) {
+      // Update thumbnails
+      const thumbsCol = document.querySelector('.thumbs-col');
+      thumbsCol.innerHTML = '';
+      
+      variant.productImage.forEach(img => {
+        const imgElement = document.createElement('img');
+        imgElement.src = '/' + img;
+        imgElement.alt = 'thumb';
+        imgElement.onclick = function() { changeImage('/' + img); };
+        thumbsCol.appendChild(imgElement);
+      });
+      
+      // Update main image
+      changeImage('/' + variant.productImage[0]);
+    }
   });
 
   // Switch image from thumbnail

@@ -116,41 +116,19 @@ const addProducts = async (req, res) => {
       });
     }
 
-    // ✅ Ensure upload directory exists
-    const uploadDir = path.join(__dirname, "../../public/uploads/product-images");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const imageFilenames = [];
-    for (let i = 1; i <= 4; i++) {
-      const croppedImageData = req.body[`croppedImage${i}`];
-      if (croppedImageData && croppedImageData.startsWith("data:image")) {
-        const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, "");
-        const imageBuffer = Buffer.from(base64Data, "base64");
-        const filename = `${Date.now()}-image${i}.webp`;
-        const filepath = path.join(uploadDir, filename);
-        await sharp(imageBuffer)
-          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
-          .webp({ quality: 80 })
-          .toFile(filepath);
-        imageFilenames.push(`uploads/product-images/${filename}`);
-      }
-    }
-
-   // ✅ Create new product document
+   // ✅ Create new product document without images
    const newProduct = new Product({
     name,
     description,
     brand,
     category,
-    subcategory, // ✅ now it matches
-    productImage: imageFilenames,
+    subcategory,
+    productImage: [], // Empty array, images will be added via variants
     status: ["Available", "Out Of Stock", "Discontinued"].includes(status)
       ? status
       : "Available",
   });
-    console.log({ name, description, brand, category, subcategory, imageFilenames, status });
+    console.log({ name, description, brand, category, subcategory, status });
 
     await newProduct.validate().catch(err => {
       console.error("❌ Mongoose validation error:", err.message);
@@ -414,39 +392,47 @@ const editProduct = async (req, res) => {
   }
 }
  
-const deleteSingleImage = async (req, res) => {
+const deleteSingleVariantImage = async (req, res) => {
   try {
-    const { imageNameToServer, productIdToServer, imageIndex } = req.body;
-    console.log("Deleting:", imageNameToServer, productIdToServer, imageIndex);
+    const { productId, variantId, imageIndex } = req.body;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(variantId)) {
+      return res.status(400).json({ status: false, message: "Invalid product or variant ID" });
+    }
 
     // Find product
-    const product = await Product.findById(productIdToServer);
-    if (!product) {
-      return res.status(404).json({ status: false, message: "Product not found" });
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ status: false, message: "Product not found" });
+
+    // Find variant
+    const variant = product.variants.id(variantId);
+    if (!variant) return res.status(404).json({ status: false, message: "Variant not found" });
+
+    // Make sure productImage exists and image index valid
+    if (!variant.productImage || !variant.productImage[imageIndex]) {
+      return res.status(400).json({ status: false, message: "Image not found in variant" });
     }
 
-    // Make sure productImage array exists
-    if (!Array.isArray(product.productImage)) {
-      return res.status(400).json({ status: false, message: "No images found for this product" });
-    }
+    // Get image path
+    const imageToDelete = variant.productImage[imageIndex];
 
-    // Delete image from array
-    product.productImage.splice(imageIndex, 1);
+    // Remove from DB array
+    variant.productImage.splice(imageIndex, 1);
     await product.save();
 
-    // Delete the file from server storage
-    const imagePath = path.join(__dirname, "../../public", imageNameToServer);
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-      console.log(`🗑️ Image ${imageNameToServer} deleted successfully`);
-    } else {
-      console.log(`⚠️ Image file not found: ${imageNameToServer}`);
+    // Remove actual file
+    const filePath = path.join(__dirname, "../../public", imageToDelete);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log("🗑️ Deleted:", filePath);
     }
 
-    res.json({ status: true, message: "Image deleted successfully" });
+    return res.json({ status: true, message: "Variant image deleted successfully" });
+
   } catch (error) {
-    console.error("Error in deleteSingleImage:", error);
-    res.status(500).json({ status: false, message: "An error occurred while deleting the image" });
+    console.error("Error deleting variant image:", error);
+    return res.status(500).json({ status: false, message: "Server error while deleting image" });
   }
 };
 
@@ -455,7 +441,9 @@ const showProductVariants=async (req,res)=>{
   const productId=req.params.id;
   try{
     const product=await Product.findById(productId).lean();
-    console.log(product._id)
+    console.log('Product ID:', product._id);
+    console.log('Product variants:', JSON.stringify(product.variants, null, 2));
+    
     if(!product)
     {
       return res.status(404).send('product not found')
@@ -473,40 +461,84 @@ const showProductVariants=async (req,res)=>{
 }
 const addProductVariants=async(req,res)=>{
   try{
-    const { color, regularPrice, salePrice,quantity } = req.body;
-    const productId = req.params.productId;
-    if (!color || !regularPrice || !salePrice || quantity == null) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+    // ✅ First check if req.body exists
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ success: false, message: 'No form data received. Make sure form is submitted properly.' });
     }
+
+    const { color, regularPrice, salePrice, quantity } = req.body;
+    const productId = req.params.productId;
+
+    console.log("📦 Received data:", { color, regularPrice, salePrice, quantity, productId });
+
+    if (!color || !regularPrice || !salePrice || quantity == null) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All fields are required',
+        received: { color, regularPrice, salePrice, quantity }
+      });
+    }
+    
     if (quantity < 0) {
       return res.status(400).json({ success: false, message: 'Quantity cannot be negative' });
     }
+    
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ success: false, message: 'Invalid product ID' });
     }
+    
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: 'product not found' });
     }
+    
     const existingVariant = product.variants.find(v =>
       v.color.toLowerCase() === color.toLowerCase()
-      //  && v.size.toLowerCase() === size.toLowerCase()
     );
+    
     if (existingVariant) {
-      return res.status(400).json({ success: false, message: 'Variant with same color and price already exists' });
+      return res.status(400).json({ success: false, message: 'Variant with same color already exists' });
     }
+
+    // ✅ Ensure upload directory exists
+    const uploadDir = path.join(__dirname, "../../public/uploads/product-images");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const imageFilenames = [];
+    for (let i = 1; i <= 4; i++) {
+      const croppedImageData = req.body[`croppedImage${i}`];
+      if (croppedImageData && croppedImageData.startsWith("data:image")) {
+        const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, "");
+        const imageBuffer = Buffer.from(base64Data, "base64");
+        const filename = `${Date.now()}-image${i}.webp`;
+        const filepath = path.join(uploadDir, filename);
+        await sharp(imageBuffer)
+          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toFile(filepath);
+        imageFilenames.push(`uploads/product-images/${filename}`);
+      }
+    }
+
     product.variants.push({
       color,
       regularPrice: parseFloat(regularPrice),
       salePrice: parseFloat(salePrice),
-      quantity: parseInt(quantity)
+      quantity: parseInt(quantity),
+      productImage: imageFilenames // ✅ Add images to variant
     });
 
     await product.save();
     return res.redirect(`/admin/product/${productId}/variants`);
   } catch (err) {
-    console.error('Add Subcategory Error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error("🔥 REAL ERROR →", err);
+    return res.status(500).json({ 
+      success: false, 
+      message: err.message,
+      error: err.toString()
+    });
   }
 }
 
@@ -565,10 +597,46 @@ const updateVariant = async (req, res) => {
     if (variantIndex === -1) {
       return res.status(404).send('Variant not found');
     }
+    
+    // Update basic fields
     product.variants[variantIndex].color = color;
     product.variants[variantIndex].regularPrice = parseFloat(regularPrice)
     product.variants[variantIndex].salePrice = parseFloat(salePrice)
     product.variants[variantIndex].quantity = parseInt(quantity);
+
+    // Process new images if uploaded
+    const uploadDir = path.join(__dirname, "../../public/uploads/product-images");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const newImageFilenames = [];
+    for (let i = 1; i <= 4; i++) {
+      const croppedImageData = req.body[`croppedImage${i}`];
+      const deleteImage = req.body[`deleteImage${i}`];
+      
+      if (croppedImageData && croppedImageData.startsWith("data:image")) {
+        // New image uploaded - process it
+        const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, "");
+        const imageBuffer = Buffer.from(base64Data, "base64");
+        const filename = `${Date.now()}-variant-image${i}.webp`;
+        const filepath = path.join(uploadDir, filename);
+        await sharp(imageBuffer)
+          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toFile(filepath);
+        newImageFilenames.push(`uploads/product-images/${filename}`);
+      } else if (deleteImage === 'true') {
+        // Image marked for deletion - skip it (don't add to array)
+        console.log(`Image ${i} marked for deletion, skipping...`);
+      } else if (product.variants[variantIndex].productImage && product.variants[variantIndex].productImage[i - 1]) {
+        // Keep existing image if no new one uploaded and not marked for deletion
+        newImageFilenames.push(product.variants[variantIndex].productImage[i - 1]);
+      }
+    }
+
+    // Update images array
+    product.variants[variantIndex].productImage = newImageFilenames;
 
     
     await product.save();
@@ -676,7 +744,7 @@ module.exports={
      deleteProduct,
      getEditProduct,
      editProduct,
-     deleteSingleImage,
+    deleteSingleVariantImage,
      showProductVariants,
      addProductVariants,
      deleteVariant,

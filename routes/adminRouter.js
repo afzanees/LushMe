@@ -34,12 +34,7 @@ router.post('/addSubcategory', adminAuth, categoryController.addSubcategory);
 //product management
 router.get("/addProducts", adminAuth, productController.getProductAddPage);
 router.post("/saveImage", adminAuth, upload.single('image'), productController.saveImage);
-router.post("/addProducts", adminAuth, upload.fields([
-    { name: 'image1', maxCount: 1 },
-    { name: 'image2', maxCount: 1 },
-    { name: 'image3', maxCount: 1 },
-    { name: 'image4', maxCount: 1 }
-]), productController.addProducts);
+router.post("/addProducts", adminAuth, upload.none(), productController.addProducts);
 router.get("/products",adminAuth,productController.getProductList )
 router.get("/blockProduct",adminAuth,productController.blockProduct);
 router.get("/unblockProduct",adminAuth,productController.unblockProduct);
@@ -51,7 +46,7 @@ router.post("/editProduct/:id/edit", adminAuth, upload.fields([
     { name: 'image3', maxCount: 1 },
     { name: 'image4', maxCount: 1 }
 ]), productController.editProduct);
-router.post("/deleteImage",adminAuth,productController.deleteSingleImage)
+router.post("/delete-image",adminAuth,productController.deleteSingleVariantImage);
 router.post('/addProductOffer', adminAuth,productController.addProductOffer);
 router.post('/removeProductOffer', adminAuth, productController.removeProductOffer);
 
@@ -66,10 +61,20 @@ router.post("/toggleBrandStatus", adminAuth, brandController.toggleBrandStatus);
 
 //product varient
 router.get('/product/:id/variants', productController.showProductVariants);
-router.post('/product/:productId/variants/add', productController.addProductVariants);
+router.post('/product/:productId/variants/add', upload.fields([
+  { name: 'image1', maxCount: 1 },
+  { name: 'image2', maxCount: 1 },
+  { name: 'image3', maxCount: 1 },
+  { name: 'image4', maxCount: 1 }
+]), productController.addProductVariants);
 // router.post('/product/:productId/variant/:variantId/delete',productController.deleteVariant);
 router.post('/product/:productId/variants/:variantId/delete', productController.deleteVariant);
-router.post('/product/:productId/variants/:variantId/edit', productController.updateVariant);
+router.post('/product/:productId/variants/:variantId/edit', upload.fields([
+  { name: 'image1', maxCount: 1 },
+  { name: 'image2', maxCount: 1 },
+  { name: 'image3', maxCount: 1 },
+  { name: 'image4', maxCount: 1 }
+]), productController.updateVariant);
 
 
 module.exports = router;

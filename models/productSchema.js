@@ -16,7 +16,7 @@ const variantSchema = new Schema({
 },
   quantity: {
     type: Number,
-    require:true
+    required:true
   },
     productImage: { 
     type: [String] 
@@ -74,9 +74,7 @@ const productSchema = new Schema({
 },
 
 variants: [variantSchema], 
-  isBlocked: { 
-    type: Boolean, 
-    default: false },
+
   status: {
     type: String,
     enum: ["Available", "Out Of Stock", "Discontinued"],

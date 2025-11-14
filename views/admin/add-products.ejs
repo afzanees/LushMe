@@ -1,7 +1,6 @@
 <%- include('partials/header', { title: 'Add Product' }) %>
 <%- include('partials/sidebar', { admin }) %>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.css">
 
 <style>
@@ -10,17 +9,6 @@
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.05);
-  }
-  .preview-container {
-    margin-top: 10px;
-    display: none;
-  }
-  .image-preview {
-    width: 150px;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid #ddd;
   }
   input.is-invalid, select.is-invalid, textarea.is-invalid {
     border-color: red !important;
@@ -35,8 +23,7 @@
   <h3 class="mb-4">Add New Product</h3>
   <form id="productForm" class="row g-4 form-section" enctype="multipart/form-data" onsubmit="return validateForm(event)" novalidate>
 
-    <!-- LEFT SIDE -->
-    <div class="col-md-6">
+    <div class="col-md-12">
 
       <label class="form-label">Product Name</label>
       <input type="text" id="name" name="name" class="form-control" required>
@@ -83,26 +70,6 @@
 
     </div>
 
-    <!-- RIGHT SIDE -->
-    <div class="col-md-6">
-      <h4>Product Images</h4>
-      <div class="image-upload-container d-flex flex-wrap gap-3">
-        <% for (let i = 1; i <= 4; i++) { %>
-          <div class="image-upload-item">
-            <label class="form-label">Image <%= i %></label>
-            <input type="file" id="image<%= i %>" name="image<%= i %>" class="form-control"
-                   accept="image/*" required onchange="initCropper(event, <%= i %>)">
-            <div class="preview-container" id="preview-container<%= i %>">
-              <img id="preview<%= i %>" class="image-preview" alt="Preview">
-              <button type="button" class="btn btn-sm btn-outline-dark mt-2" onclick="cropImage(<%= i %>)">Crop</button>
-            </div>
-            <input type="hidden" id="croppedImage<%= i %>" name="croppedImage<%= i %>">
-            <div id="image<%= i %>-error" class="text-danger"></div>
-          </div>
-        <% } %>
-      </div>
-    </div>
-
     <div class="col-12 d-flex justify-content-end mt-3">
       <button type="reset" class="btn btn-outline-secondary me-2" id="resetBtn">Cancel</button>
       <button type="submit" class="btn btn-dark">Save</button>
@@ -114,7 +81,6 @@
 <!-- SCRIPTS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 
 <script>
   // --------------------- CATEGORY → SUBCATEGORY ----------------------
@@ -137,51 +103,6 @@
     }
   });
 
-  // --------------------- IMAGE CROPPING ----------------------
-  let croppers = {};
-
-  function initCropper(event, index) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    const preview = document.getElementById('preview' + index);
-    const container = document.getElementById('preview-container' + index);
-
-    reader.onload = function (e) {
-      preview.src = e.target.result;
-      container.style.display = 'block';
-
-      if (croppers[index]) croppers[index].destroy();
-
-      croppers[index] = new Cropper(preview, {
-        aspectRatio: 1,
-        viewMode: 1,
-        autoCropArea: 1
-      });
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  function cropImage(index) {
-    const cropper = croppers[index];
-    if (!cropper) {
-      Swal.fire('No Image', 'Please upload an image first.', 'warning');
-      return;
-    }
-
-    const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
-    const croppedImage = canvas.toDataURL('image/webp', 0.9);
-    document.getElementById('croppedImage' + index).value = croppedImage;
-
-    const preview = document.getElementById('preview' + index);
-    preview.src = croppedImage;
-    cropper.destroy();
-    delete croppers[index];
-    Swal.fire('Cropped!', 'Image updated successfully.', 'success');
-  }
-
   // --------------------- FORM VALIDATION + SUBMIT ----------------------
   function validateForm(e) {
     e.preventDefault();
@@ -200,17 +121,6 @@
         if (el) el.classList.add('is-invalid');
       }
     });
-    
-    let imgCount = 0;
-    for (let i = 1; i <= 4; i++) {
-      const imgInput = document.getElementById('image' + i);
-      if (imgInput && imgInput.files.length > 0) imgCount++;
-    }
-
-    if (imgCount < 4) {
-      Swal.fire('Images Required', 'Upload all 4 product images.', 'error');
-      return false;
-    }
 
     if (!isValid) return false;
 
@@ -232,19 +142,6 @@
 
     return false;
   }
-
-  // --------------------- RESET ----------------------
-  document.getElementById('resetBtn').addEventListener('click', () => {
-    for (let i = 1; i <= 4; i++) {
-      const preview = document.getElementById('preview' + i);
-      preview.src = '';
-      document.getElementById('preview-container' + i).style.display = 'none';
-      document.getElementById('image' + i).value = '';
-      document.getElementById('croppedImage' + i).value = '';
-      if (croppers[i]) croppers[i].destroy();
-      delete croppers[i];
-    }
-  });
 </script>
 
 <%- include('partials/footer') %>
