@@ -1,0 +1,33 @@
+<%- include("../partials/user/header") %>
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Change Email</h4>
+        </div>
+        <div class="card-body">
+          <% if (typeof message !== 'undefined' && message) { %>
+            <div class="alert alert-danger"><%= message %></div>
+          <% } %>
+          
+          <form method="POST" action="/change-email">
+            <div class="mb-3">
+              <label for="email" class="form-label">Current Email Address</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+              <small class="text-muted">Enter your current email to verify</small>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">Send OTP</button>
+              <a href="/profile" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/user/footer') %>

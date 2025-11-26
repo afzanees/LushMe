@@ -29,7 +29,7 @@
         <div class="signup1 text-left" >
             Please check your mail address for OTP</a>
           </div>
-          <form id="otpForm"  action="/confirmotp" method="post" onsubmit="return validateOTPForm()">
+          <form id="otpForm" action="<%= otpAction %>" method="post" onsubmit="return validateOTPForm()">
             <div class="d-flex justify-content-center mt-3 mb-3">
               <input type="number" maxlength="1" class="form-control otp-input" />
               <input type="number" maxlength="1" class="form-control otp-input" />
@@ -99,7 +99,7 @@
 
     $.ajax({
       type: "POST",
-      url: "/confirmotp",
+      url: document.getElementById("otpForm").action,
       data: JSON.stringify({ otp: otpInput }),
       contentType: "application/json",
       xhrFields: { withCredentials: true },

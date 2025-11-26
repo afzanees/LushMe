@@ -2,10 +2,24 @@ const User = require('../../models/userSchema')
 const Category = require('../../models/categorySchema');
 const Product = require('../../models/productSchema');
 const Brand = require('../../models/brandSchema');
+const Address = require('../../models/addressSchema')
+const Order = require("../../models/orderSchema");
+const generateOtp = require('../../utils/otp');
+const sendVerificationEmail = require('../../utils/sendEmail')
 
 const nodemailer = require('nodemailer')
 const env = require('dotenv').config()
 const bcrypt = require('bcrypt')
+
+// Hash password function
+const securePassword = async (password) => {
+    try {
+        return await bcrypt.hash(password, 10);
+    } catch (error) {
+        console.error('Error hashing password:', error);
+        throw error;
+    }
+}
 
 
 const loadForgotPassword = async (req, res) => {
@@ -44,7 +58,7 @@ const forgotPasswordSendOTP = async (req, res) => {
 
         console.log("Forgot Password OTP:", otp);
 
-        res.render("user/forgotOtpVerify", { message: null });
+        res.render("user/confirmotp", { otpAction:"/forgot-password/verify-otp" });
 
     } catch (error) {
         console.error("Forgot Password Error:", error);
@@ -56,24 +70,490 @@ const verifyForgotPasswordOTP = async (req, res) => {
     try {
         const { otp } = req.body;
 
-        if (otp != req.session.resetOtp) {
-            return res.render("user/forgotOtpVerify", { message: "Invalid OTP" });
+        if (String(otp) !== String(req.session.resetOtp)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid OTP"
+            });
         }
 
-        // OTP correct → move to reset password page
-        res.render("user/resetPassword", {
-            email: req.session.resetEmail,
-            message: null
+        // OTP correct → redirect user to reset password page
+        return res.json({
+            success: true,
+            redirectUrl: "/update-password"
         });
 
     } catch (error) {
-        console.error("Verify OTP Error:", error);
+        console.error("Verify Forgot Password Error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+const loadResetPassword = async (req, res) => {
+    try {
+        if (!req.session.resetEmail) {
+            return res.redirect("/forgot-password");
+        }
+
+        res.render("user/resetPassword", { email: req.session.resetEmail });
+    } catch (error) {
+        console.error("Reset Password Load Error:", error);
         res.redirect("/pageNotFound");
     }
 };
+
+const updatePassword = async (req, res) => {
+    try {
+        const { newPassword, confirmPassword } = req.body;
+
+        if (newPassword !== confirmPassword) {
+            return res.render("user/resetPassword", {
+                message: "Password does not match",
+                email: req.session.resetEmail
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await User.updateOne(
+            { email: req.session.resetEmail },
+            { $set: { password: hashedPassword } }
+        );
+
+        // Clear session
+        req.session.resetOtp = null;
+        req.session.resetEmail = null;
+
+        res.redirect("/login");
+
+    } catch (error) {
+        console.error("Update Password Error:", error);
+        res.redirect("/pageNotFound");
+    }
+};
+
+const userProfile = async (req,res)=>{
+    try{ 
+        const userId =req.session.user
+        const userData = await User.findById(userId)
+        const userAddress = await Address.findOne({ userId: userId });
+        const addresses = userAddress ? userAddress.address : [];
+        console.log("View Loaded")
+        //for order
+        const page = parseInt(req.query.page) || 1;
+        const limit = 5;
+        const skip = (page - 1) * limit;
+        const totalOrders = await Order.countDocuments({ userId });
+        const orders = await Order.find({ userId })
+        .sort({ createdOn: -1 }) // latest first
+        .skip(skip)
+        .limit(limit)
+        .lean();
+        const totalPages = Math.ceil(totalOrders / limit);
+
+        // Wallet history pagination
+        const walletPage = parseInt(req.query.walletPage) || 1;
+        const walletLimit = 5;
+        const walletSkip = (walletPage - 1) * walletLimit;
+        const walletHistory = userData.walletTransactions || [];
+
+        const paginatedHistory = walletHistory
+        .sort((a, b) => new Date(b.date) - new Date(a.date)) // newest first
+        .slice(walletSkip, walletSkip + walletLimit);
+        const totalWalletPages = Math.ceil(walletHistory.length / walletLimit);
+
+        const walletTransactions = userData.walletTransactions || [];
+        
+        res.render('user/profile',{user:userData,
+            addresses,
+            orders,
+            currentPage: page,
+            totalPages,
+            walletTransactions: paginatedHistory,
+            walletCurrentPage: walletPage,
+            walletTotalPages: totalWalletPages,
+        })
+       }catch (err){
+        res.redirect("/pageNotFound")
+       }
+    }
+//change email
+const changeEmail = async (req,res)=>{
+  try{
+    const user = req.session.user
+    res.render('change-email',{user})
+  } catch (err){
+    res.redirect("/pageNotFound")
+  }
+}
+//change email validation
+const changeEmailValid =async (req,res)=>{
+    try{
+        const {email}=req.body;
+        const userExist=await User.findOne({email})
+
+        if(userExist)
+        {
+            const otp =generateOtp();
+            const emailSent=await sendVerificationEmail(email,otp)
+            if(emailSent){
+                req.session.userOtp=otp
+                req.session.userData=req.body
+                req.session.email=email
+                res.render('change-email-otp',{ user: req.session.user || null })
+                console.log(`Email Sent : ${email}, Otp: ${otp}`)
+               }else{
+                res.json('Email error')
+               }
+        }else{
+            res.render('change-email',{message: "User with email not exist"})
+        }
+
+    }catch (err){
+        res.redirect("/pageNotFound")  
+    }
+}
+
+//otp varification
+const verifyEmailOtp = async (req,res) => {
+    try {
+        
+        const enteredOtp = req.body.otp;
+        if(enteredOtp === req.session.userOtp){
+            // req.session.userData = req.body.userData;
+            res.render("new-email",{
+                user: req.session.user || null,
+                userData: req.session.userData,
+            })
+        }else{
+            res.render("change-email-otp",{
+                message:"OTP not matching",
+                userData: req.session.userData,
+                user: req.session.user || null,
+            })
+        }
+
+    } catch (error) {
+        res.redirect("/pagenotfound")
+    }
+}
+const updateEmail= async (req,res)=>
+{
+    try{
+        const newEmail=req.body.newEmail
+        const userId=req.session.user
+        await User.findByIdAndUpdate(userId,{email:newEmail})
+        res.redirect('/userProfile')
+
+    }catch (err){
+        res.redirect("/pagenotfound")
+    }
+}
+//Updating userData
+
+const updateProfile = async (req, res) => {
+    try {
+      const userId = req.session.user;
+      const { name, phone } = req.body;
+  
+    //   console.log('Updating user:', { userId, name, phone });
+  
+      // Update only name and phone
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { name, phone },
+        { new: true, runValidators: true }
+      );
+  
+      if (!updatedUser) {
+        console.log('User not found');
+        return res.status(404).send('User not found');
+      }
+  
+      // Update session data
+      req.session.user.name = updatedUser.name;
+      req.session.user.phone = updatedUser.phone;
+  
+      console.log('Updated user:', updatedUser);
+  
+      return res.redirect('/userProfile');
+    } catch (error) {
+      console.error('Update error:', error);
+      return res.status(500).send('Server error');
+    }
+  };
+
+  //Get  change password page
+  const getChangePassword = async (req,res)=>
+{
+    try{
+        res.render('change-password',{ user: req.session.user || null})
+
+    }catch (err){
+        res.redirect("/pagenotfound")
+    }
+}
+//Change password
+const changePassword = async (req,res)=>
+{
+    try{
+         const userId =req.session.user
+         const {currentPassword,newPassword,confirmPassword} = req.body
+         const userData =await User.findById(userId)
+         const passwordMatch =await bcrypt.compare(currentPassword,userData.password)
+        if(!passwordMatch)
+        {
+            return res.status(400).json({success:false,message:"Incorrect password"})
+        }else{
+            if(newPassword !== confirmPassword){
+                return res.status(400).json({success:false,message:'New password and confirm password must be same'})
+            }else{
+                const passwordHash =await securePassword(newPassword)
+                userData.password =passwordHash
+                await userData.save()
+                res.status(200).json({success:true,message:'Password changed'})
+
+            }
+        }
+
+    }catch (err){
+        console.error("Error while changing password", err)
+        res.status(500).json({success: false, message: 'Internal server error'})
+    }
+}
+//profilepic change
+const changeProfilePic = async (req, res) => {
+    try {
+      const userId = typeof req.session.user === 'string' ? req.session.user : req.session.user._id;
+  
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+  
+      const filename = req.file.filename;
+      console.log(filename)
+  
+      await User.findByIdAndUpdate(userId, { profileImage: filename });
+  
+      res.json({ success: true, filename });
+    } catch (error) {
+      console.error('Profile pic upload error:', error);
+      res.status(500).json({ error: 'Upload failed' });
+    }
+  };
+
+  //Load Address page
+  const getAddAddress = async (req,res) => {
+    try {
+        const user = req.session.user;
+        res.render("add-address",{user:user})
+    } catch (error) {
+        res.redirect("/pagenotfound")
+    }
+}
+//add address  
+const addAddress = async (req,res)=>{
+    try{
+        const userId = req.session.user
+        const userData = await User.findById(userId)
+
+        const {name, addressType, houseNo, city, state, landMark,pincode, phone, altPhone} = req.body
+        const userAddress = await Address.findOne({userId: userData._id})
+        if(!userAddress){
+            const newAddress = new Address({
+                userId: userData._id,
+                address: [{addressType, name, houseNo, city, state, landMark, pincode, phone, altPhone}]
+            })
+
+            await newAddress.save()
+        }else{
+            
+            userAddress.address.push({addressType, name, houseNo, city, state, landMark, pincode, phone, altPhone})
+            await userAddress.save()
+        }
+        res.status(200).json({success: true, message: 'Address added successfully.'})
+
+    }catch (err){
+        console.error('Error while adding new address', err)
+        res.status(500).json({success: false, message: 'Internal server error'})
+    }
+}
+
+const getEditAddress =async (req,res)=>{
+    try{
+        const addressId=req.query.id;
+        const user = req.session.user;
+        const currAddress = await Address.findOne({
+            "address._id": addressId,
+        });
+        if(!currAddress){
+            return res.redirect("/pagenotfound")
+        }
+        const addressData = currAddress.address.find((item)=>{
+            return item._id.toString()===addressId.toString(); 
+        })
+        if(!addressData){
+            return res.redirect("/pagenotfound")
+        }
+        res.render("edit-address",{address:addressData, user:user})
+
+    }catch (error){
+        res.redirect("/pagenotfound")
+    }
+    }
+
+  const postEditAddress =async (req,res)=>{
+    try{
+        const userId = req.session.user;
+        const { addressId, name, addressType, houseNo, city, state, landMark, pincode, phone, altPhone } = req.body;
+        const userAddressDoc = await Address.findOne({ userId, "address._id": addressId });
+        if (!userAddressDoc) return res.status(404).json({ success: false, message: "Address not found" });
+
+        const addr = userAddressDoc.address.id(addressId);
+        if (!addr) return res.status(404).json({ success: false, message: "Address not found" });
+
+        addr.name = name;
+        addr.addressType = addressType;
+        addr.houseNo = houseNo;
+        addr.city = city;
+        addr.state = state;
+        addr.landMark = landMark;
+        addr.pincode = pincode;
+        addr.phone = phone;
+        addr.altPhone = altPhone;
+        await userAddressDoc.save();
+    
+        res.json({ success: true, message: 'Address updated successfully.' });
+
+    }catch (error){
+        console.error('Update address error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+
+    }
+   
+  }
+  const deleteAddress =async (req,res)=>{
+    try{
+        const addressId=req.query.id;
+        const findAddress=await Address.findOne({"address._id":addressId})
+         if(!findAddress){
+            return res.status(404).send("Address not found")
+        }
+        await Address.updateOne({'address._id':addressId},{$pull:{address:{_id:addressId}}})
+        res.redirect("/userProfile")
+    
+    }catch (error){
+        console.error("Error in deleting address",error);
+        res.redirect("/pagenotfound")
+    }
+  }
+
+// Wallet - Create Razorpay order for wallet top-up
+const createWalletOrder = async (req, res) => {
+    try {
+        const Razorpay = require('razorpay');
+        const { amount } = req.body;
+
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid amount' });
+        }
+
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+
+        const options = {
+            amount: amount * 100, // Convert to paise
+            currency: 'INR',
+            receipt: `wallet_${Date.now()}`
+        };
+
+        const order = await razorpay.orders.create(options);
+        
+        res.json({
+            success: true,
+            orderId: order.id,
+            amount: order.amount
+        });
+
+    } catch (error) {
+        console.error('Wallet order creation error:', error);
+        res.status(500).json({ success: false, message: 'Failed to create order' });
+    }
+};
+
+// Wallet - Verify payment and add money to wallet
+const verifyWalletPayment = async (req, res) => {
+    try {
+        const crypto = require('crypto');
+        const { payment, orderId, amount } = req.body;
+
+        // Verify payment signature
+        const sign = payment.razorpay_order_id + "|" + payment.razorpay_payment_id;
+        const expectedSign = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(sign.toString())
+            .digest("hex");
+
+        if (expectedSign !== payment.razorpay_signature) {
+            return res.status(400).json({ status: false, message: "Invalid signature" });
+        }
+
+        // Add money to user wallet
+        const userId = req.session.user;
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ status: false, message: "User not found" });
+        }
+
+        user.wallet = (user.wallet || 0) + parseFloat(amount);
+        
+        // Add transaction to wallet history
+        user.walletTransactions = user.walletTransactions || [];
+        user.walletTransactions.push({
+            date: new Date(),
+            amount: parseFloat(amount),
+            status: 'credited',
+            method: 'razorpay',
+            description: 'Wallet top-up'
+        });
+
+        await user.save();
+
+        res.json({ status: true, message: "Payment verified and wallet updated" });
+
+    } catch (error) {
+        console.error('Wallet payment verification error:', error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+};
+
 
 module.exports = {
     loadForgotPassword,
     forgotPasswordSendOTP,
     verifyForgotPasswordOTP,
+    loadResetPassword,
+    updatePassword,
+     userProfile,
+    changeEmail,
+    changeEmailValid,
+    verifyEmailOtp,
+    updateEmail,
+    updateProfile,
+    getChangePassword,
+    changePassword,
+    changeProfilePic,
+    getAddAddress,
+    addAddress,
+    getEditAddress,
+    postEditAddress,
+    deleteAddress,
+    createWalletOrder,
+    verifyWalletPayment,
 }

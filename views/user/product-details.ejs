@@ -19,10 +19,16 @@
     object-fit:cover;
     border-radius:10px;
     border:1px solid #e9ecef;
+    cursor: crosshair;
   }
   /* elevateZoom overlay sits in .zoomContainer (added at runtime) */
-  .zoomContainer{ z-index:10000 !important; }
-
+  .zoomContainer{ 
+    z-index:10000 !important; 
+  }
+  .zoomLens {
+    border: 2px solid #888;
+    background-color: rgba(255, 255, 255, 0.4);
+  }
   .qty-wrap{
     display:inline-flex; align-items:center; gap:6px; border:1px solid #ced4da;
     border-radius:8px; padding:4px 8px;
@@ -55,7 +61,7 @@
                 <img
                   src="/<%= img %>"
                   alt="thumb"
-                  onclick="changeImage('/<%= img %>')"
+                  onmouseover="changeImage('/<%= img %>')"
                 />
               <% }) %>
             <% } else { %>
@@ -107,7 +113,7 @@
               <% } %>
             <% } else { %>
               <div class="fs-6 text-muted">No price available</div>
-            <% } %>
+            <% } %> 
           </div>
 
           <p class="mb-2">Brand: <span class="fw-semibold text-danger"><%= product.brand?.name || 'N/A' %></span></p>
@@ -215,23 +221,22 @@
 </section>
 
 
-<!-- ElevateZoom plugin -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevateZoom.min.js"></script>
-
 <script>
   // Store all variants data for quick access
   const allVariants = <%- JSON.stringify(product.variants || []) %>;
   
-  // Init lens-zoom on main image
-  $(function(){
-     $('#main-image').removeData('elevateZoom');
-    $('#main-image').elevateZoom({
+  // Init lens-zoom on main image (using elevatezoom-plus from header)
+  $(document).ready(function(){
+    $('#main-image').ezPlus({
       zoomType: "lens",
       lensShape: "round",
-      lensSize: 170,
-      containLensZoom: true,
-      borderSize: 1,
-      cursor: "crosshair"
+      lensSize: 200,
+      borderSize: 2,
+      cursor: "crosshair",
+      responsive: true,
+      easing: true,
+      lensFadeIn: 300,
+      lensFadeOut: 300
     });
   });
 
@@ -246,13 +251,17 @@
       thumbsCol.innerHTML = '';
       
       variant.productImage.forEach(img => {
-        const imgElement = document.createElement('img');
-        imgElement.src = '/' + img;
-        imgElement.alt = 'thumb';
-        imgElement.onclick = function() { changeImage('/' + img); };
-        thumbsCol.appendChild(imgElement);
-      });
-      
+  const imgElement = document.createElement('img');
+  imgElement.src = '/' + img;
+  imgElement.alt = 'thumb';
+
+  // ✅ Hover event added
+  imgElement.onmouseover = function() {
+    changeImage('/' + img);
+  };
+
+  thumbsCol.appendChild(imgElement);
+});
       // Update main image
       changeImage('/' + variant.productImage[0]);
     }
@@ -260,22 +269,31 @@
 
   // Switch image from thumbnail
   function changeImage(newSrc){
+    if(!newSrc.startsWith('/')){
+      newSrc = '/' + newSrc;
+    }
     const $img = $('#main-image');
 
     // update src + zoom image
     $img.attr('src', newSrc);
     $img.attr('data-zoom-image', newSrc);
 
-    // remove old zoom container & re-init
-    $('.zoomContainer').remove();
-    $img.removeData('elevateZoom'); // clear plugin data
-    $img.elevateZoom({
+    // remove old zoom and re-init with ezPlus
+    const ezApi = $img.data('ezPlus');
+    if (ezApi) {
+      ezApi.destroy();
+    }
+    
+    $img.ezPlus({
       zoomType: "lens",
       lensShape: "round",
-      lensSize: 170,
-      containLensZoom: true,
-      borderSize: 1,
-      cursor: "crosshair"
+      lensSize: 200,
+      borderSize: 2,
+      cursor: "crosshair",
+      responsive: true,
+      easing: true,
+      lensFadeIn: 300,
+      lensFadeOut: 300
     });
   }
 

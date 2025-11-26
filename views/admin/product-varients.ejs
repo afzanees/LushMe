@@ -1,17 +1,15 @@
+<%- include('partials/footer') %>
+
+....................
 <%- include('partials/header', { title: 'Product Management' }) %>
 <%- include('partials/sidebar', { admin }) %>
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 <style>
-#variant-preview img, .cropper-container img {
-  max-width: 100% !important;
-}
-.cropper-container {
-  max-width:140px !important;
-  max-height:160px !important;
-  margin:auto;
-}
 .variant-preview {
-  width: 140px;
-  height: 160px;
+  width: 100%;
+  max-width: 400px;
+  height: 400px;
   border: 1px solid #ddd;
   border-radius: 6px;
   overflow: hidden;
@@ -23,20 +21,14 @@
 .variant-preview img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: block;
+  max-width: 100%;
 }
 
-/* Force cropper wrapper to stay same size */
+/* Allow cropper to use full space */
 .cropper-container {
-  width: 140px !important;
-  height: 160px !important;
+  max-width: 100%;
   margin: auto;
-}
-
-/* Prevent cropper from pushing layout */
-.cropper-container img {
-  max-width: none !important;
-  object-fit: cover;
 }
 
 .variant-image-thumb {
@@ -46,6 +38,27 @@
   border-radius: 4px;
   border: 1px solid #ddd;
   margin: 2px;
+}
+
+/* Edit modal current image display */
+.current-image-display {
+  width: 100%;
+  max-width: 400px;
+  height: 400px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f8f8;
+  position: relative;
+}
+
+.current-image-display img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 </style>
 <section class="container my-4">
@@ -183,15 +196,12 @@
         <input type="file" id="image<%= i %>" name="image<%= i %>" accept="image/*"
                class="form-control mb-2" onchange="previewVariantImage(event, <%= i %>)">
 
-        <div id="previewBox<%= i %>" class="variant-preview d-none">
+                    <div id="previewBox<%= i %>" class="variant-preview d-none">
+                      <img id="previewImg<%= i %>">
+                    </div>
 
-          <img id="previewImg<%= i %>" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
-        </div>
-
-        <button type="button" id="cropBtn<%= i %>" class="btn btn-sm btn-outline-dark mt-2 d-none"
-                onclick="cropVariantImage(<%= i %>)">Crop</button>
-
-        <input type="hidden" id="croppedImage<%= i %>" name="croppedImage<%= i %>">
+                    <button type="button" id="cropBtn<%= i %>" class="btn btn-sm btn-success mt-2 d-none"
+                            onclick="cropVariantImage(<%= i %>)"><i class="fas fa-check"></i> Crop & Save</button>        <input type="hidden" id="croppedImage<%= i %>" name="croppedImage<%= i %>">
       </div>
     <% } %>
   </div>
@@ -236,32 +246,48 @@
 
             <!-- Edit Variant Images -->
             <div class="mb-4">
-              <label class="form-label fw-bold">Update Variant Images (Optional)</label>
+              <label class="form-label fw-bold">Update Variant Images (4 Images)</label>
               <div class="row g-3">
                 <% for (let i = 1; i <= 4; i++) { %>
-                  <div class="col-6 text-center">
+                  <div class="col-md-6 text-center">
                     <label class="form-label">Image <%= i %></label>
                     
-                    <!-- Current Image Display -->
-                    <div id="currentImage<%= i %>" class="mb-2 position-relative" style="display: inline-block;">
-                      <img id="currentImg<%= i %>" src="" alt="Current Image <%= i %>" class="variant-image-thumb d-none" style="width: 100px; height: 100px;">
+                    <!-- Combined Image Display Area -->
+                    <div class="current-image-display mb-2" id="imageDisplay<%= i %>">
+                      <!-- Current/Existing Image -->
+                      <img id="currentImg<%= i %>" src="" alt="Current Image <%= i %>" class="d-none">
+                      
+                      <!-- Preview/New Image (will replace current image in same space) -->
+                      <img id="editPreviewImg<%= i %>" class="d-none">
+                      
+                      <!-- No Image Placeholder -->
+                      <div id="noImage<%= i %>" class="text-muted">No image</div>
+                      
+                      <!-- Delete Button for Current Image -->
                       <button type="button" id="deleteImgBtn<%= i %>" class="btn btn-sm btn-danger position-absolute top-0 end-0 d-none" 
-                              style="padding: 2px 6px; font-size: 10px;" onclick="deleteCurrentImage(<%= i %>)" title="Delete Image">
+                              style="padding: 4px 8px; font-size: 12px; z-index: 10;" onclick="deleteCurrentImage(<%= i %>)" title="Delete Image">
                         <i class="fas fa-times"></i>
                       </button>
-                      <div id="noImage<%= i %>" class="text-muted small">No image</div>
+                      
                       <input type="hidden" id="deleteImage<%= i %>" name="deleteImage<%= i %>" value="false">
                     </div>
 
-                    <input type="file" id="editImage<%= i %>" name="image<%= i %>" accept="image/*"
-                           class="form-control mb-2" onchange="previewEditVariantImage(event, <%= i %>)">
-
-                    <div id="editPreviewBox<%= i %>" class="variant-preview d-none">
-                      <img id="editPreviewImg<%= i %>" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+                    <!-- File Input with Custom Display -->
+                    <div class="mb-2">
+                      <label for="editImage<%= i %>" class="btn btn-sm btn-outline-primary" id="fileLabel<%= i %>" style="cursor: pointer;">
+                        <i class="fas fa-upload"></i> Choose File
+                      </label>
+                      <input type="file" id="editImage<%= i %>" name="image<%= i %>" accept="image/*"
+                             class="d-none" onchange="previewEditVariantImage(event, <%= i %>)">
+                      <div id="fileName<%= i %>" class="text-muted small mt-1"></div>
+                      <button type="button" id="clearFile<%= i %>" class="btn btn-sm btn-danger mt-1 d-none" onclick="clearFileInput(<%= i %>)">
+                        <i class="fas fa-times"></i> Remove
+                      </button>
                     </div>
 
-                    <button type="button" id="editCropBtn<%= i %>" class="btn btn-sm btn-outline-dark mt-2 d-none"
-                            onclick="cropEditVariantImage(<%= i %>)">Crop</button>
+                    <!-- Crop Button -->
+                    <button type="button" id="editCropBtn<%= i %>" class="btn btn-sm btn-success mt-2 d-none"
+                            onclick="cropEditVariantImage(<%= i %>)"><i class="fas fa-check"></i> Crop & Save</button>
 
                     <input type="hidden" id="editCroppedImage<%= i %>" name="croppedImage<%= i %>">
                   </div>
@@ -305,17 +331,32 @@ function previewVariantImage(event, index) {
       cropperInstances[index].destroy();
     }
 
-    // IMPORTANT → Remove object-fit before starting crop
-    img.style.objectFit = "contain";
-
-    // Start cropper
-    cropperInstances[index] = new Cropper(img, {
-      aspectRatio: 1,
-      viewMode: 2,
-      autoCropArea: 0.8,
-      responsive: true,
-      zoomOnWheel: true,
-    });
+    // Wait for image to load before initializing cropper
+    img.onload = function() {
+      // Only initialize if not already cropped
+      if (!img.dataset.cropped) {
+        // Start cropper with better settings
+        cropperInstances[index] = new Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.8,
+          responsive: true,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+          zoomable: true,
+          zoomOnWheel: true,
+          wheelZoomRatio: 0.1,
+          minContainerWidth: 300,
+          minContainerHeight: 300
+        });
+      }
+    };
   };
   reader.readAsDataURL(file);
 }
@@ -330,11 +371,25 @@ function cropVariantImage(index) {
   document.getElementById(`croppedImage${index}`).value = croppedImage;
   
   const img = document.getElementById(`previewImg${index}`);
-  img.src = croppedImage;
-  img.style.objectFit = "cover"; // return back after crop
-
+  const box = document.getElementById(`previewBox${index}`);
+  const cropBtn = document.getElementById(`cropBtn${index}`);
+  
+  // Destroy cropper completely
   cropper.destroy();
   cropperInstances[index] = null;
+  
+  // Remove onload handler to prevent reinitialization
+  img.onload = null;
+  
+  // Mark image as cropped to prevent reinitialization
+  img.dataset.cropped = 'true';
+  
+  // Update image to show cropped result
+  img.src = croppedImage;
+  img.style.objectFit = "cover";
+  
+  // Hide crop button after cropping
+  if (cropBtn) cropBtn.classList.add("d-none");
 
   Swal.fire("Done", "Image cropped successfully!", "success");
 }
@@ -347,29 +402,67 @@ function previewEditVariantImage(event, index) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const img = document.getElementById(`editPreviewImg${index}`);
-    const box = document.getElementById(`editPreviewBox${index}`);
     const cropBtn = document.getElementById(`editCropBtn${index}`);
+    const fileName = document.getElementById(`fileName${index}`);
+    const clearFileBtn = document.getElementById(`clearFile${index}`);
+    const currentImg = document.getElementById(`currentImg${index}`);
+    const noImage = document.getElementById(`noImage${index}`);
+    const deleteImgBtn = document.getElementById(`deleteImgBtn${index}`);
 
+    // Show filename
+    if (fileName) {
+      fileName.textContent = `Selected: ${file.name}`;
+      fileName.classList.add('text-success');
+    }
+    
+    // Show clear button
+    if (clearFileBtn) clearFileBtn.classList.remove('d-none');
+
+    // Hide current image and "no image" text
+    if (currentImg) currentImg.classList.add('d-none');
+    if (noImage) noImage.classList.add('d-none');
+    if (deleteImgBtn) deleteImgBtn.classList.add('d-none');
+
+    // Show preview image in the same display area
+    img.classList.remove('d-none');
+    cropBtn.classList.remove('d-none');
+
+    // Reset cropped flag for new upload
+    img.dataset.cropped = '';
+    
     img.src = e.target.result;
-    box.classList.remove("d-none");
-    cropBtn.classList.remove("d-none");
 
     // Destroy previous cropper if exists
     if (editCropperInstances[index]) {
       editCropperInstances[index].destroy();
     }
 
-    // Remove object-fit before starting crop
-    img.style.objectFit = "contain";
-
-    // Start cropper
-    editCropperInstances[index] = new Cropper(img, {
-      aspectRatio: 1,
-      viewMode: 2,
-      autoCropArea: 0.8,
-      responsive: true,
-      zoomOnWheel: true,
-    });
+    // Wait for image to load before initializing cropper
+    img.onload = function() {
+      // Only initialize if not already cropped
+      if (!img.dataset.cropped) {
+        // Start cropper with better settings
+        editCropperInstances[index] = new Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.8,
+          responsive: true,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+          zoomable: true,
+          zoomOnWheel: true,
+          wheelZoomRatio: 0.1,
+          minContainerWidth: 300,
+          minContainerHeight: 300
+        });
+      }
+    };
   };
   reader.readAsDataURL(file);
 }
@@ -384,13 +477,78 @@ function cropEditVariantImage(index) {
   document.getElementById(`editCroppedImage${index}`).value = croppedImage;
   
   const img = document.getElementById(`editPreviewImg${index}`);
-  img.src = croppedImage;
-  img.style.objectFit = "cover";
-
+    const box = document.getElementById(`editPreviewBox${index}`);
+    const cropBtn = document.getElementById(`editCropBtn${index}`);
+  
+  // Destroy cropper completely
   cropper.destroy();
   editCropperInstances[index] = null;
+  
+  // Remove onload handler to prevent reinitialization
+  img.onload = null;
+  
+  // Mark image as cropped to prevent reinitialization
+  img.dataset.cropped = 'true';
+  
+  // Update image to show cropped result
+  img.src = croppedImage;
+  img.style.objectFit = "cover";
+  
+  // Hide crop button after cropping
+  if (cropBtn) cropBtn.classList.add("d-none");
 
   Swal.fire("Done", "Image cropped successfully!", "success");
+}
+
+// Clear file input and reset preview
+function clearFileInput(index) {
+  const editImage = document.getElementById(`editImage${index}`);
+  const editPreviewImg = document.getElementById(`editPreviewImg${index}`);
+  const editCropBtn = document.getElementById(`editCropBtn${index}`);
+  const editCroppedImage = document.getElementById(`editCroppedImage${index}`);
+  const fileName = document.getElementById(`fileName${index}`);
+  const clearFileBtn = document.getElementById(`clearFile${index}`);
+  const currentImg = document.getElementById(`currentImg${index}`);
+  const noImage = document.getElementById(`noImage${index}`);
+  const deleteImgBtn = document.getElementById(`deleteImgBtn${index}`);
+  const deleteImageInput = document.getElementById(`deleteImage${index}`);
+
+  // Destroy cropper if exists
+  if (editCropperInstances[index]) {
+    editCropperInstances[index].destroy();
+    editCropperInstances[index] = null;
+  }
+
+  // Clear file input
+  if (editImage) editImage.value = '';
+  
+  // Hide preview image
+  if (editPreviewImg) {
+    editPreviewImg.src = '';
+    editPreviewImg.classList.add('d-none');
+    editPreviewImg.dataset.cropped = '';
+  }
+  if (editCropBtn) editCropBtn.classList.add('d-none');
+  if (editCroppedImage) editCroppedImage.value = '';
+  
+  // Clear filename display
+  if (fileName) {
+    fileName.textContent = '';
+    fileName.classList.remove('text-success');
+  }
+  
+  // Hide clear button
+  if (clearFileBtn) clearFileBtn.classList.add('d-none');
+
+  // Restore current image if it was hidden and not marked for deletion
+  if (currentImg && currentImg.src && deleteImageInput.value !== 'true') {
+    currentImg.classList.remove('d-none');
+    if (deleteImgBtn) deleteImgBtn.classList.remove('d-none');
+    if (noImage) noImage.classList.add('d-none');
+  } else {
+    // Show "no image" if there's no current image
+    if (noImage) noImage.classList.remove('d-none');
+  }
 }
 
 // Delete current image function
@@ -409,6 +567,8 @@ function deleteCurrentImage(index) {
       const noImage = document.getElementById(`noImage${index}`);
       const deleteImgBtn = document.getElementById(`deleteImgBtn${index}`);
       const deleteImageInput = document.getElementById(`deleteImage${index}`);
+      const editImage = document.getElementById(`editImage${index}`);
+      const fileLabel = document.getElementById(`fileLabel${index}`);
       
       // Hide current image and show "no image"
       currentImg.src = '';
@@ -419,7 +579,11 @@ function deleteCurrentImage(index) {
       // Mark for deletion
       deleteImageInput.value = 'true';
       
-      Swal.fire('Deleted!', 'Image marked for deletion.', 'success');
+      // Enable file input for this position
+      if (editImage) editImage.disabled = false;
+      if (fileLabel) fileLabel.classList.remove('disabled');
+      
+      Swal.fire('Deleted!', 'Image deleted. You can now upload a new image in this position.', 'success');
     }
   });
 }
@@ -485,7 +649,7 @@ if (isNaN(salePrice) || salePrice <= 0) {
 }
 
 if (parseFloat(salePrice) > parseFloat(regularPrice)) {
-  e.preventDefault();
+  +
   showError('Final price cannot be higher than regular price.');
   return;
 }
@@ -510,15 +674,24 @@ if (parseFloat(salePrice) > parseFloat(regularPrice)) {
       // Reset image fields
       const editImage = document.getElementById(`editImage${i}`);
       const editPreviewBox = document.getElementById(`editPreviewBox${i}`);
+      const editPreviewImg = document.getElementById(`editPreviewImg${i}`);
       const editCropBtn = document.getElementById(`editCropBtn${i}`);
       const editCroppedImage = document.getElementById(`editCroppedImage${i}`);
       const deleteImageInput = document.getElementById(`deleteImage${i}`);
+      const fileName = document.getElementById(`fileName${i}`);
+      const clearFileBtn = document.getElementById(`clearFile${i}`);
       
       if (editImage) editImage.value = '';
       if (editPreviewBox) editPreviewBox.classList.add('d-none');
+      if (editPreviewImg) editPreviewImg.dataset.cropped = ''; // Reset cropped flag
       if (editCropBtn) editCropBtn.classList.add('d-none');
       if (editCroppedImage) editCroppedImage.value = '';
       if (deleteImageInput) deleteImageInput.value = 'false';
+      if (fileName) {
+        fileName.textContent = '';
+        fileName.classList.remove('text-success');
+      }
+      if (clearFileBtn) clearFileBtn.classList.add('d-none');
 
       // Display current images
       const currentImg = document.getElementById(`currentImg${i}`);

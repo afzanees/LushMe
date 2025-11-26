@@ -2,7 +2,8 @@ const User = require('../../models/userSchema')
 const Category = require('../../models/categorySchema');
 const Product = require('../../models/productSchema');
 const Brand = require('../../models/brandSchema');
-
+const generateOtp = require('../../utils/otp');
+const sendVerificationEmail = require('../../utils/sendEmail')
 const nodemailer = require('nodemailer')
 const env = require('dotenv').config()
 const bcrypt = require('bcrypt')
@@ -57,40 +58,7 @@ const loadRegister = async (req,res)=>{
 //     }
 // }
 
-function generateOtp(){
-    return Math.floor(100000 + Math.random()*900000).toString();   // create a random otp
-}
 
-async function sendVerificationEmail(email,otp){
-     try {                        
-
-        const transporter =  nodemailer.createTransport({                 // we set the default email and password , that mail will send otp to user registered mail 
-
-            service:'gmail',
-            port:587,
-            secure:false,
-            requireTLS:true,
-            auth:{
-                user:process.env.NODEMAILER_EMAIL,
-                pass:process.env.NODEMAILER_PASSWORD
-            }
-        })   
-        
-        const info = await transporter.sendMail({     //info of sending mail with otp
-            from:process.env.NODEMAILER_EMAIL,
-            to:email,
-            subject:"Verify your account",
-            text:`Your OTP: ${otp}`,
-            html:`<b>Your OTP: ${otp} </b>,`
-        })
-
-        return info.accepted.length > 0
-        
-     } catch (error) {
-        console.error("Error sending email",error)
-        return false;
-     }
-}
 
 const register = async (req,res) =>{
     try {
@@ -117,7 +85,7 @@ const register = async (req,res) =>{
         req.session.userOtp = otp;
         req.session.userData = {username,email,phone,password};
                                     //a after session stored, we get the message varify otp
-        res.render("user/confirmotp");
+        res.render("user/confirmotp", { otpAction: "/confirmotp" });
         console.log("Otp Sent",otp)
 
     } catch (error) {

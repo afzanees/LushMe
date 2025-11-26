@@ -5,7 +5,7 @@ const customerController = require('../controller/admin/customerController')
 const categoryController = require('../controller/admin/categoryController')
 const brandController = require('../controller/admin/brandController')
 const productController = require('../controller/admin/productController')
-const {userAuth,adminAuth} = require('../middlewares/auth')
+const {adminAuth} = require('../middlewares/auth')
 const upload = require('../middlewares/multer')
 
 router.get('/pageerror',adminController.pageerror)
