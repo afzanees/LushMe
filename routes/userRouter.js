@@ -4,6 +4,7 @@ const userController = require('../controller/user/userController')
 const productController = require('../controller/user/productController')
 const bcrypt = require('bcrypt');
 const profileController = require('../controller/user/profileController');
+const cartController = require('../controller/user/cartController'); 
 const uploads = require('../middlewares/multer')
 const {userAuth} = require('../middlewares/auth')
 
@@ -48,6 +49,14 @@ router.get("/deleteAddress", userAuth, profileController.deleteAddress);
 //Wallet Management
 router.post("/createWalletOrder", userAuth, profileController.createWalletOrder);
 router.post("/verifyWalletPayment", userAuth, profileController.verifyWalletPayment);
+
+
+//Cart Management
+router.get("/cart", userAuth, cartController.getCartPage);
+router.post("/addToCart",userAuth, cartController.addToCart)
+router.post("/changeQuantity", userAuth, cartController.changeQuantity);
+router.post("/removeCartItem", userAuth, cartController.deleteProduct);
+router.get('/validate-cart', userAuth, cartController.validateCartBeforeCheckout);
 
 
 module.exports = router

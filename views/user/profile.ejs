@@ -285,7 +285,7 @@ tbody tr:hover {
   <nav class="sidebar1" aria-label="User Navigation">
     <div class="user-greeting">
       Hello<br />
-      <span class="username"><%= user ? user.name : 'Guest' %></span>
+      <span class="username"><%= user ? user.username : 'Guest' %></span>
     </div>
 
     <a href="#profile" class="nav-link active" data-target="profile">Profile</a>
@@ -325,7 +325,7 @@ tbody tr:hover {
         <div class="input-wrapper">
           <label for="firstName">First Name</label>
           <div style="display: flex; align-items: center; gap: 10px;">
-            <input type="text" id="firstName" name="name" class="form-control" value="<%= user ? user.name : '' %>" readonly />
+            <input type="text" id="firstName" name="name" class="form-control" value="<%= user ? user.username : '' %>" readonly />
             <button type="button" class="btn btn-sm btn-outline-primary edit-btn" onclick="toggleEdit('firstName', this)">Edit</button>
           </div>
           <div id="nameError" class="error-message" style="display:none;"></div>

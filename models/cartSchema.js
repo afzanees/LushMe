@@ -25,6 +25,10 @@ const cartSchema = new Schema({
             type:Number,
             required:true,
         },
+        color:{
+            type:String,
+            required:true
+        },
         status:{
             type:String,
             default: 'placed',
