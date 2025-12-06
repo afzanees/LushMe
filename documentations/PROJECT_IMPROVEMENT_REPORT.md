@@ -39,8 +39,8 @@ This report provides a comprehensive analysis of the LushMe e-commerce applicati
 
 **Current:**
 ```properties
-NODEMAILER_PASSWORD=rxgw ieiy igye egne
-GOOGLE_CLIENT_SECRET=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
+NODEMAILER_PASSWORD=*** (credentials exposed - rotated)
+GOOGLE_CLIENT_SECRET=*** (credentials exposed - rotated)
 ```
 
 **Fix:**
