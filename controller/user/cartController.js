@@ -190,11 +190,11 @@ const getCartPage = async (req, res) => {
           price: "$items.price",
           totalPrice: "$items.totalPrice",
           productName: "$productDetails.name",
-          productPrice: "$productDetails.finalPrice",
-          productImage: { $arrayElemAt: ["$productDetails.images", 0] },
+          productPrice: "$productDetails.variants.salePrice",
+          productImage: { $arrayElemAt: ["$productDetails.variants.productImage", 0] },
           categoryName: "$categoryDetails.name",
           productStock: "$productDetails.variants.quantity",
-          brandName: "$brandDetails.brandName",
+          brandName: "$brandDetails.name",
           isBlocked: 1,
           isCategoryListed: 1,
           isOutOfStock: 1,
@@ -207,7 +207,7 @@ const getCartPage = async (req, res) => {
     // Calculate grand total for cart
     let grandTotal = 0;
     cartData.forEach(item => {
-      grandTotal += item.productPrice * item.quantity;
+      grandTotal += item.totalPrice;
     });
 
     console.log("cart data :",cartData)
@@ -221,7 +221,7 @@ const getCartPage = async (req, res) => {
     console.log(totalPayable,shippingCharge)
 
     req.session.cartTotal = grandTotal
-    res.render('cart', {
+    res.render('user/cart', {
       user: req.session.user,
       cartItems: cartData,
       grandTotal,

@@ -1,0 +1,124 @@
+<form action="/address/save" method="POST">
+
+  <!-- Redirect target -->
+  <input type="hidden" name="redirectTo" value="<%= redirectTo %>">
+
+  <!-- Edit only -->
+  <% if (address && address._id) { %>
+    <input type="hidden" name="addressId" value="<%= address._id %>">
+  <% } %>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Address Type</label>
+      <select name="addressType" class="form-select" required>
+        <option value="Home" <%= address?.addressType === 'Home' ? 'selected' : '' %>>Home</option>
+        <option value="Office" <%= address?.addressType === 'Office' ? 'selected' : '' %>>Office</option>
+      </select>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Full Name</label>
+      <input
+        type="text"
+        name="name"
+        class="form-control"
+        value="<%= address?.name || '' %>"
+        placeholder="John Doe"
+        required
+      >
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Phone Number</label>
+      <input
+        type="tel"
+        name="phone"
+        class="form-control"
+        value="<%= address?.phone || '' %>"
+        placeholder="9876543210"
+        pattern="[0-9]{10}"
+        required
+      >
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Alternate Phone (Optional)</label>
+      <input
+        type="tel"
+        name="altPhone"
+        class="form-control"
+        value="<%= address?.altPhone || '' %>"
+        placeholder="9876543210"
+        pattern="[0-9]{10}"
+      >
+    </div>
+
+    <div class="col-12">
+      <label class="form-label fw-semibold">House No / Building / Street</label>
+      <input
+        type="text"
+        name="houseNo"
+        class="form-control"
+        value="<%= address?.houseNo || '' %>"
+        placeholder="House No. 123, Main Street"
+        required
+      >
+    </div>
+
+    <div class="col-12">
+      <label class="form-label fw-semibold">Landmark</label>
+      <input
+        type="text"
+        name="landMark"
+        class="form-control"
+        value="<%= address?.landMark || '' %>"
+        placeholder="Near City Mall"
+        required
+      >
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">City</label>
+      <input
+        type="text"
+        name="city"
+        class="form-control"
+        value="<%= address?.city || '' %>"
+        placeholder="Mumbai"
+        required
+      >
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">State</label>
+      <input
+        type="text"
+        name="state"
+        class="form-control"
+        value="<%= address?.state || '' %>"
+        placeholder="Maharashtra"
+        required
+      >
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Pincode</label>
+      <input
+        type="text"
+        name="pincode"
+        class="form-control"
+        value="<%= address?.pincode || '' %>"
+        placeholder="400001"
+        pattern="[0-9]{6}"
+        required
+      >
+    </div>
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary w-100 mt-2">
+        <%= address ? 'Update Address' : 'Save Address' %>
+      </button>
+    </div>
+  </div>
+</form>

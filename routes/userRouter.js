@@ -5,6 +5,8 @@ const productController = require('../controller/user/productController')
 const bcrypt = require('bcrypt');
 const profileController = require('../controller/user/profileController');
 const cartController = require('../controller/user/cartController'); 
+const orderController = require('../controller/user/orderController');
+const addressController = require('../controller/user/addressController')
 const uploads = require('../middlewares/multer')
 const {userAuth} = require('../middlewares/auth')
 
@@ -40,11 +42,16 @@ router.post("/change-password", userAuth, profileController.changePassword);
 router.post("/upload-profile-pic",userAuth,uploads.single("profileImage"), profileController.changeProfilePic)
 
 //Address Management
-router.get("/addAddress", userAuth, profileController.getAddAddress);
-router.post('/add-address', userAuth, profileController.addAddress)
-router.get("/editAddress", userAuth, profileController.getEditAddress);
-router.post("/editAddress", userAuth, profileController.postEditAddress);
+// router.get("/addAddress", userAuth, profileController.getAddAddress);
+// router.post('/add-address', userAuth, profileController.addAddress)
+// router.get("/editAddress", userAuth, profileController.getEditAddress);
+// router.post("/editAddress", userAuth, profileController.postEditAddress);
 router.get("/deleteAddress", userAuth, profileController.deleteAddress);
+
+// Address Management (Add + Edit for Profile & Checkout)
+router.get('/address', userAuth, addressController.getAddressPage);              // Add
+router.get('/address/:addressId', userAuth, addressController.getAddressPage);   // Edit
+router.post('/address/save', userAuth, addressController.saveAddress);  
 
 //Wallet Management
 router.post("/createWalletOrder", userAuth, profileController.createWalletOrder);
@@ -57,6 +64,15 @@ router.post("/addToCart",userAuth, cartController.addToCart)
 router.post("/changeQuantity", userAuth, cartController.changeQuantity);
 router.post("/removeCartItem", userAuth, cartController.deleteProduct);
 router.get('/validate-cart', userAuth, cartController.validateCartBeforeCheckout);
+
+//Order management
+router.get("/checkout", userAuth, orderController.getCheckoutPage)
+router.post('/check-stock', userAuth, orderController.checkStock)
+router.post('/placeOrder', userAuth, orderController.placeOrder)
+router.post('/verifyPayment', userAuth, orderController.verifyPayment)
+router.post('/confirmOrderAfterRazorpay', userAuth, orderController.confirmOrderAfterRazorpay)
+
+
 
 
 module.exports = router

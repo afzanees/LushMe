@@ -181,65 +181,87 @@ const userProfile = async (req,res)=>{
        }
     }
 //change email
-const changeEmail = async (req,res)=>{
-  try{
-    const user = req.session.user
-    res.render('change-email',{user})
-  } catch (err){
-    res.redirect("/pageNotFound")
+const changeEmail = async (req, res) => {
+  try {
+    res.render('user/change-email', {
+      user: req.user,
+      message: null
+    });
+  } catch (err) {
+    res.redirect('/pagenotfound');
   }
-}
+};
+
 //change email validation
-const changeEmailValid =async (req,res)=>{
-    try{
-        const {email}=req.body;
-        const userExist=await User.findOne({email})
+const changeEmailValid = async (req, res) => {
+  try {
+    const { email } = req.body;
 
-        if(userExist)
-        {
-            const otp =generateOtp();
-            const emailSent=await sendVerificationEmail(email,otp)
-            if(emailSent){
-                req.session.userOtp=otp
-                req.session.userData=req.body
-                req.session.email=email
-                res.render('change-email-otp',{ user: req.session.user || null })
-                console.log(`Email Sent : ${email}, Otp: ${otp}`)
-               }else{
-                res.json('Email error')
-               }
-        }else{
-            res.render('change-email',{message: "User with email not exist"})
-        }
-
-    }catch (err){
-        res.redirect("/pageNotFound")  
+    // Check if email already exists
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.render('user/change-email', {
+        user: req.user,
+        message: 'This email is already in use'
+      });
     }
-}
 
-//otp varification
-const verifyEmailOtp = async (req,res) => {
-    try {
-        
-        const enteredOtp = req.body.otp;
-        if(enteredOtp === req.session.userOtp){
-            // req.session.userData = req.body.userData;
-            res.render("new-email",{
-                user: req.session.user || null,
-                userData: req.session.userData,
-            })
-        }else{
-            res.render("change-email-otp",{
-                message:"OTP not matching",
-                userData: req.session.userData,
-                user: req.session.user || null,
-            })
-        }
+    const otp = generateOtp();
+    const emailSent = await sendVerificationEmail(email, otp);
 
-    } catch (error) {
-        res.redirect("/pagenotfound")
+    if (!emailSent) {
+      return res.render('user/change-email', {
+        user: req.user,
+        message: 'Failed to send OTP. Try again.'
+      });
     }
-}
+
+    // Store ONLY what is needed
+    req.session.emailOtp = otp;
+    req.session.pendingEmail = email;
+
+    console.log(`OTP sent to ${email}: ${otp}`);
+
+    res.render('user/change-email-otp', {
+      user: req.user,
+      message: null
+    });
+    
+
+  } catch (err) {
+    console.error(err);
+    res.redirect('/pagenotfound');
+  }
+};
+
+const verifyEmailOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    if (otp !== req.session.emailOtp) {
+      return res.render('user/change-email-otp', {
+        user: req.user,
+        message: 'Invalid OTP'
+      });
+    }
+
+    // OTP success → update email
+    await User.findByIdAndUpdate(req.user._id, {
+      email: req.session.pendingEmail
+    });
+
+    // Clear OTP data
+    req.session.emailOtp = null;
+    req.session.pendingEmail = null;
+
+    res.redirect('/profile');
+
+  } catch (err) {
+    console.error(err);
+    res.redirect('/pagenotfound');
+  }
+};
+
 const updateEmail= async (req,res)=>
 {
     try{
@@ -279,7 +301,7 @@ const updateProfile = async (req, res) => {
   
       console.log('Updated user:', updatedUser);
   
-      return res.redirect('/userProfile');
+      return res.redirect('/profile');
     } catch (error) {
       console.error('Update error:', error);
       return res.status(500).send('Server error');
@@ -287,42 +309,72 @@ const updateProfile = async (req, res) => {
   };
 
   //Get  change password page
-  const getChangePassword = async (req,res)=>
-{
-    try{
-        res.render('change-password',{ user: req.session.user || null})
-
-    }catch (err){
-        res.redirect("/pagenotfound")
-    }
+ const getChangePassword = async (req, res) => {
+  try {
+    res.render('user/change-password', { user: req.session.user || null })
+  } catch (err) {
+    res.redirect("/pagenotfound")
+  }
 }
 //Change password
-const changePassword = async (req,res)=>
-{
-    try{
-         const userId =req.session.user
-         const {currentPassword,newPassword,confirmPassword} = req.body
-         const userData =await User.findById(userId)
-         const passwordMatch =await bcrypt.compare(currentPassword,userData.password)
-        if(!passwordMatch)
-        {
-            return res.status(400).json({success:false,message:"Incorrect password"})
-        }else{
-            if(newPassword !== confirmPassword){
-                return res.status(400).json({success:false,message:'New password and confirm password must be same'})
-            }else{
-                const passwordHash =await securePassword(newPassword)
-                userData.password =passwordHash
-                await userData.save()
-                res.status(200).json({success:true,message:'Password changed'})
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.session.user
+    const { currentPassword, newPassword, confirmPassword } = req.body
 
-            }
-        }
-
-    }catch (err){
-        console.error("Error while changing password", err)
-        res.status(500).json({success: false, message: 'Internal server error'})
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" })
     }
+
+    const userData = await User.findById(userId)
+
+    if (!userData) {
+      return res.status(404).json({ success: false, message: "User not found" })
+    }
+
+    // Google login users
+    if (!userData.password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password change not available for Google login users"
+      })
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      currentPassword,
+      userData.password
+    )
+
+    if (!passwordMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect current password"
+      })
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password and confirm password must match"
+      })
+    }
+
+    const passwordHash = await securePassword(newPassword)
+    userData.password = passwordHash
+    await userData.save()
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully"
+    })
+
+  } catch (err) {
+    console.error("Error while changing password", err)
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    })
+  }
 }
 //profilepic change
 const changeProfilePic = async (req, res) => {
@@ -435,21 +487,35 @@ const getEditAddress =async (req,res)=>{
     }
    
   }
-  const deleteAddress =async (req,res)=>{
-    try{
-        const addressId=req.query.id;
-        const findAddress=await Address.findOne({"address._id":addressId})
-         if(!findAddress){
-            return res.status(404).send("Address not found")
-        }
-        await Address.updateOne({'address._id':addressId},{$pull:{address:{_id:addressId}}})
-        res.redirect("/userProfile")
-    
-    }catch (error){
-        console.error("Error in deleting address",error);
-        res.redirect("/pagenotfound")
+  const deleteAddress = async (req, res) => {
+    try {
+      const userId = req.user._id;
+      const { id: addressId } = req.query;
+      const { redirect } = req.query; // checkout or profile
+
+      if (!addressId) {
+        return res.status(400).json({ success: false, message: 'Address ID required' });
+      }
+
+      // Find and delete the address
+      const result = await Address.updateOne(
+        { userId, 'address._id': addressId },
+        { $pull: { address: { _id: addressId } } }
+      );
+
+      if (result.modifiedCount === 0) {
+        return res.status(404).json({ success: false, message: 'Address not found' });
+      }
+
+      // Determine redirect based on parameter
+      const redirectTo = redirect === 'checkout' ? '/checkout' : '/profile';
+      return res.redirect(redirectTo);
+
+    } catch (error) {
+      console.error('Error in deleting address', error);
+      res.status(500).json({ success: false, message: 'Error deleting address' });
     }
-  }
+  };
 
 // Wallet - Create Razorpay order for wallet top-up
 const createWalletOrder = async (req, res) => {

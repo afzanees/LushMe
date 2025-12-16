@@ -55,7 +55,7 @@
                     <td class="column-2">
                       <%= item.productName %> <br>
                       <small>Color: <b><%= item.color %></b></small><br>
-                      <small>Brand: <b><%= item.brandName %></b></small>
+                      <small>Brand: <b><%= item.brand?.name || 'N/A' %></b></small>
                     </td>
                     <td class="column-3">₹ <%= item.productPrice.toFixed(2) %></td>
 

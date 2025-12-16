@@ -348,7 +348,13 @@ tbody tr:hover {
 
         <div class="buttons">
           <a href="/change-email" class="btn btn-dark">Change Email</a>
-          <a href="/change-password" class="btn btn-danger">Change Password</a>
+           <% if (user.password) { %>
+    <a href="/change-password" class="btn btn-danger">Change Password</a>
+  <% } else { %>
+    <span class="text-muted ms-2">
+      (Signed in with Google)
+    </span>
+  <% } %>
           <button type="submit" class="btn btn-sml btn-dark">Save Changes</button>
         </div>
       </form>
