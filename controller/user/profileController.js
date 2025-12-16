@@ -148,10 +148,11 @@ const userProfile = async (req,res)=>{
         const skip = (page - 1) * limit;
         const totalOrders = await Order.countDocuments({ userId });
         const orders = await Order.find({ userId })
-        .sort({ createdOn: -1 }) // latest first
-        .skip(skip)
-        .limit(limit)
-        .lean();
+          .sort({ createdOn: -1 }) // latest first
+          .skip(skip)
+          .limit(limit)
+          .populate('orderedItems.product')
+          .lean();
         const totalPages = Math.ceil(totalOrders / limit);
 
         // Wallet history pagination
@@ -280,27 +281,25 @@ const updateProfile = async (req, res) => {
     try {
       const userId = req.session.user;
       const { name, phone } = req.body;
-  
-    //   console.log('Updating user:', { userId, name, phone });
-  
-      // Update only name and phone
+
+      // Update only username and phone
       const updatedUser = await User.findByIdAndUpdate(
         userId,
-        { name, phone },
+        { username: name, phone },
         { new: true, runValidators: true }
       );
-  
+
       if (!updatedUser) {
         console.log('User not found');
         return res.status(404).send('User not found');
       }
-  
+
       // Update session data
-      req.session.user.name = updatedUser.name;
+      req.session.user.username = updatedUser.username;
       req.session.user.phone = updatedUser.phone;
-  
+
       console.log('Updated user:', updatedUser);
-  
+
       return res.redirect('/profile');
     } catch (error) {
       console.error('Update error:', error);

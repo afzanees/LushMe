@@ -70,7 +70,14 @@ router.get("/checkout", userAuth, orderController.getCheckoutPage)
 router.post('/check-stock', userAuth, orderController.checkStock)
 router.post('/placeOrder', userAuth, orderController.placeOrder)
 router.post('/verifyPayment', userAuth, orderController.verifyPayment)
-router.post('/confirmOrderAfterRazorpay', userAuth, orderController.confirmOrderAfterRazorpay)
+//router.post('/confirmOrderAfterRazorpay', userAuth, orderController.confirmOrderAfterRazorpay)
+router.get('/order-success/:orderId', userAuth, orderController.getOrderSuccessPage);
+router.get('/viewOrderDetails/:orderId', userAuth, orderController.viewOrderDetails)
+router.post('/paymentConfirm',userAuth, orderController.paymentConfirm);
+//router.get("/retryPayment", userAuth, orderController.retryPayment);
+
+router.post("/cancelOrder",userAuth,orderController.cancelOrder);
+router.post('/orders/return-request', userAuth, orderController.returnRequest);
 
 
 

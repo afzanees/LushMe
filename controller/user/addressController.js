@@ -63,7 +63,7 @@ const addressController = {
           {
             $set: {
               'address.$.addressType': addressType,
-              'address.$.name': name,
+              'address.$.username': name,
               'address.$.phone': phone,
               'address.$.altPhone': altPhone || '',
               'address.$.houseNo': houseNo,
@@ -79,7 +79,7 @@ const addressController = {
       else {
         const newAddress = {
           addressType: addressType || 'Home',
-          name,
+          username,
           phone,
           altPhone: altPhone || '',
           houseNo,

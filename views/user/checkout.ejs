@@ -596,7 +596,13 @@
           discount: discount
         }),
         success: function (response) {
-          const orderId = response.order?._id;
+          const orderId = response.order && response.order._id;
+
+if (!orderId) {
+  console.error("Order ID missing in response", response);
+  Swal.fire("Error", "Order created but ID missing", "error");
+  return;
+}
     
           if (response.method === "cod" || (response.method === "wallet" && response.payment === true)) {
             Swal.fire({
