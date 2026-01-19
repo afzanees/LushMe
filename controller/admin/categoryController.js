@@ -42,7 +42,7 @@ const addCategory = async (req, res) => {
       const skip = (page - 1) * limit;
   
       const searchQuery = req.query.search ? req.query.search.trim() : '';
-      const query = {};
+      const query = { isDeleted: { $ne: true } }; // Only show non-deleted categories
   
       if (searchQuery) {
         // Case-insensitive search for category name

@@ -15,12 +15,16 @@ const productDetails = async (req,res) => {
         }
         const userData =  userId ? await User.findById(userId) : null;
         const productId = req.query.id;
-        const product = await Product.findOne({ _id: productId, isBlocked: false})
+        const product = await Product.findOne({ _id: productId})
         .populate('category')
         .populate({ path: 'ratings.userId', select: 'name profilePicture' })
         .populate('brand');
         if (!product) {
             return res.redirect('/pageNotFound');
+          }
+          if (product.isBlocked) {
+            // Product exists but blocked by admin
+            return res.redirect('/shop'); // or render unavailable page
           }
         const ratingsCount = product?.ratings?.length || 0;  
         let totalQuantity = 0;

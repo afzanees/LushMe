@@ -4,10 +4,12 @@ const db = require("./config/db")
 const userRouter = require('./routes/userRouter')
 const path = require('path');
 const session = require('express-session');
+const flash = require('connect-flash');
 const adminRouter = require("./routes/adminRouter")
 const authRoute = require("./routes/authRoute");
 const passport = require("./config/passport"); 
 const User = require('./models/userSchema');
+const { errorHandler, notFound } = require('./middlewares/errorhandling');
 db();
 
 const app = express()
@@ -27,7 +29,7 @@ app.use(session({
     
 }))
 
-
+app.use(flash());
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -63,25 +65,14 @@ app.use('/',userRouter)
 app.use('/admin',adminRouter)
 app.use("/auth", authRoute);
 
+// 404 handler - must be after all routes
+app.use(notFound);
 
-
-
+// Global error handler - must be last
+app.use(errorHandler);
 
 app.listen(process.env.PORT, ()=>{
     console.log("server is running")
 })
 
 module.exports = app
-
-
-
-
-
-
-
-
-
-
-
-
-//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

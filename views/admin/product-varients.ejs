@@ -108,7 +108,15 @@
                 <!-- <a href="/admin/product/<%= product._id %>/variants/<%= variant._id %>/edit" class="btn btn-info btn-sm" title="Edit">
                   <i class="fas fa-edit"></i>
                 </a> -->
-                <button class="btn btn-info btn-sm" onclick='openEditVariantModal("<%= variant._id %>", "<%= variant.color %>", "<%= variant.regularPrice %>", "<%= variant.salePrice %>", "<%= variant.quantity %>", <%- JSON.stringify(variant.productImage || []) %>)' title="Edit">
+                <button class="btn btn-info btn-sm" 
+                        data-variant-id="<%= variant._id %>"
+                        data-variant-color="<%= variant.color %>"
+                        data-variant-regular-price="<%= variant.regularPrice %>"
+                        data-variant-sale-price="<%= variant.salePrice %>"
+                        data-variant-quantity="<%= variant.quantity %>"
+                        data-variant-images='<%- JSON.stringify(variant.productImage || []) %>'
+                        onclick="openEditVariantModalData(this)" 
+                        title="Edit">
                   <i class="fas fa-edit"></i>
                 </button>
                 
@@ -305,6 +313,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <script>
@@ -662,6 +671,18 @@ if (parseFloat(salePrice) > parseFloat(regularPrice)) {
   });
 </script>
 <script>
+  // Helper function to read data attributes from button
+  function openEditVariantModalData(button) {
+    const id = button.getAttribute('data-variant-id');
+    const color = button.getAttribute('data-variant-color');
+    const regularPrice = button.getAttribute('data-variant-regular-price');
+    const salePrice = button.getAttribute('data-variant-sale-price');
+    const quantity = button.getAttribute('data-variant-quantity');
+    const images = JSON.parse(button.getAttribute('data-variant-images') || '[]');
+    
+    openEditVariantModal(id, color, regularPrice, salePrice, quantity, images);
+  }
+
   function openEditVariantModal(id, color, regularPrice, salePrice, quantity, images) {
     console.log('Opening modal with images:', images);
     

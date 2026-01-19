@@ -346,7 +346,7 @@
             <strong>Status:</strong> <%= orderObj.status.charAt(0).toUpperCase() + orderObj.status.slice(1) %> <br />
             <strong>Grand Total:</strong> ₹<%= orderObj.finalAmount.toFixed(2) %> <br />
            
-            <strong>Delivery Charge:</strong> ₹<%= orderObj.deliveryCharge.toFixed(2) %>
+            <strong>Delivery Charge:</strong> ₹<%= (orderObj.deliveryCharge || 0).toFixed(2) %>
           </p>
      
         </article>
@@ -370,7 +370,7 @@
 <!-- end -->
     
 <% if (orderObj.status === "failed") { %>
-  <button onclick="retryPayment('<%= orderObj._id %>')" class="btn btn-dark btn-sm mt-2">
+  <button onclick="retryPayment('<%= orderObj.orderId %>')" class="btn btn-dark btn-sm mt-2">
       Retry Payment
   </button>
 <% } %>
@@ -381,63 +381,69 @@
     <% orderObj.orderedItems.forEach((item,index) => { %>
       <div class="order-card">
        
-      <img src="/<%= item.productImages[0] %>" 
-     alt="<%= item.productName || 'Product Image' %>" 
+      <img src="/<%= item.selectedVariant && item.selectedVariant.productImage && item.selectedVariant.productImage[0] ? item.selectedVariant.productImage[0] : 'images/profile.png' %>" 
+     alt="<%= item.product && item.product.name ? item.product.name : 'Product Image' %>" 
      class="order-img" />
 
 
         <div class="details">
-          <a href="/viewOrderDetails/<%= orderObj._id %>" class="product-name" title="View Order Details"><strong><%= item.productName || 'Product' %></strong></a>
-          <div>Size: <%= item.size || 'N/A' %></div>
-          <div>Color: <%= item.color || 'N/A' %></div>
+          <a href="/viewOrderDetails/<%= orderObj.orderId %>" class="product-name" title="View Order Details"><strong><%= item.product && item.product.name ? item.product.name : 'Product' %></strong></a>
+          <div>Color: <%= item.selectedVariant && item.selectedVariant.color ? item.selectedVariant.color : 'N/A' %></div>
           <div>Quantity: <%= item.quantity %></div>
         </div>
 
         <div class="center-info">
-          <strong>₹<%= item.finalPrice.toFixed(2) %></strong>
-          <strong style="color: #0baf5d;">Total :   ₹<%=(parseInt(item.finalPrice) * parseInt(item.quantity)).toLocaleString()%></strong>
+          <strong>₹<%= (item.price || 0).toFixed(2) %></strong>
+          <strong style="color: #0baf5d;">Total :   ₹<%= ((item.price || 0) * (item.quantity || 0)).toFixed(2) %></strong>
           <div>
-            <% if(item.status === 'delivered') { %>
-              Delivered On<br><%= new Date(item.deliveredOn || orderObj.deliveredOn).toLocaleDateString() %>
-          
-            <% } else if (
-              item.status === 'cancelled' ||
-              item.status === 'return_requested' ||
-              item.status === 'returning' ||
-              item.status === 'returned'
-            ) { %>
-              
-            
+            <% 
+              const itemStatus = (item.status || orderObj.status || '').toLowerCase().trim();
+            %>
+            <% if(itemStatus === 'delivered') { %>
+              <span style="color: #0baf5d; font-weight: 600;">✓ Delivered On</span><br><%= orderObj.deliveredOn ? new Date(orderObj.deliveredOn).toLocaleDateString() : 'N/A' %>
+              <% if(item.returnRejected) { %>
+                <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                  <strong style="color: #856404; font-size: 12px;">⚠️ Return Request Rejected</strong>
+                  <p style="color: #856404; font-size: 11px; margin: 5px 0 0 0;"><%= item.returnRejectionReason || 'Return request was rejected by admin' %></p>
+                </div>
+              <% } %>
+            <% } else if (itemStatus === 'cancelled') { %>
+              <span style="color: #dc3545; font-weight: 600;">✗ Cancelled On</span><br><%= orderObj.updatedAt ? new Date(orderObj.updatedAt).toLocaleDateString() : 'N/A' %>
+            <% } else if (itemStatus === 'return_requested' || itemStatus === 'return request') { %>
+              <span style="color: #ff9800; font-weight: 600;">⟲ Return Requested</span><br><%= orderObj.updatedAt ? new Date(orderObj.updatedAt).toLocaleDateString() : 'N/A' %>
+            <% } else if (itemStatus === 'returned') { %>
+              <span style="color: #2196f3; font-weight: 600;">↩ Returned On</span><br><%= orderObj.updatedAt ? new Date(orderObj.updatedAt).toLocaleDateString() : 'N/A' %>
             <% } else { %>
               <% 
                 const createdDate = new Date(orderObj.createdOn);
-                const deliveryDays = 5; // or item-specific if available
+                const deliveryDays = 5;
                 const deliveryDate = new Date(createdDate);
                 deliveryDate.setDate(createdDate.getDate() + deliveryDays);
               %>
-              Delivery Expected By<br><%= deliveryDate.toLocaleDateString() %>
+              <span style="font-weight: 600;">Delivery Expected By</span><br><%= deliveryDate.toLocaleDateString() %>
             <% } %>
           </div>
-          <small style="color: #cc1b2d;font-size :larger;">
-           <% if(item.status === 'delivered') { %>
-          Your item has been delivered
-        <% } else if(item.status === 'cancelled') { %>
-          Your item has been cancelled
-        <% } else if(item.status === 'return_requested') { %>
-          Your return request is being processed
-        <% } else if(item.status === 'returning') { %>
-          Your item is being returned
-        <% } else if(item.status === 'returned') { %>
-          Your item has been successfully returned
-        <% } else { %>
-          Your item order has been placed
-        <% } %>
+          <small style="font-size: 13px; font-weight: 600; display: block; margin-top: 8px; padding: 6px 10px; border-radius: 4px; text-align: center;">
+            <% if(itemStatus === 'delivered') { %>
+              <span style="color: #fff; background-color: #0baf5d; padding: 6px 12px; border-radius: 4px; display: inline-block;">✓ Item Delivered</span>
+            <% } else if(itemStatus === 'cancelled') { %>
+              <span style="color: #fff; background-color: #dc3545; padding: 6px 12px; border-radius: 4px; display: inline-block;">✗ Item Cancelled</span>
+            <% } else if(itemStatus === 'return_requested' || itemStatus === 'return request') { %>
+              <span style="color: #fff; background-color: #ff9800; padding: 6px 12px; border-radius: 4px; display: inline-block;">⟲ Return Processing</span>
+            <% } else if(itemStatus === 'returned') { %>
+              <span style="color: #fff; background-color: #2196f3; padding: 6px 12px; border-radius: 4px; display: inline-block;">↩ Item Returned</span>
+            <% } else if(itemStatus === 'shipped') { %>
+              <span style="color: #333; background-color: #ffc107; padding: 6px 12px; border-radius: 4px; display: inline-block;">🚚 Item Shipped</span>
+            <% } else { %>
+              <span style="color: #fff; background-color: #6c757d; padding: 6px 12px; border-radius: 4px; display: inline-block;">📦 Order Placed</span>
+            <% } %>
           </small>
 
           <div class="timeline" aria-label="Order status timeline">
             <% 
-              const statuses = ['pending', 'confirmed', 'shipped', 'delivered']; 
-              const currentStatusIndex = statuses.indexOf(item.status);
+              const statuses = ['pending', 'processing', 'shipped', 'delivered']; 
+              const itemStatusForTimeline = (item.status || orderObj.status || '').toLowerCase();
+              const currentStatusIndex = statuses.indexOf(itemStatusForTimeline);
             %>
             <% statuses.forEach((status, idx) => { %>
               <div class="step-container">
@@ -449,35 +455,36 @@
         </div>
 
         <div class="action-buttons">
-                        <% if(
-                          item.status !== 'cancelled' &&
-                          item.status !== 'delivered' &&
-                          item.status !== 'return_requested'&&
-                          item.status !== 'returned'&&
-                          item.status !== 'rejected'&&
-                          orderObj.status !== 'cancelled'
-                        ) { %>
-                          
-                    <button onclick="confirmCancelOrder('<%= orderObj.orderId %>', <%= index %>)" class="btn-cancel">Cancel Item</button>
+                        <% 
+                          const canCancel = itemStatus !== 'cancelled' && 
+                                           itemStatus !== 'delivered' && 
+                                           itemStatus !== 'return_requested' && 
+                                           itemStatus !== 'return request' &&
+                                           itemStatus !== 'returned';
+                        %>
+                        
+                        <% if(canCancel) { %>
+                          <button onclick="confirmCancelOrder('<%= orderObj.orderId %>', <%= index %>)" class="btn-cancel">Cancel Order</button>
+                        <% } else if(itemStatus === 'cancelled') { %>
+                          <button disabled class="btn-cancel" style="opacity: 0.6; cursor: not-allowed;">Order Cancelled</button>
+                        <% } else if(itemStatus === 'delivered') { %>
+                          <% if(!item.returnRejected) { %>
+                            <button disabled class="btn-cancel" style="opacity: 0.6; cursor: not-allowed;">Order Delivered</button>
+                          <% } else { %>
+                            <span style="color: #856404; font-size: 12px; font-style: italic;">Return was rejected</span>
+                          <% } %>
+                        <% } %>
 
-                    <% } else if(item.status === 'cancelled') { %>
-                      <button disabled class="btn-cancel" style="opacity: 0.6; cursor: not-allowed;">Item Cancelled</button>
-                    <% } else if(item.status === 'delivered' ) { %>
-                      <button disabled class="btn-cancel" style="opacity: 0.6; cursor: not-allowed;">Item Delivered</button>
-                      <% } else if(item.status === 'rejected' ) { %>
-                        <button disabled class="btn-cancel" style="opacity: 0.6; cursor: not-allowed;">Return rejected</button>
-                    <% } %>
-
-                      <!-- Return Request Button -->
-              <% if(item.status === 'delivered') { %>
-                <button class="btn-return" onclick="requestReturn('<%= orderObj.orderId %>', <%= index %>)">Request Return</button>
-              <% } else if(item.status === 'return_requested') { %>
-                <button disabled class="btn-return" style="opacity: 0.6; cursor: not-allowed;">Return Requested</button>
-              <% } else if(item.status === 'returning') { %>
-                <button disabled class="btn-return" style="opacity: 0.6; cursor: not-allowed;">Returning</button>
-              <% } else if(item.status === 'returned') { %>
-                <button disabled class="btn-return" style="opacity: 0.6; cursor: not-allowed;">Returned</button>
-              <% } %>
+                        <!-- Return Request Button -->
+                        <% if(itemStatus === 'delivered' && !item.returnRejected) { %>
+                          <button class="btn-return" onclick="requestReturn('<%= orderObj.orderId %>', <%= index %>)">Request Return</button>
+                        <% } else if(itemStatus === 'return_requested' || itemStatus === 'return request') { %>
+                          <button disabled class="btn-return" style="opacity: 0.6; cursor: not-allowed;">Return Requested</button>
+                        <% } else if(itemStatus === 'returned') { %>
+                          <button disabled class="btn-return" style="opacity: 0.6; cursor: not-allowed;">Returned</button>
+                        <% } else if(itemStatus === 'delivered' && item.returnRejected) { %>
+                          <button disabled class="btn-return" style="opacity: 0.6; cursor: not-allowed; background: #856404;">Return Rejected</button>
+                        <% } %>
                   
 
          
@@ -621,13 +628,40 @@
       contentType: 'application/json',
       data: JSON.stringify({ orderId, itemIndex, reason }),
       success: (response) => {
-        Swal.fire('Cancelled!', 'The order item has been cancelled.', 'success').then(() => {
-          window.location.reload();
-        });
+        if (response.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Cancelled!',
+            text: response.message || 'The order item has been cancelled successfully.',
+            confirmButtonText: 'OK'
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Failed',
+            text: response.message || 'Failed to cancel the order item.',
+            confirmButtonText: 'OK'
+          });
+        }
       },
-      error: (error) => {
-        Swal.fire('Error!', 'There was an error cancelling the order item.', 'error');
-        console.error(error);
+      error: (xhr, status, error) => {
+        let errorMessage = 'There was an error cancelling the order item.';
+        try {
+          const response = JSON.parse(xhr.responseText);
+          errorMessage = response.message || errorMessage;
+        } catch (e) {
+          errorMessage = xhr.responseText || errorMessage;
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: errorMessage,
+          confirmButtonText: 'OK'
+        });
+        console.error('Cancel Error:', error);
+        console.error('Response:', xhr.responseText);
       }
     });
   }

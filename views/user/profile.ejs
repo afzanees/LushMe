@@ -277,6 +277,98 @@ tbody tr:hover {
   cursor: default;
   pointer-events: none;
 }
+
+/* Wallet styles */
+.wallet-wrapper {
+  max-width: 680px;
+  margin: 24px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(20,20,40,0.06);
+  padding: 20px;
+}
+
+.wallet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.wallet-balance {
+  display: flex;
+  flex-direction: column;
+}
+
+.wallet-balance .label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.wallet-balance .amount {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #222;
+  margin-top: 6px;
+}
+
+.wallet-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  cursor: pointer;
+  border: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.btn-primary {
+  background: #4a3aff;
+  color: #fff;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.wallet-form {
+  margin-top: 14px;
+  display: none;
+  gap: 12px;
+}
+.wallet-form.active { display:flex; align-items:center; }
+
+.wallet-form input[type="number"] {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  width: 160px;
+}
+
+.transactions {
+  margin-top: 18px;
+}
+.transactions table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.transactions th, .transactions td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.txn-credit { color: #0b8a5f; font-weight:600; }
+.txn-debit { color: #b02a37; font-weight:600; }
+
+@media (max-width:640px) {
+  .wallet-header { flex-direction: column; align-items:flex-start; gap:8px; }
+  .wallet-actions { width:100%; justify-content:space-between; }
+}
   
 </style>
 
@@ -305,8 +397,8 @@ tbody tr:hover {
         <h2>PROFILE </h2>
 
         <div class="profile-image-wrapper" title="Change profile picture">
-          <img id="profileImagePreview"
-               src="<%= user && user.profilePicture ? ('/uploads/profile/' + user.profilePicture) : '/images/default-avatar.png' %>"
+          <img id="profileImagePreview" 
+               src="<%= user && user.profileImage ? '/uploads/profile/' + user.profileImage : '/images/profile.png' %>"
                alt="Profile Image" />
           <label for="profileImageInput" class="edit-icon" title="Change Profile Picture">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -347,14 +439,14 @@ tbody tr:hover {
         </div>
 
         <div class="buttons">
-          <a href="/change-email" class="btn btn-dark">Change Email</a>
-           <% if (user.password) { %>
-    <a href="/change-password" class="btn btn-danger">Change Password</a>
-  <% } else { %>
-    <span class="text-muted ms-2">
-      (Signed in with Google)
-    </span>
-  <% } %>
+          <% if (user.password) { %>
+            <a href="/change-email" class="btn btn-dark">Change Email</a>
+            <a href="/change-password" class="btn btn-danger">Change Password</a>
+          <% } else { %>
+            <span class="text-muted" style="font-size: 0.9rem;">
+              <i class="fas fa-info-circle"></i> Email and Password are managed by Google
+            </span>
+          <% } %>
           <button type="submit" class="btn btn-sml btn-dark">Save Changes</button>
         </div>
       </form>
@@ -391,7 +483,7 @@ tbody tr:hover {
                   <td>
                     <% order.orderedItems.forEach(item => { %>
                       <div class="d-flex flex-column">
-                        <span><%= item.product?.productName || item.productName %> (x<%= item.quantity %>)</span>
+                        <span><%= item.product?.name || 'Product' %> (x<%= item.quantity %>)</span>
                       </div>
                     <% }) %>
                   </td>
@@ -467,28 +559,58 @@ tbody tr:hover {
 
     <!-- Wallet Section -->
     <div id="wallet" class="section-content">
-      <h2>Wallet</h2>
-      <div class="underline"></div>
-      
-      <div class="card-body contact-from-area">
-        <div class="row">
-          <div class="col-lg-8 mx-auto text-center mt-4">
-            <!-- Wallet Balance -->
-            <h4 class="mb-4">Wallet Balance: ₹<%= user.wallet.toFixed(2) %></h4>
+      <div class="wallet-wrapper">
+        <div class="wallet-header">
+          <div class="wallet-balance">
+            <div class="label">Wallet balance</div>
+            <div class="amount">
+              ₹ <%= (user && user.wallet) ? user.wallet.toFixed(2) : '0.00' %>
+            </div>
+          </div>
 
-            <!-- Add Money Form -->
-            <form id="addWalletForm">
-              <div class="form-group">
-                <label for="walletAmount" class="h5">Enter Amount to Add</label>
-                <input type="number" min="1" id="walletAmount" class="form-control" placeholder="Enter amount in ₹" required />
-              </div>
-              <button type="button" class="btn btn-success mt-3" onclick="addMoneyToWallet()">Add Money</button>
-            </form>
+          <div class="wallet-actions">
+            <button id="addFundsBtn" class="btn btn-primary">Add Funds</button>
           </div>
         </div>
+
+        <div id="walletForm" class="wallet-form">
+          <input id="walletAmount" name="amount" type="number" min="1" step="1" placeholder="Amount (₹)" />
+          <button type="button" onclick="addMoneyToWallet()" class="btn btn-primary">Confirm</button>
+          <button type="button" id="cancelWallet" class="btn btn-outline">Cancel</button>
+        </div>
+
+        <div class="transactions">
+          <h4 style="margin:0 0 10px 0;">Recent transactions</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th style="text-align:right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (Array.isArray(walletTransactions) && walletTransactions.length) { %>
+                <% walletTransactions.forEach(function(tx) { %>
+                  <tr>
+                    <td><%= new Date(tx.date).toLocaleString() %></td>
+                    <td><%= tx.description || tx.method || tx.type %></td>
+                    <td style="text-align:right;">
+                      <span class="<%= tx.status === 'credited' ? 'txn-credit' : 'txn-debit' %>">
+                        <%= (tx.status === 'credited' ? '+' : '-') %>₹<%= Math.abs(tx.amount).toFixed(2) %>
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr><td colspan="3" style="text-align:center; padding:16px;">No transactions yet</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
       </div>
-      
     </div>
+
      <!-- Wallet History Section -->
      <div id="Wallet-History" class="section-content">
       <h2>Wallet History</h2>
@@ -640,6 +762,7 @@ tbody tr:hover {
     </div>
  </section>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -827,68 +950,54 @@ tbody tr:hover {
     }
   });
 
-  //Add money to wallet
+  //Add money to wallet (Direct - No Payment Gateway)
   function addMoneyToWallet() {
     const amount = parseFloat(document.getElementById("walletAmount").value);
     if (!amount || amount <= 0) {
       Swal.fire("Invalid Amount", "Please enter a valid amount to add.", "warning");
       return;
     }
-   $.ajax({
-      url: '/createWalletOrder',
-      method: 'POST',
-      data: { amount },
-      success: function (response) {
-        const options = {
-          key: "rzp_test_ClMWweWS70Dbkd", 
-          amount: response.amount,
-          currency: "INR",
-          name: "Wallet Top-up",
-          description: "Add money to wallet",
-          order_id: response.orderId,
-          handler: function (payment) {
-            // Step 2: On payment success, confirm to backend
-            $.ajax({
-              url: '/verifyWalletPayment',
-              method: 'POST',
-              data: {
-                payment,
-                orderId: response.orderId,
-                amount
-              },
-              success: function (res) {
-                if (res.status) {
-                  Swal.fire("Success", "Amount added to wallet!", "success").then(() => {
-                    location.reload();
-                  });
-                } else {
-                  Swal.fire("Failed", "Payment verification failed.", "error");
-                }
-              }
-            });
+    
+    if (amount < 10) {
+      Swal.fire("Minimum Amount", "Minimum amount to add is ₹10.", "warning");
+      return;
+    }
+    
+    // Show confirmation
+    Swal.fire({
+      title: 'Add Money to Wallet?',
+      text: `Add ₹${amount} to your wallet?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Add it!',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Send AJAX request to add money
+        $.ajax({
+          url: '/addWalletMoney',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ amount }),
+          success: function (response) {
+            if (response.success) {
+              Swal.fire({
+                icon: "success",
+                title: "Success!",
+                text: `₹${amount} added to wallet successfully!`,
+                confirmButtonText: "OK"
+              }).then(() => {
+                location.reload();
+              });
+            } else {
+              Swal.fire("Failed", response.message || "Failed to add money.", "error");
+            }
           },
-          prefill: {
-            name: "Customer Name",
-            email: "customer@example.com",
-            contact: "9999999999"
-          },
-          theme: {
-            color: "#3399cc"
+          error: function(xhr, status, error) {
+            console.error('Add money error:', error);
+            Swal.fire("Error", "Failed to add money. Please try again.", "error");
           }
-        };
-
-        const rzp = new Razorpay(options);
-        rzp.on('payment.failed', function (resp) {
-          console.log("Wallet top-up payment failed", resp);
-        
-          Swal.fire({
-            title: "Payment Failed",
-            text: resp.error.description || "Transaction was unsuccessful.",
-            icon: "error",
-            confirmButtonText: "Try Again"
-          });
         });
-        rzp.open();
       }
     });
   }
@@ -911,5 +1020,22 @@ tbody tr:hover {
   }
 </script>
 
+<script>
+  // small client script to toggle the add-funds form
+  (function(){
+    const addBtn = document.getElementById('addFundsBtn');
+    const form = document.getElementById('walletForm');
+    const cancel = document.getElementById('cancelWallet');
+
+    addBtn && addBtn.addEventListener('click', function(){ 
+      form.classList.add('active'); 
+    });
+    
+    cancel && cancel.addEventListener('click', function(){ 
+      form.classList.remove('active');
+      document.getElementById('walletAmount').value = ''; 
+    });
+  })();
+</script>
 
 <%- include('../partials/user/footer') %>

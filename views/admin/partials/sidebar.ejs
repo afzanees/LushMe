@@ -20,10 +20,12 @@
       <li class="nav-item">
         <a href="/admin/products" class="nav-link text-white">Products</a>
       </li>
+      <li class="nav-item">
+        <a href="/admin/orderList" class="nav-link text-white">Orders</a>
+      </li>
       <li class="nav-item mt-3 border-top pt-3">
-        <span>👋 <%= admin?.username || "Admin" %></span><br>
+        <span><%= admin?.username || "Admin" %></span><br>
         <a href="/admin/logout" class="btn btn-sm btn-danger mt-2">Logout</a>
       </li>
     </ul>
   </div>
-  

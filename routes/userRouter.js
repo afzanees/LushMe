@@ -6,7 +6,8 @@ const bcrypt = require('bcrypt');
 const profileController = require('../controller/user/profileController');
 const cartController = require('../controller/user/cartController'); 
 const orderController = require('../controller/user/orderController');
-const addressController = require('../controller/user/addressController')
+const addressController = require('../controller/user/addressController');
+const wishlistController = require('../controller/user/wishlistController');
 const uploads = require('../middlewares/multer')
 const {userAuth} = require('../middlewares/auth')
 
@@ -54,6 +55,7 @@ router.get('/address/:addressId', userAuth, addressController.getAddressPage);  
 router.post('/address/save', userAuth, addressController.saveAddress);  
 
 //Wallet Management
+router.post("/addWalletMoney", userAuth, profileController.addWalletMoney);
 router.post("/createWalletOrder", userAuth, profileController.createWalletOrder);
 router.post("/verifyWalletPayment", userAuth, profileController.verifyWalletPayment);
 
@@ -78,6 +80,11 @@ router.post('/paymentConfirm',userAuth, orderController.paymentConfirm);
 
 router.post("/cancelOrder",userAuth,orderController.cancelOrder);
 router.post('/orders/return-request', userAuth, orderController.returnRequest);
+
+// Wishlist Management
+router.get('/wishlist', userAuth, wishlistController.getWishlistPage);
+router.post('/addToWishlist', userAuth, wishlistController.addToWishlist);
+router.post('/removeFromWishlist', userAuth, wishlistController.removeFromWishlist);
 
 
 

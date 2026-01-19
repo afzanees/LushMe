@@ -1,0 +1,248 @@
+<%- include('../partials/user/header') %>
+
+<style>
+  body {
+    background-color: #f8f9fa;
+  }
+  .wishlist-container {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 20px;
+  }
+  .wishlist-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+  }
+  .wishlist-empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .wishlist-empty i {
+    font-size: 80px;
+    color: #ddd;
+    margin-bottom: 20px;
+  }
+  .product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+    margin-bottom: 20px;
+  }
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+  }
+  .product-img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+  }
+  .product-body {
+    padding: 20px;
+  }
+  .product-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  .product-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #dc3545;
+    margin-bottom: 15px;
+  }
+  .btn-remove {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .btn-remove:hover {
+    background: #c82333;
+  }
+  .btn-add-cart {
+    background: #0d6efd;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background 0.3s ease;
+  }
+  .btn-add-cart:hover {
+    background: #0b5ed7;
+  }
+</style>
+
+<div class="wishlist-container">
+  <h1 class="wishlist-title">My Wishlist</h1>
+
+  <% if (!wishlist || wishlist.length === 0) { %>
+    <div class="wishlist-empty">
+      <i class="fas fa-heart"></i>
+      <h3>Your wishlist is empty</h3>
+      <p class="text-muted mb-4">Add products you love to your wishlist</p>
+      <a href="/shop" class="btn btn-primary px-5">Continue Shopping</a>
+    </div>
+  <% } else { %>
+    <div class="row">
+      <% wishlist.forEach(product => { %>
+        <div class="col-md-4 col-sm-6">
+          <div class="product-card">
+            <% 
+              let imgSrc = '/images/placeholder.png';
+              if (product.variants && product.variants.length > 0 && product.variants[0].productImage && product.variants[0].productImage.length > 0) {
+                imgSrc = '/' + product.variants[0].productImage[0];
+              }
+            %>
+            <a href="/productDetails?id=<%= product._id %>">
+              <img src="<%= imgSrc %>" alt="<%= product.name %>" class="product-img">
+            </a>
+            
+            <div class="product-body">
+              <a href="/productDetails?id=<%= product._id %>" style="text-decoration: none; color: inherit;">
+                <h5 class="product-name"><%= product.name %></h5>
+              </a>
+              
+              <% 
+                let minPrice = 0;
+                if (product.variants && product.variants.length > 0) {
+                  minPrice = Math.min(...product.variants.map(v => v.salePrice || v.regularPrice));
+                }
+              %>
+              <div class="product-price">₹<%= minPrice.toFixed(2) %></div>
+
+              <div class="d-flex gap-2">
+                <button class="btn-add-cart" onclick="moveToCart('<%= product._id %>')">
+                  Add to Cart
+                </button>
+                <button class="btn-remove" onclick="removeFromWishlist('<%= product._id %>')">
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  function removeFromWishlist(productId) {
+    Swal.fire({
+      title: 'Remove from wishlist?',
+      text: 'Are you sure you want to remove this item?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, remove it!',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.post('/removeFromWishlist', { productId })
+          .done(response => {
+            if (response.status) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Removed!',
+                text: 'Product removed from wishlist',
+                showConfirmButton: false,
+                timer: 1500
+              }).then(() => {
+                location.reload();
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.message || 'Failed to remove from wishlist'
+              });
+            }
+          })
+          .fail(() => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to remove from wishlist'
+            });
+          });
+      }
+    });
+  }
+
+  function moveToCart(productId) {
+    // Show loading
+    Swal.fire({
+      title: 'Adding to cart...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // Add to cart with first variant (index 0)
+    $.ajax({
+      url: '/addToCart',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ 
+        productId, 
+        variantIndex: 0,
+        quantity: 1 
+      }),
+      success: function(response) {
+        if (response.status) {
+          // Remove from wishlist after successful cart addition
+          $.post('/removeFromWishlist', { productId })
+            .done(() => {
+              Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Product moved to cart',
+                showConfirmButton: false,
+                timer: 1500
+              }).then(() => {
+                location.reload();
+              });
+            })
+            .fail(() => {
+              Swal.fire({
+                icon: 'warning',
+                title: 'Partial Success',
+                text: 'Added to cart but could not remove from wishlist'
+              });
+            });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: response.message || 'Failed to add to cart'
+          });
+        }
+      },
+      error: function(xhr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: xhr.responseJSON?.message || 'Failed to add to cart'
+        });
+      }
+    });
+  }
+</script>
+
+<%- include('../partials/user/footer') %>

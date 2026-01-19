@@ -273,7 +273,8 @@ const getEditProduct=async (req,res)=>{
     const categories = await Category.find({isListed: true })
     .select('name subcategories')
     .lean();
-    const brand = await Brand.find({isBlocked:false}).lean();
+    const brand = await Brand.find({isListed: true}).lean();
+    console.log('Brands found:', brand.length, brand.map(b => b.name));
     res.render("admin/edit-product", {
       product: product,
       brand:brand,

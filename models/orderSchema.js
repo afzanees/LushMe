@@ -8,11 +8,20 @@ const orderSchema = new Schema ({
         default:()=>uuidv4(),
         unique:true,
     },
+    userId:{
+        type: Schema.Types.ObjectId,
+        ref:"User",
+        required:true,
+    },
     orderedItems:[{
         product:{
             type: Schema.Types.ObjectId,
             ref:"Product",
             required:true,
+        },
+        variantIndex: {
+            type: Number,
+            required: true,
         },
         quantity:{
             type:Number,
@@ -21,6 +30,27 @@ const orderSchema = new Schema ({
         price:{
             type:Number,
             default:0
+        },
+        status:{
+            type:String,
+            default:'Pending',
+            enum:['Pending','confirmed','processing','Shipped','Delivered','cancelled','Returned','return_requested','return request']
+        },
+        cancellationReason:{
+            type:String,
+            default:''
+        },
+        returnReason:{
+            type:String,
+            default:''
+        },
+        returnRejected:{
+            type:Boolean,
+            default:false
+        },
+        returnRejectionReason:{
+            type:String,
+            default:''
         }
     }],
     totalPrice:{
@@ -35,10 +65,42 @@ const orderSchema = new Schema ({
         type:Number,
         required:true,
     },
+    deliveryCharge:{
+        type:Number,
+        default:0
+    },
     address:{
-        type:Schema.Types.ObjectId,
-        ref:"User",
-        required:true,
+        addressType:{
+            type:String,
+            required:true
+        },
+        name:{
+            type:String,
+            required:true
+        },
+        city:{
+            type:String,
+            required:true
+        },
+        houseNo:{
+            type:String,
+            required:true
+        },
+        state:{
+            type:String,
+            required:true
+        },
+        pincode:{
+            type:String,
+            required:true
+        },
+        phone:{
+            type:String,
+            required:true
+        },
+        altPhone:{
+            type:String,
+        }
     },
     invoiceDate:{
         type:Date
@@ -47,6 +109,11 @@ const orderSchema = new Schema ({
         type:String,
         required:true,
         enum:['Pending','Shipped','Delivered','Cancelled','Return Request', 'Returned']
+    },
+    paymentMethod:{
+        type:String,
+        required:true,
+        enum:['cod','razorpay','wallet']
     },
     createdOn:{
         type:Date,

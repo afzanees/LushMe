@@ -1,0 +1,700 @@
+/*=================================================================
+  RESPONSIVE STYLES FOR LUSHME E-COMMERCE
+  Mobile-first approach with breakpoints:
+  - Mobile: < 576px
+  - Tablet: 576px - 992px
+  - Desktop: > 992px
+=================================================================*/
+
+/* ========================================
+   GLOBAL RESPONSIVE UTILITIES
+======================================== */
+
+/* Ensure images are responsive by default */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Keep header logo at fixed size on desktop */
+header img[alt="Logo"] {
+  height: 40px;
+  width: auto;
+}
+
+/* Prevent header from becoming too large */
+header.p-3 {
+  padding: 1rem !important;
+}
+
+/* Responsive containers */
+.container-fluid {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* ========================================
+   ADMIN PANEL RESPONSIVE STYLES
+======================================== */
+
+/* Mobile & Tablet - Hide sidebar by default, show toggle button */
+@media (max-width: 992px) {
+  /* Sidebar */
+  .navbar-aside {
+    transform: translateX(-100%);
+    z-index: 9999;
+    transition: transform 0.3s ease;
+  }
+
+  .navbar-aside.show {
+    transform: translateX(0);
+  }
+
+  /* Overlay for sidebar */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+  }
+
+  .sidebar-overlay.show {
+    display: block;
+  }
+
+  /* Main content - full width on mobile */
+  .main-wrap {
+    margin-left: 0;
+    padding: 15px;
+  }
+
+  .main-header.navbar {
+    margin-left: 0;
+    padding: 10px 15px;
+  }
+
+  /* Hamburger menu button */
+  .mobile-menu-toggle {
+    display: block !important;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #333;
+    cursor: pointer;
+    padding: 5px 10px;
+  }
+
+  /* Admin cards - stack vertically */
+  .row.row-cols-1.row-cols-md-2.row-cols-lg-4 {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .row.row-cols-1.row-cols-md-2.row-cols-lg-4 > div {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  /* Tables - horizontal scroll */
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px;
+  }
+
+  /* Forms - full width inputs */
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Modal adjustments */
+  .modal-dialog {
+    margin: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  /* Dashboard stats cards */
+  .content-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .card-body h5 {
+    font-size: 1rem;
+  }
+
+  .card-body h3 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Desktop - Show sidebar toggle hidden */
+@media (min-width: 993px) {
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* ========================================
+   USER SITE RESPONSIVE STYLES
+======================================== */
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+  /* Header adjustments */
+  header .container {
+    padding: 0 10px;
+  }
+
+  header .d-flex {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Logo - smaller on mobile only */
+  header a img {
+    height: 30px !important;
+  }
+
+  /* Navigation - Stack vertically */
+  header .nav {
+    flex-direction: column;
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  header .nav li {
+    width: 100%;
+    text-align: center;
+    padding: 5px 0;
+  }
+
+  /* Search bar - full width */
+  header form {
+    width: 100% !important;
+    margin: 10px 0;
+  }
+
+  header form input {
+    width: 100%;
+  }
+
+  /* User actions */
+  header .dropdown {
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  /* Hide some nav items on very small screens */
+  @media (max-width: 480px) {
+    header .nav li:nth-child(n+3) {
+      display: none;
+    }
+  }
+}
+
+/* Desktop - Keep original sizes */
+@media (min-width: 769px) {
+  /* Ensure header maintains original styling */
+  header {
+    padding: inherit;
+  }
+  
+  /* Keep logo at original size (40px as defined in HTML) */
+  header a img {
+    height: 40px;
+  }
+  
+  /* Keep original header layout */
+  header .container {
+    max-width: 1320px;
+  }
+}
+
+/* Product Grid Responsive */
+@media (max-width: 576px) {
+  /* 1 column on mobile */
+  .row-cols-1 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .isotope-item {
+    width: 100% !important;
+    margin-bottom: 15px;
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  /* 2 columns on tablet */
+  .row-cols-1 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .isotope-item {
+    width: 48% !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  /* 3 columns on large tablet */
+  .row-cols-1 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+  }
+
+  .isotope-item {
+    width: 31% !important;
+  }
+}
+
+@media (min-width: 993px) {
+  /* 4 columns on desktop */
+  .row-cols-1 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .isotope-item {
+    width: 23% !important;
+  }
+}
+
+/* Product Details Page */
+@media (max-width: 768px) {
+  /* Product images - full width */
+  .wrap-slick3 {
+    margin-bottom: 20px;
+  }
+
+  /* Product info */
+  .js-pscroll {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Size/color buttons - smaller */
+  .btn-num-product-down,
+  .btn-num-product-up {
+    width: 35px;
+    height: 35px;
+  }
+
+  .num-product {
+    width: 60px;
+    height: 35px;
+    font-size: 16px;
+  }
+
+  /* Add to cart button - full width */
+  .flex-w.flex-r-m {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .flex-c-m.stext-101 {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* Shopping Cart Responsive */
+@media (max-width: 768px) {
+  /* Cart table */
+  .table-shopping-cart {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .table-shopping-cart table {
+    min-width: 600px;
+  }
+
+  /* Cart item images */
+  .table-shopping-cart img {
+    max-width: 60px;
+  }
+
+  /* Cart totals */
+  .bor10.p-lr-40.p-t-30.p-b-40.m-lr-0-xl {
+    padding: 20px 15px !important;
+    margin-top: 20px;
+  }
+
+  /* Quantity controls */
+  .wrap-num-product {
+    margin: 0 auto;
+  }
+}
+
+/* Checkout Page */
+@media (max-width: 768px) {
+  /* Billing details */
+  .col-lg-7 {
+    margin-bottom: 30px;
+  }
+
+  /* Order summary - sticky on mobile */
+  .bor10.p-lr-40.p-t-30.p-b-40 {
+    padding: 20px 15px !important;
+  }
+
+  /* Form inputs */
+  .bor8.size-13 {
+    width: 100%;
+  }
+
+  /* Payment buttons */
+  .payment-options {
+    flex-direction: column;
+  }
+
+  .payment-options button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* Profile Page */
+@media (max-width: 768px) {
+  /* Profile tabs - stack vertically */
+  .nav-tabs {
+    flex-direction: column;
+    border-bottom: none;
+  }
+
+  .nav-tabs .nav-link {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    margin-bottom: 5px;
+  }
+
+  /* Address cards */
+  .address-card {
+    margin-bottom: 15px;
+  }
+
+  /* Order history table */
+  .order-history-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* Shop/Filter Page */
+@media (max-width: 992px) {
+  /* Filter sidebar */
+  .col-md-3 {
+    margin-bottom: 20px;
+  }
+
+  /* Toggle filters button */
+  .filter-toggle {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: #333;
+    color: #fff;
+    border: none;
+    margin-bottom: 15px;
+    cursor: pointer;
+  }
+
+  .filters-wrapper {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80%;
+    max-width: 300px;
+    height: 100vh;
+    background: #fff;
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .filters-wrapper.show {
+    display: block;
+    transform: translateX(0);
+  }
+
+  .filter-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+  }
+
+  .filter-overlay.show {
+    display: block;
+  }
+}
+
+/* ========================================
+   TYPOGRAPHY RESPONSIVE
+======================================== */
+
+@media (max-width: 768px) {
+  /* Headings */
+  h1, .ltext-101 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+  }
+
+  h2, .ltext-102 {
+    font-size: clamp(1.25rem, 4vw, 2rem);
+  }
+
+  h3, .mtext-101 {
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+  }
+
+  /* Body text */
+  body, .stext-101 {
+    font-size: clamp(0.875rem, 2vw, 1rem);
+  }
+
+  /* Buttons */
+  .btn, .flex-c-m {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}
+
+/* ========================================
+   SPACING ADJUSTMENTS
+======================================== */
+
+@media (max-width: 768px) {
+  /* Reduce padding on sections */
+  .bg0.p-t-75.p-b-85,
+  .bg0.p-t-80.p-b-140 {
+    padding-top: 30px !important;
+    padding-bottom: 30px !important;
+  }
+
+  .p-lr-15 {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .m-lr-auto {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+  }
+
+  /* Container spacing */
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+/* ========================================
+   ADMIN SPECIFIC COMPONENTS
+======================================== */
+
+@media (max-width: 768px) {
+  /* Product management */
+  .product-image-preview {
+    max-width: 100%;
+    margin: 10px 0;
+  }
+
+  /* Variant cards */
+  .variant-card {
+    margin-bottom: 15px;
+  }
+
+  /* Order details */
+  .order-details-card {
+    padding: 15px;
+  }
+
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-item img {
+    max-width: 100px;
+    margin-bottom: 10px;
+  }
+
+  /* Dashboard charts */
+  canvas {
+    max-height: 250px !important;
+  }
+
+  /* Action buttons */
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-group .btn {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+======================================== */
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Show only on mobile */
+.show-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .show-mobile {
+    display: block !important;
+  }
+}
+
+/* Full width on mobile */
+@media (max-width: 768px) {
+  .mobile-full-width {
+    width: 100% !important;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  a, button, .btn, input[type="submit"], input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+======================================== */
+
+@media print {
+  .navbar-aside,
+  .main-header,
+  .no-print {
+    display: none !important;
+  }
+
+  .main-wrap {
+    margin-left: 0;
+  }
+}
+
+/* ========================================
+   LANDSCAPE ORIENTATION
+======================================== */
+
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reduce header height */
+  header {
+    padding: 5px 0;
+  }
+
+  /* Adjust modal height */
+  .modal-dialog {
+    max-height: 90vh;
+  }
+
+  .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+
+/* ========================================
+   HIGH DPI SCREENS
+======================================== */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Ensure images look sharp on retina displays */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* ========================================
+   ANIMATIONS FOR MOBILE
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Smooth transitions for mobile menu */
+@media (max-width: 992px) {
+  .navbar-aside,
+  .filters-wrapper {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+======================================== */
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #007efc;
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 10000;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}

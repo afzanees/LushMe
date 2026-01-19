@@ -5,6 +5,7 @@ const customerController = require('../controller/admin/customerController')
 const categoryController = require('../controller/admin/categoryController')
 const brandController = require('../controller/admin/brandController')
 const productController = require('../controller/admin/productController')
+const orderController = require('../controller/admin/orderController')
 const {adminAuth} = require('../middlewares/auth')
 const upload = require('../middlewares/multer')
 
@@ -14,7 +15,7 @@ router.post('/login',adminController.login)
 router.get('/dashboard',adminAuth,adminController.loadDashboard)
 router.get('/logout',adminController.logout)
 
-//custpmer management
+//customer management
 
 router.get('/users',adminAuth,customerController.customerInfo)
 router.get('/blockCustomer',adminAuth,customerController.customerBlocked)
@@ -75,6 +76,15 @@ router.post('/product/:productId/variants/:variantId/edit', upload.fields([
   { name: 'image3', maxCount: 1 },
   { name: 'image4', maxCount: 1 }
 ]), productController.updateVariant);
+
+// Order management routes
+router.get('/orderList', adminAuth, orderController.getOrderList);
+router.get('/order/:orderId', adminAuth, orderController.getOrderDetails);
+router.post('/orders/:orderId/status', adminAuth, orderController.updateOrderStatus);
+router.post('/orders/:orderId/items/:itemIndex/status', adminAuth, orderController.updateItemStatus);
+router.post('/orders/:orderId/cancel', adminAuth, orderController.cancelOrder);
+router.post('/orders/:orderId/items/:itemIndex/return', adminAuth, orderController.handleReturnRequest);
+router.get('/orders/stats', adminAuth, orderController.getOrderStats);
 
 
 module.exports = router;

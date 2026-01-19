@@ -209,15 +209,29 @@ Sort: <%= selectedSort %> ×
 
               <div class="card-body">
                 <h6 class="fw-semibold"><%= product.name %></h6>
-                <p class="text-muted small m-0"><%= product.brand.name %></p>
-                  <% if (product.displaySalePrice && product.displaySalePrice < product.displayRegularPrice) { %>
-              <p class="fw-bold text-danger">₹ <%= product.displaySalePrice %></p>
-              <p class="text-muted"><strike>₹ <%= product.displayRegularPrice %></strike></p>
-            <% } else if (product.displayRegularPrice) { %>
-              <p class="fw-bold">₹ <%= product.displayRegularPrice %></p>
-            <% } else { %>
-              <p class="text-muted">Price not available</p>
-            <% } %>
+                <% if (product.brand && product.brand.name) { %>
+                  <p class="text-muted small m-0"><%= product.brand.name %></p>
+                <% } %>
+                
+                <% 
+                  // Check if product is out of stock
+                  const totalQty = (product.variants||[]).reduce((sum, v) => sum + (Number(v.quantity)||0), 0);
+                  const isOutOfStock = totalQty <= 0 || product.status === "Out Of Stock";
+                %>
+                
+                <% if (isOutOfStock) { %>
+                  <span class="badge bg-danger mb-2">OUT OF STOCK</span>
+                <% } %>
+                
+                <% if (product.displaySalePrice && product.displaySalePrice < product.displayRegularPrice) { %>
+                  <p class="fw-bold text-danger">₹ <%= product.displaySalePrice %></p>
+                  <p class="text-muted"><strike>₹ <%= product.displayRegularPrice %></strike></p>
+                <% } else if (product.displayRegularPrice) { %>
+                  <p class="fw-bold">₹ <%= product.displayRegularPrice %></p>
+                <% } else { %>
+                  <p class="text-muted">Price not available</p>
+                <% } %>
+                
                 <a href="/productDetails?id=<%= product._id %>" class="btn btn-dark btn-sm mt-2">View</a>
               </div>
             </div>

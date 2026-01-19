@@ -147,12 +147,16 @@ const userProfile = async (req,res)=>{
         const limit = 5;
         const skip = (page - 1) * limit;
         const totalOrders = await Order.countDocuments({ userId });
+        console.log('🔍 Total Orders Found:', totalOrders);
+        console.log('🔍 User ID:', userId);
         const orders = await Order.find({ userId })
           .sort({ createdOn: -1 }) // latest first
           .skip(skip)
           .limit(limit)
           .populate('orderedItems.product')
           .lean();
+        console.log('🔍 Orders Retrieved:', orders.length);
+        console.log('🔍 Orders Data:', JSON.stringify(orders, null, 2));
         const totalPages = Math.ceil(totalOrders / limit);
 
         // Wallet history pagination
@@ -184,8 +188,16 @@ const userProfile = async (req,res)=>{
 //change email
 const changeEmail = async (req, res) => {
   try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId);
+    
+    // Check if user is Google login user
+    if (!userData.password) {
+      return res.redirect('/profile'); // or show error message
+    }
+    
     res.render('user/change-email', {
-      user: req.user,
+      user: userData,
       message: null
     });
   } catch (err) {
@@ -196,13 +208,21 @@ const changeEmail = async (req, res) => {
 //change email validation
 const changeEmailValid = async (req, res) => {
   try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId);
+    
+    // Prevent Google users from changing email
+    if (!userData.password) {
+      return res.redirect('/profile');
+    }
+    
     const { email } = req.body;
 
     // Check if email already exists
     const emailExists = await User.findOne({ email });
     if (emailExists) {
       return res.render('user/change-email', {
-        user: req.user,
+        user: userData,
         message: 'This email is already in use'
       });
     }
@@ -212,7 +232,7 @@ const changeEmailValid = async (req, res) => {
 
     if (!emailSent) {
       return res.render('user/change-email', {
-        user: req.user,
+        user: userData,
         message: 'Failed to send OTP. Try again.'
       });
     }
@@ -224,7 +244,7 @@ const changeEmailValid = async (req, res) => {
     console.log(`OTP sent to ${email}: ${otp}`);
 
     res.render('user/change-email-otp', {
-      user: req.user,
+      user: userData,
       message: null
     });
     
@@ -385,9 +405,19 @@ const changeProfilePic = async (req, res) => {
       }
   
       const filename = req.file.filename;
-      console.log(filename)
+      console.log('Profile image uploaded:', filename);
   
-      await User.findByIdAndUpdate(userId, { profileImage: filename });
+      // Update user profile image
+      const updatedUser = await User.findByIdAndUpdate(
+        userId, 
+        { profileImage: filename },
+        { new: true }
+      );
+      
+      // Update session with new profile image
+      if (req.session.user) {
+        req.session.user.profileImage = filename;
+      }
   
       res.json({ success: true, filename });
     } catch (error) {
@@ -516,14 +546,70 @@ const getEditAddress =async (req,res)=>{
     }
   };
 
+// Simple wallet add money (without payment gateway)
+const addWalletMoney = async (req, res) => {
+    try {
+        const userId = req.session.user;
+        const { amount } = req.body;
+
+        console.log('Add wallet money request:', { userId, amount });
+
+        if (!amount || amount <= 0) {
+            return res.json({ success: false, message: 'Invalid amount' });
+        }
+
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.json({ success: false, message: 'User not found' });
+        }
+
+        // Add money to wallet
+        user.wallet = (user.wallet || 0) + parseFloat(amount);
+        
+        // Add transaction to wallet history
+        user.walletTransactions = user.walletTransactions || [];
+        user.walletTransactions.push({
+            date: new Date(),
+            amount: parseFloat(amount),
+            status: 'credited',
+            method: 'razorpay',
+            description: 'Wallet top-up (Manual)'
+        });
+
+        await user.save();
+
+        res.json({ 
+            success: true, 
+            message: 'Amount added to wallet successfully',
+            newBalance: user.wallet 
+        });
+
+    } catch (error) {
+        console.error('Add wallet money error:', error);
+        res.json({ success: false, message: 'Failed to add money' });
+    }
+};
+
 // Wallet - Create Razorpay order for wallet top-up
 const createWalletOrder = async (req, res) => {
     try {
         const Razorpay = require('razorpay');
         const { amount } = req.body;
 
+        console.log('Wallet order request:', { amount, body: req.body });
+
         if (!amount || amount <= 0) {
             return res.status(400).json({ success: false, message: 'Invalid amount' });
+        }
+
+        // Check if Razorpay credentials exist
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            console.error('Razorpay credentials missing');
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Payment gateway not configured. Please contact support.' 
+            });
         }
 
         const razorpay = new Razorpay({
@@ -537,7 +623,9 @@ const createWalletOrder = async (req, res) => {
             receipt: `wallet_${Date.now()}`
         };
 
+        console.log('Creating Razorpay order:', options);
         const order = await razorpay.orders.create(options);
+        console.log('Order created successfully:', order.id);
         
         res.json({
             success: true,
@@ -546,8 +634,12 @@ const createWalletOrder = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Wallet order creation error:', error);
-        res.status(500).json({ success: false, message: 'Failed to create order' });
+        console.error('Wallet order creation error:', error.message);
+        console.error('Full error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message || 'Failed to create order' 
+        });
     }
 };
 
@@ -619,6 +711,7 @@ module.exports = {
     getEditAddress,
     postEditAddress,
     deleteAddress,
+    addWalletMoney,
     createWalletOrder,
     verifyWalletPayment,
 }

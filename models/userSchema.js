@@ -45,7 +45,7 @@ const userSchema = new Schema({       // creating model
     }],
     wishlist:[{
         type:Schema.Types.ObjectId,
-        ref:"wishlist"
+        ref:"Product"
     }],
     wallet: {
         type: Number,

@@ -79,7 +79,7 @@ const addressController = {
       else {
         const newAddress = {
           addressType: addressType || 'Home',
-          username,
+          name,
           phone,
           altPhone: altPhone || '',
           houseNo,

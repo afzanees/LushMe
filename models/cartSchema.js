@@ -13,6 +13,10 @@ const cartSchema = new Schema({
             ref:'Product',
             required:true,
         },
+        variantIndex: { 
+            type: Number, 
+            required: true 
+        },
         quantity:{
             type:Number,
             default:1
@@ -24,10 +28,6 @@ const cartSchema = new Schema({
         totalPrice:{
             type:Number,
             required:true,
-        },
-        color:{
-            type:String,
-            required:true
         },
         status:{
             type:String,

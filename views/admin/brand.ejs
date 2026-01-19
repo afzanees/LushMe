@@ -36,10 +36,9 @@
           </td>
           <td>
             <button class="btn btn-sm btn-info" 
-                    data-id="<%= brand._id %>" 
-                    data-name="<%= brand.name %>" 
-                    data-description="<%= brand.description || '' %>"
-                    onclick="openEditModalFromData(this)">Edit</button>
+                    onclick="openEditModal('<%= brand._id %>', `<%= brand.name.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`, `<%= (brand.description || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\').replace(/\r?\n/g, ' ') %>`)">
+              Edit
+            </button>
             <button class="btn btn-sm btn-danger" onclick="deleteBrand('<%= brand._id %>')">Delete</button>
             <button class="btn btn-sm btn-secondary" onclick="toggleBrandStatus('<%= brand._id %>')">
               <%= brand.isListed ? "Unlist" : "List" %>
@@ -98,13 +97,6 @@ function openEditModal(id, name, desc) {
   document.getElementById("brandName").value = name;
   document.getElementById("brandDesc").value = desc;
   new bootstrap.Modal(document.getElementById("brandModal")).show();
-}
-
-function openEditModalFromData(button) {
-  const id = button.getAttribute('data-id');
-  const name = button.getAttribute('data-name');
-  const desc = button.getAttribute('data-description');
-  openEditModal(id, name, desc);
 }
 
 document.getElementById("brandForm").addEventListener("submit", async (e) => {

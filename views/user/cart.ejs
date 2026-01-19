@@ -7,6 +7,14 @@
     opacity: 0.6;
     cursor: not-allowed;
   }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #ccc !important;
+  }
+  .out-of-stock-row {
+    background-color: #fff3cd !important;
+  }
 </style>
 <section class="bg-img1 txt-center p-lr-15 p-tb-92" style="background-image: url('images/bg-02.jpg');">
   <h2 class="ltext-105 cl0 txt-center">
@@ -26,7 +34,7 @@
 </div>
 
 <!-- Shopping Cart -->
-<form class="bg0 p-t-75 p-b-85" id="cartForm">
+<form class="bg0 p-t-75 p-b-85" id="cartForm"  method="POST" action="/checkout">
   <div class="container">
     <div class="row">
       <div class="col-lg-10 col-xl-7 m-lr-auto m-b-50">
@@ -46,7 +54,7 @@
                 <tr><td colspan="6" class="text-center">Your cart is empty.</td></tr>
               <% } else { %>
                 <% cartItems.forEach((item, index) => { %>
-                  <tr class="table_row">
+                  <tr class="table_row <%= (item.isOutOfStock || item.isBlocked || !item.isCategoryListed) ? 'out-of-stock-row' : '' %>">
                     <td class="column-1">
                       <div class="how-itemcart1">
                         <img src="/<%= item.productImage %>" alt="<%= item.productName %>">
@@ -65,8 +73,12 @@
                         <button 
                             type="button" 
                             class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m" 
-                            onclick="changeQuantity('<%= item.productId %>', -1, <%= item.productPrice %>, <%= index %>, <%= item.productStock %>,'<%= item.color %>')"
-                            
+                            onclick="changeQuantity(
+                              '<%= item.productId %>',
+                              <%= item.variantIndex %>,
+                              -1
+                            )"
+                            <%= (item.isOutOfStock || item.isBlocked || !item.isCategoryListed) ? 'disabled' : '' %>
                             >
                             -
                             </button>
@@ -75,19 +87,19 @@
                             class="mtext-104 cl3 txt-center num-product" 
                             type="number" 
                             name="quantity" 
-                            id="cartProductQuantity<%= index %>" 
+                            id="cartProductQuantity<%= item.variantIndex %>"
                             value="<%= item.quantity %>" 
                             min="1" 
                             max="<%= item.productStock %>" 
                             readonly
-                            <%= item.productStock <= 0 ? 'disabled' : '' %>
+                            <%= (item.isOutOfStock || item.isBlocked || !item.isCategoryListed) ? 'disabled' : '' %>
                             >
 
                             <button 
                             type="button" 
                             class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m" 
-                            onclick="changeQuantity('<%= item.productId %>', 1, <%= item.productPrice %>, <%= index %>, <%= item.productStock %>,'<%= item.color %>')"
-                           
+                            onclick="changeQuantity( '<%= item.productId %>',<%= item.variantIndex %>,1)"
+                            <%= (item.isOutOfStock || item.isBlocked || !item.isCategoryListed) ? 'disabled' : '' %>
                             >
                             +
                             </button>
@@ -111,15 +123,16 @@
                     </td>
 
                     <!-- Subtotal with id for JS update -->
-                    <td class="column-5" id="subTotal<%= index %>">₹ <%= (item.productPrice * item.quantity).toFixed(2) %></td>
+                    <td class="column-5" id="subTotal<%= item.variantIndex %>">₹ <%= (item.productPrice * item.quantity).toFixed(2) %></td>
 
                     <!-- Remove item -->
                  
-                      <td class="column-6">
-                        <a class="btn btn-sm" href="#" onclick="confirmRemove('<%= item.productId %>', '<%= item.color %>', <%= index %>)">
-                          <i class="fi-rs-trash"></i> Remove
-                        </a>
-                      </td>
+                    <td class="column-6">
+                      <a class="btn btn-sm" href="#"
+                         onclick="confirmRemove('<%= item.productId %>', <%= item.variantIndex %>)">
+                        <i class="fi-rs-trash"></i> Remove
+                      </a>
+                    </td>
                     
                       
                       
@@ -131,6 +144,7 @@
         </div>
       </div>
 
+      <% if (cartItems.length > 0) { %>
       <div class="col-sm-10 col-lg-7 col-xl-5 m-lr-auto m-b-50">
         <div class="bor10 p-lr-40 p-t-30 p-b-40 m-l-63 m-r-40 m-lr-0-xl p-lr-15-sm">
           <h4 class="mtext-109 cl2 p-b-30">Cart Totals</h4>
@@ -163,7 +177,7 @@
             </div>
           </div>
            <a 
-            href="javascript:void(0)" 
+            href="/checkout" 
             id="proceedCheckout"
             class="flex-c-m stext-101 cl0 size-116 bg3 bor14 hov-btn3 p-lr-15 trans-04 pointer"
           >
@@ -171,6 +185,7 @@
           </a>
          </div>
       </div>
+      <% } %>
     </div>
   </div>
 </form>
@@ -220,10 +235,13 @@
   }
 
  //change quantity
-  function changeQuantity(productId, count, productPrice, index, maxStock, color) {
+ function changeQuantity(productId, variantIndex, count, productPrice, maxStock, color) {
     maxStock = parseInt(maxStock);
-    const quantityInput = document.getElementById(`cartProductQuantity${index}`);
-    const subtotalElement = document.getElementById(`subTotal${index}`);
+    const quantityInput =
+  document.getElementById(`cartProductQuantity${variantIndex}`);
+
+const subtotalElement =
+  document.getElementById(`subTotal${variantIndex}`);
     const totalElement = document.getElementById('total');
     const shippingChargeElement = document.getElementById('shippingCharge');
     const totalPayableElement = document.getElementById('totalPayable');
@@ -269,34 +287,34 @@
     $.ajax({
       url: '/changeQuantity',
       method: 'POST',
-      data: { productId, count, color },
-      success: (response) => {
-        if (response.status) {
-          const newQuantity = response.newQuantity;
-          quantityInput.value = newQuantity;
-  
-          if (subtotalElement) {
-            subtotalElement.innerText = (newQuantity * productPrice).toFixed(2);
-          }
-          if (totalElement) {
-            totalElement.innerText = response.grandTotal.toFixed(2);
-          }
-          if (shippingChargeElement) {
-            shippingChargeElement.innerText = response.shippingCharge.toFixed(2);
-          }
-          if (totalPayableElement) {
-            totalPayableElement.innerText = response.totalPayable.toFixed(2);
-          }
-           // Update max stock in case it changed
-        quantityInput.setAttribute('max', response.updatedStock);
-         btnMinus.disabled = newQuantity <= 1;
-          btnPlus.disabled = newQuantity >= Math.min(3, response.updatedStock);
-        } else {
-          Swal.fire('Error', response.error || 'Could not update quantity', 'error');
-          btnMinus.disabled = false;
-          btnPlus.disabled = false;
-        }
-      },  
+      data: {
+    productId: productId,
+    variantIndex: variantIndex,
+    count: count,
+    color: color
+  },
+  success: (response) => {
+  if (response.status) {
+    const newQuantity = response.newQuantity;
+    quantityInput.value = newQuantity;
+
+    if (subtotalElement) {
+      subtotalElement.innerText = (newQuantity * productPrice).toFixed(2);
+    }
+    if (totalElement) {
+      totalElement.innerText = response.grandTotal.toFixed(2);
+    }
+    if (shippingChargeElement) {
+      shippingChargeElement.innerText = response.shippingCharge.toFixed(2);
+    }
+    if (totalPayableElement) {
+      totalPayableElement.innerText = response.totalPayable.toFixed(2);
+    }
+    quantityInput.setAttribute('max', response.updatedStock);
+  } else {
+    Swal.fire('Error', response.error || 'Could not update quantity', 'error');
+  }
+},
       error: (err) => {
         console.error(err);
         Swal.fire('Error', 'Server error while updating quantity', 'error');
@@ -306,7 +324,7 @@
   
 
   //Remove cart product
-  function confirmRemove(productId, color, index) {
+  function confirmRemove(productId, variantIndex) {
     Swal.fire({
       title: 'Are you sure?',
       text: 'Do you want to remove this item from your cart?',
@@ -319,7 +337,10 @@
         $.ajax({
           url: '/removeCartItem',
           method: 'POST',
-          data: { productId, color },
+          data: {
+          productId: productId,
+          variantIndex: variantIndex
+        },
           success: (response) => {
             if(response.status){
               Swal.fire('Removed!', 'Your item has been removed.', 'success').then(() => {

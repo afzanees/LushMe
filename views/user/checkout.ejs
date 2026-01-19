@@ -604,23 +604,29 @@ if (!orderId) {
   return;
 }
     
-          if (response.method === "cod" || (response.method === "wallet" && response.payment === true)) {
+          if (response.method === "cod" || (response.method === "wallet" && response.success === true)) {
             Swal.fire({
-              title: "Order Success",
-              text: "Order placed successfully!",
+              title: "Order Success!",
+              text: `Your order #${response.order.orderId} has been placed successfully!`,
               icon: "success",
               showCancelButton: true,
-              confirmButtonText: "View orders",
-              cancelButtonText: "Continue shopping",
+              confirmButtonText: "View Order Details",
+              cancelButtonText: "Continue Shopping",
+              confirmButtonColor: "#198754",
+              cancelButtonColor: "#6c757d",
               reverseButtons: true
             }).then(result => {
-              window.location.href = result.isConfirmed ? `/viewOrderDetails/${orderId}` : '/';
+              if (result.isConfirmed) {
+                window.location.href = `/viewOrderDetails/${response.order._id}`;
+              } else {
+                window.location.href = '/shop';
+              }
             });
     
-          } else if (response.method === "wallet" && response.payment === false) {
+          } else if (response.method === "wallet" && response.success === false) {
             Swal.fire({
               title: "Order Failed",
-              text: "Wallet amount is not enough",
+              text: response.message || "Wallet amount is not enough",
               icon: "error"
             }).then(() => {
               location.href = '/checkout';
@@ -722,15 +728,21 @@ if (!orderId) {
         success: function (response) {
           if (response.status) {
             Swal.fire({
-              title: "Order success",
-              text: "Order placed successfully",
+              title: "Order Success!",
+              text: `Your order has been placed successfully!`,
               icon: "success",
               showCancelButton: true,
-              confirmButtonText: "View orders",
-              cancelButtonText: "Continue shopping",
+              confirmButtonText: "View Order Details",
+              cancelButtonText: "Continue Shopping",
+              confirmButtonColor: "#198754",
+              cancelButtonColor: "#6c757d",
               reverseButtons: true
             }).then(result => {
-              window.location.href = result.isConfirmed ? `/viewOrderDetails/${orderId}` : '/';
+              if (result.isConfirmed) {
+                window.location.href = `/viewOrderDetails/${order._id}`;
+              } else {
+                window.location.href = '/shop';
+              }
             });
           } else {
             Swal.fire("Payment Failed", "Transaction failed. Try again.", "error");
@@ -756,15 +768,21 @@ if (!orderId) {
               success: function (res) {
                 if (res.success) {
                   Swal.fire({
-                    title: "Order success",
-                    text: "Order placed successfully",
+                    title: "Order Success!",
+                    text: `Your order #${res.order.orderId} has been placed successfully!`,
                     icon: "success",
                     showCancelButton: true,
-                    confirmButtonText: "View orders",
-                    cancelButtonText: "Continue shopping",
+                    confirmButtonText: "View Order Details",
+                    cancelButtonText: "Continue Shopping",
+                    confirmButtonColor: "#198754",
+                    cancelButtonColor: "#6c757d",
                     reverseButtons: true
                   }).then(result => {
-                    window.location.href = result.isConfirmed ? `/viewOrderDetails/${res.orderId}` : '/';
+                    if (result.isConfirmed) {
+                      window.location.href = `/viewOrderDetails/${res.order._id}`;
+                    } else {
+                      window.location.href = '/shop';
+                    }
                   });
                 } else {
                   Swal.fire("Order Failed", "Order could not be created after payment.", "error");

@@ -254,8 +254,7 @@ const logout = async (req, res, next) => {
         const search = req.query.search || null;
         let query = {
             isBlocked: false,
-            category: { $in: categoryIds },
-            variants: { $elemMatch: { quantity: { $gt: 0 } } }
+            category: { $in: categoryIds }
           };
           if (search) {
            
@@ -264,7 +263,7 @@ const logout = async (req, res, next) => {
               { description: { $regex: search, $options: 'i' } }
             ];
           }
-        const products = await Product.find(query).sort({createdAt: -1}).skip(skip).limit(limit);
+        const products = await Product.find(query).populate('brand').sort({createdAt: -1}).skip(skip).limit(limit);
         
       products.forEach(product => {
   const category = categories.find(cat => cat._id.toString() === product.category?.toString());
@@ -279,6 +278,7 @@ const logout = async (req, res, next) => {
 
   // ✅ Total stock across variants
   product.totalQuantity = product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0);
+  product.isOutOfStock = product.totalQuantity === 0;
 
   // ✅ Choose lowest priced variant
   if (product.variants.length > 0) {
@@ -300,7 +300,7 @@ const logout = async (req, res, next) => {
 
 
         // Get total number of products for pagination
-        const totalProducts = await Product.countDocuments({isBlocked:false,category:{$in:categoryIds} ,variants:{ $elemMatch: { quantity: { $gt: 0 } } } });
+        const totalProducts = await Product.countDocuments({isBlocked:false,category:{$in:categoryIds}});
         const totalPages = Math.ceil(totalProducts / limit);
         const brands= await Brand.find({isListed:true})
         const catgoriesWithIds = categories.map(category=>({_id:category._id,name:category.name,subcategories: category.subcategories || []}))
@@ -430,6 +430,10 @@ if (req.query.price) {
 findProducts.forEach(product => {
   if (product.variants && product.variants.length > 0) {
 
+    // Calculate total stock
+    product.totalQuantity = product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0);
+    product.isOutOfStock = product.totalQuantity === 0;
+
     // Find minimum sale price variant
     const minVariant = product.variants.reduce((a, b) =>
       a.salePrice < b.salePrice ? a : b
@@ -445,6 +449,7 @@ findProducts.forEach(product => {
     product.displaySalePrice = null;
     product.displayRegularPrice = null;
     product.minPriceForSort = Infinity;
+    product.isOutOfStock = true;
   }
 });
 
