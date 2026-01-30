@@ -41,7 +41,9 @@
   .product-img {
     width: 100%;
     height: 250px;
-    object-fit: cover;
+    object-fit: contain; /* Changed from cover to contain - shows full image */
+    background-color: #f8f9fa; /* Light background to fill space */
+    padding: 10px;
   }
   .product-body {
     padding: 20px;
@@ -106,12 +108,12 @@
                 imgSrc = '/' + product.variants[0].productImage[0];
               }
             %>
-            <a href="/productDetails?id=<%= product._id %>">
+            <a href="/productDetails/<%= product.slug || product._id %>">
               <img src="<%= imgSrc %>" alt="<%= product.name %>" class="product-img">
             </a>
             
             <div class="product-body">
-              <a href="/productDetails?id=<%= product._id %>" style="text-decoration: none; color: inherit;">
+              <a href="/productDetails/<%= product.slug || product._id %>" style="text-decoration: none; color: inherit;">
                 <h5 class="product-name"><%= product.name %></h5>
               </a>
               
@@ -124,7 +126,7 @@
               <div class="product-price">₹<%= minPrice.toFixed(2) %></div>
 
               <div class="d-flex gap-2">
-                <button class="btn-add-cart" onclick="moveToCart('<%= product._id %>')">
+                <button class="btn-add-cart" onclick='showVariantModal("<%= product._id %>", <%- JSON.stringify(product.name) %>, <%- JSON.stringify(product.variants) %>)'>
                   Add to Cart
                 </button>
                 <button class="btn-remove" onclick="removeFromWishlist('<%= product._id %>')">
@@ -184,7 +186,75 @@
     });
   }
 
-  function moveToCart(productId) {
+  function showVariantModal(productId, productName, variants) {
+    if (!variants || variants.length === 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'This product has no available variants'
+      });
+      return;
+    }
+
+    // Build variant options HTML
+    let variantOptionsHtml = variants.map((variant, index) => {
+      const images = variant.productImage || [];
+      const imgSrc = images.length > 0 ? '/' + images[0] : '/images/placeholder.png';
+      return `
+        <div class="variant-option" style="border: 2px solid #ddd; padding: 10px; margin: 5px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px;" 
+             onclick="selectVariant(${index}, this)">
+          <img src="${imgSrc}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+          <div style="text-align: left;">
+            <strong>${variant.color}</strong><br>
+            <span style="color: #dc3545; font-weight: bold;">₹${variant.salePrice}</span>
+            <span style="color: #999; text-decoration: line-through; margin-left: 5px;">₹${variant.regularPrice}</span><br>
+            <small style="color: ${variant.quantity > 0 ? 'green' : 'red'}">
+              ${variant.quantity > 0 ? `Stock: ${variant.quantity}` : 'Out of Stock'}
+            </small>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    Swal.fire({
+      title: `Choose Color for ${productName}`,
+      html: `
+        <div style="max-height: 400px; overflow-y: auto;">
+          ${variantOptionsHtml}
+        </div>
+        <input type="hidden" id="selectedVariantIndex" value="">
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Add to Cart',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#0d6efd',
+      cancelButtonColor: '#6c757d',
+      preConfirm: () => {
+        const selectedIndex = document.getElementById('selectedVariantIndex').value;
+        if (selectedIndex === '') {
+          Swal.showValidationMessage('Please select a color/variant');
+          return false;
+        }
+        return selectedIndex;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        moveToCart(productId, parseInt(result.value));
+      }
+    });
+  }
+
+  window.selectVariant = function(index, element) {
+    // Remove previous selection
+    document.querySelectorAll('.variant-option').forEach(el => {
+      el.style.border = '2px solid #ddd';
+    });
+    // Highlight selected
+    element.style.border = '2px solid #0d6efd';
+    document.getElementById('selectedVariantIndex').value = index;
+  }
+
+  function moveToCart(productId, variantIndex) {
     // Show loading
     Swal.fire({
       title: 'Adding to cart...',
@@ -194,14 +264,14 @@
       }
     });
 
-    // Add to cart with first variant (index 0)
+    // Add to cart with selected variant
     $.ajax({
       url: '/addToCart',
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify({ 
         productId, 
-        variantIndex: 0,
+        variantIndex: variantIndex,
         quantity: 1 
       }),
       success: function(response) {

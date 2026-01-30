@@ -779,3 +779,1568 @@
   });
   </script>
   
+
+
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LushMe Cosmetics</title>
+
+  <!-- Google Fonts -->
+   <!-- icon -->
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet"> -->
+ <link rel="stylesheet" type="text/css" href="/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="/fonts/iconic/css/material-design-iconic-font.min.css">
+<link rel="stylesheet" type="text/css" href="/fonts/linearicons-v1.0.0/icon-font.min.css">
+
+<link rel="stylesheet" type="text/css" href="/vendor/animate/animate.css">
+<link rel="stylesheet" type="text/css" href="/vendor/css-hamburgers/hamburgers.min.css">
+<link rel="stylesheet" type="text/css" href="/vendor/animsition/css/animsition.min.css">
+<link rel="stylesheet" type="text/css" href="/vendor/select2/select2.min.css">
+<link rel="stylesheet" type="text/css" href="/vendor/daterangepicker/daterangepicker.css">
+<link rel="stylesheet" type="text/css" href="/vendor/slick/slick.css">
+<link rel="stylesheet" type="text/css" href="/vendor/MagnificPopup/magnific-popup.css">
+  <!--===============================================================================================-->
+    <!-- <link rel="stylesheet" type="text/css" href="/vendor/perfect-scrollbar/perfect-scrollbar.css"> -->
+  <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="/css/util.css">
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+     <link rel="stylesheet" href="/css/style.css">
+    <!-- Responsive Styles -->
+    <link rel="stylesheet" type="text/css" href="/css/responsive.css">
+    <link rel="icon" type="image/png" href="/images/logo.png"> 
+    <!-- <link rel="stylesheet" type="text/css" href="/css/custom/profile.css"> -->
+  <!--===============================================================================================-->
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-K+K5pEonTbR9v1TcX9n7NmERcExOxkQJCVZnQEn+Y2jXz+USMGeZNUqYPSm3UL/Ix8o3BDKdXCEUu7vUj+kNfA==" crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom-plus/1.1.21/jquery.elevatezoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+
+
+   
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="p-3 mb-3 border-bottom">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+
+      <!-- Logo -->
+      <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 link-body-emphasis text-decoration-none">
+        <img src="/images/logo.png" height="40" alt="Logo">
+      </a>
+
+      <!-- Nav links -->
+      <ul class="nav col-12 col-lg-auto mb-2 mb-md-0 justify-content-center">
+        <li><a href="#" class="nav-link px-2 link-secondary">What's new</a></li>
+        <li><a href="/shop" class="nav-link px-2 link-body-emphasis">Products</a></li>
+        <li><a href="#" class="nav-link px-2 link-body-emphasis">Brands</a></li>
+        <li><a href="#" class="nav-link px-2 link-body-emphasis">Offers</a></li>
+      </ul>
+
+      <!-- Search -->
+      <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
+        <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
+      </form>
+
+      <!-- Profile + Icons -->
+      <div class="d-flex align-items-center gap-3">
+
+        <% if (user){ %>
+          <!-- ✅ Logged-in user with dropdown -->
+          <div class="dropdown">
+            <img src="<%= user.profileImage || '/images/profile.png' %>"
+     alt="Profile"
+     class="profile-pic dropdown-toggle"
+     id="profileDropdown"
+     data-bs-toggle="dropdown"
+     role="button">
+
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+              <li><a class="dropdown-item" href="/profile">My Profile</a></li>
+              <li><a class="dropdown-item" href="/orders">My Orders</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="/logout">Logout</a></li>
+            </ul>
+          </div>
+        <% } else { %>
+          <!-- 🚫 Not logged in — default icon -->
+          <a href="/login">
+            <img src="/images/profile.png" alt="Login" class="profile-pic" />
+          </a>
+        <% } %>
+
+        <!-- ❤️ Wishlist -->
+        <a href="/wishlist" class="icon-btn position-relative">
+          <i class="far fa-heart"></i>
+          <% if (wishlistCount > 0) { %>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              <%= wishlistCount %>
+            </span>
+          <% } %>
+        </a>
+
+        <!-- 🛒 Cart -->
+        <a href="/cart" class="icon-btn position-relative">
+          <i class="fas fa-shopping-cart"></i>
+          <% if (cartCount > 0) { %>
+  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+    <%= cartCount %>
+  </span>
+<% } %>
+        </a>
+
+      </div>
+
+    </div>
+  </div>
+</header>
+
+const User = require('../../models/userSchema')
+const Category = require('../../models/categorySchema');
+const Product = require('../../models/productSchema');
+const Brand = require('../../models/brandSchema');
+const generateOtp = require('../../utils/otp');
+const sendVerificationEmail = require('../../utils/sendEmail')
+const nodemailer = require('nodemailer')
+const env = require('dotenv').config()
+const bcrypt = require('bcrypt')
+const loadHomepage = async (req,res) =>{
+    try {
+
+        let user = null;
+        if (req.session.user) {                        //normal user exist
+            user = await User.findById(req.session.user);  // get daa from db
+          } else if (req.user) {                      // by google
+            user = req.user; // <-- from Passport Google
+          }
+          console.log("Homepage user:", user);      
+          res.render("user/home", { user });
+    } catch (error) {
+        console.log("Home page not found",error)   // to showing error to back end
+        res.status(500).send("server error")  // to showing error to frnd end
+
+    }
+
+}
+
+const pageNotFound = async (req,res)=>{
+    try {
+        res.render("user/pagenotfound")
+    } catch (error) {
+        res.redirect("/pageNotFound")
+    }
+}
+
+const loadRegister = async (req,res)=>{
+    try {
+        return res.render("user/register")
+    } catch (error) {
+        console.log("register page is not found")
+        res.status(500).send("server error")
+    }
+}
+
+// const register = async (req,res) =>{
+//     const {username,email,phone,password} = req.body
+//     try {
+//       const newUser = new User({username,email,phone,password})
+//       console.log(newUser)
+
+//       await newUser.save() //this is the method to save dtaa in db
+
+//       return res.redirect('/register')
+//     } catch (error) {
+//         console.error("error for save user", error) // for seeing backend 
+//         res.status(500).send('internal server error')   // for seen error in frondend
+//     }
+// }
+
+
+
+const register = async (req,res) =>{
+    try {
+        
+        const {username,phone,email,password,cpassword} = req.body;
+
+        if(password !== cpassword){
+            return res.render("user/register",{message:"Password does not match"})
+        }
+        const findUser = await User.findOne({email});         // checking email exist
+        if(findUser){
+            return res.render("user/register",{message:"User with this email already existed"})
+        }
+
+        const otp = generateOtp();
+
+        // to send generate otp to user registered mail
+
+        const emailSent = await sendVerificationEmail(email,otp)
+        if(!emailSent){
+            return res.json("email-error")
+        }                                       // after successfully snding otp, we just asign otp to session
+
+        req.session.userOtp = otp;
+        req.session.userData = {username,email,phone,password};
+                                    //a after session stored, we get the message varify otp
+        res.render("user/confirmotp", { otpAction: "/confirmotp" });
+        console.log("Otp Sent",otp)
+
+    } catch (error) {
+        
+        console.error("register error",error)
+        res.redirect("/pageNotFound")
+    }
+
+}
+
+const securePassword = async (password)=>{                            //hashing password
+    try{
+        const passwordHash = await bcrypt.hash(password,10)
+        return passwordHash;
+    }catch(error){
+
+    }
+}
+
+const confirmOtp = async (req,res)=> {
+    try {
+        console.log("BODY RECEIVED:", req.body);
+        const { otp } = req.body;
+        console.log("Received OTP:", otp);
+        console.log("Session OTP:", req.session.userOtp);
+
+        if(String(otp) === String(req.session.userOtp)){
+            const user = req.session.userData
+
+            const passwordHash = await securePassword(user.password);
+
+            const savedUserData = new User ({
+                username:user.username,
+                email:user.email,
+                phone:user.phone,
+                password:passwordHash
+            })
+
+            await savedUserData.save();
+            req.session.user = savedUserData._id;
+            req.session.userOtp = null;
+            req.session.userData = null;
+            res.json({success:true, redirectUrl:"/"})
+            
+
+        }else{
+            res.status(400).json({success:false,message:"Invallid OTP, Please try again"})
+        }
+    } catch (error) {
+        console.error("Error verifying OTP",error);
+        res.status(500).json({success:false,message:"An error occured"})
+    }
+}
+
+
+const resendOTP = async (req, res) => {
+    try {
+      console.log("Session at resend:", req.session.userData);
+      const { email } = req.session.userData || {};
+  
+      if (!email) {
+        return res.status(400).json({ success: false, message: "Email not found in session" });
+      }
+  
+      const otp = generateOtp();
+      req.session.userOtp = otp;
+  
+      req.session.save(async (err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ success: false, message: "Session save failed" });
+        }
+  
+        const emailSent = await sendVerificationEmail(email, otp);
+        if (emailSent) {
+          console.log("Resend OTP:", otp);
+          res.status(200).json({ success: true, message: "OTP Resent Successfully" });
+        } else {
+          res.status(500).json({ success: false, message: "Failed to resend OTP. Please try again" });
+        }
+      });
+  
+    } catch (error) {
+      console.error("Error resending OTP", error);
+      res.status(500).json({ success: false, message: "Internal Server Error. Please try again" });
+    }
+  };
+
+
+  const loadLogin = async (req,res)=>{
+    try {
+        if(!req.session.user){
+            return res.render("user/login")
+        }else{
+            res.redirect('/')
+        }
+    } catch (error) {
+        console.log("login page is not found")
+        res.redirect('/pageNotFound')
+    }
+}
+
+const login = async (req,res)=>{
+    try {
+        
+        const {email,password} = req.body;
+        
+        const findUser = await User.findOne({isAdmin:0,email:email}) // this line check(in db) email now we entered is match to email we registered amd isadmin:0 means , that will be user, not admin, if ths two condition matches that will be login
+      
+        if(!findUser){
+            console.log('user not found')
+            return res.render("user/login",{message:"user not found"})
+            
+        }
+        if(findUser.isBlocked){
+            console.log('user is blocked by admin')
+            return res.render("user/login",{message:"user is blockd by admin"})
+        }
+        const passwordMatch = await bcrypt.compare(password,findUser.password)
+
+        if(!passwordMatch){
+            console.log('incorrect password')
+            return res.render('user/login',{message: "Incorrect password"})
+        }
+        req.session.user = findUser._id;
+        res.redirect('/')
+
+    } catch (error) {
+
+        console.log("login error",error)
+        res.render("login",{message:"Login failed, Plesae try again later"})
+        
+    }
+}
+const logout = async (req, res, next) => {
+    try {
+      req.logout(err => {
+        if (err) return next(err);
+  
+        req.session.destroy(err => {
+          if (err) return res.status(500).send("Error logging out");
+          res.clearCookie('connect.sid');
+          res.redirect('/');
+        });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).send("Server error during logout");
+    }
+  };
+
+  const loadShoppingPage = async (req, res) => {
+    try {
+         const user = req.session.user;
+        let wishlistIds = [];
+        if(user) {
+            const userDoc = await User.findById(user).select('wishlist').lean();
+            wishlistIds = userDoc?.wishlist?.map(id => id.toString()) || [];
+        }
+        const userData = user ? await User.findOne({ _id: user }) : null;
+        const categories = await Category.find({ isListed: true });
+        const categoryIds = categories.map(category => category._id.toString());
+        const page = parseInt(req.query.page) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || null;
+        let query = {
+            isBlocked: false,
+            category: { $in: categoryIds }
+          };
+          if (search) {
+           
+            query.$or = [
+              { name: { $regex: search, $options: 'i' } },
+              { description: { $regex: search, $options: 'i' } }
+            ];
+          }
+        const products = await Product.find(query).populate('brand').sort({createdAt: -1}).skip(skip).limit(limit);
+        
+      products.forEach(product => {
+  const category = categories.find(cat => cat._id.toString() === product.category?.toString());
+  const subcategory = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory?.toString());
+
+  const productOffer = product.offer || 0;
+  const categoryOffer = category?.categoryOffer || 0;
+  const subcategoryOffer = subcategory?.offer || 0;
+
+  const effectiveOffer = Math.max(productOffer, categoryOffer, subcategoryOffer);
+  product.effectiveOffer = effectiveOffer;
+
+  // ✅ Total stock across variants
+  product.totalQuantity = product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0);
+  product.isOutOfStock = product.totalQuantity === 0;
+
+  // ✅ Choose lowest priced variant
+  if (product.variants.length > 0) {
+    let minVariant = product.variants[0];
+
+    product.variants.forEach(v => {
+      if (v.salePrice < minVariant.salePrice) minVariant = v;
+    });
+
+    // ✅ Apply offer discount
+    const finalSalePrice = minVariant.salePrice * (1 - effectiveOffer / 100);
+
+    product.displayRegularPrice = minVariant.regularPrice;
+    product.displaySalePrice = Math.round(finalSalePrice * 100) / 100;
+  } else {
+    product.displayRegularPrice = product.displaySalePrice = null;
+  }
+});
+
+
+        // Get total number of products for pagination
+        const totalProducts = await Product.countDocuments({isBlocked:false,category:{$in:categoryIds}});
+        const totalPages = Math.ceil(totalProducts / limit);
+        const brands= await Brand.find({isListed:true})
+        const catgoriesWithIds = categories.map(category=>({_id:category._id,name:category.name,subcategories: category.subcategories || []}))
+        res.render('user/shop', {
+          user: userData,
+          products: products,
+          category:catgoriesWithIds,
+          brands: brands,
+          totalProducts:totalProducts,
+          currentPage:page,
+          totalPages:totalPages,
+          search,
+          wishlistIds,
+          selectedCategory: req.query.category || null,
+          selectedBrand: req.query.brand || null,
+          selectedSubcategory: req.query.subcategory || null,
+          selectedColor: req.query.color || null,
+          selectedSize: req.query.size || null,
+          selectedPrice: req.query.price || null,
+          selectedSort: req.query.sort || null,
+          query: req.query,
+         });
+      }catch (error) {
+        console.error('Error loading shop page:', error.message);
+        console.error(error.stack);
+        res.redirect('/pagenotfound');
+      }
+  }
+
+  //Product filter
+  const filterProduct = async (req, res) => {
+    try{
+        const user =req.session.user
+        const category =req.query.category
+        const subcategoryId = req.query.subcategory || null;
+        const brand=req.query.brand;
+        const color = req.query.color || null;
+        const price = req.query.price || null;
+        let variantQuery = {};
+       
+        console.log(" object:", category);
+        console.log("  Sub categoryobject:", subcategoryId );
+        const findCategory=category? await Category.findOne({_id:category},{ name: 1, subcategories: 1 }):null;
+        console.log("findCategory object:", findCategory);
+
+        const findBrand = brand ? await Brand.findOne({_id:brand}):null;
+        let wishlistIds = [];
+        if (req.session.user) {
+        const userDoc = await User.findById(req.session.user).select('wishlist').lean();
+        wishlistIds = userDoc?.wishlist?.map(id => id.toString()) || [];
+        }
+ 
+        const brands= await Brand.find({}).lean();
+         const query={
+            isBlocked :false,
+            variants: { $elemMatch: { quantity: { $gt: 0 } } }
+         }
+         
+        if (color) variantQuery.color = color;
+        if (price) variantQuery.price = price;
+
+         if (Object.keys(variantQuery).length > 0) {
+                query.variants = { $elemMatch: { ...variantQuery, quantity: { $gt: 0 } } };
+            }
+        if (findCategory) {
+            query.category = findCategory._id;
+        }
+        if (subcategoryId) {
+          query.subcategory = subcategoryId;
+          }
+        if (findBrand) {
+            query.brand = findBrand._id;
+        }
+       
+if (req.query.price) {
+  const priceRange = req.query.price;
+
+  if (priceRange === '4000+') {
+    query.variants = { 
+      $elemMatch: { salePrice: { $gte: 4000 }, quantity: { $gt: 0 } } 
+    };
+  } else {
+    const [min, max] = priceRange.split('-').map(Number);
+    query.variants = { 
+      $elemMatch: { salePrice: { $gte: min, $lte: max }, quantity: { $gt: 0 } } 
+    };
+  }
+}
+
+          const sort = req.query.sort || 'default';
+        let sortCriteria = {};
+        switch (sort) {
+          case 'price_asc':
+            sortCriteria = { "variants.salePrice": 1 };
+            break;
+          case 'price_desc':
+            sortCriteria = { "variants.salePrice": -1 };
+            break;
+          case 'name_asc':
+            sortCriteria = { name: 1 };
+            break;
+          case 'name_desc':
+            sortCriteria = { name: -1 };
+            break;
+          default:
+            sortCriteria = { createdAt: -1 };
+        }
+
+          
+        const allCategories = await Category.find({}, { name: 1, subcategories: 1 }).lean();
+        let selectedSubcategoryName = null;
+       
+       for (const cat of allCategories) {
+         const match = cat.subcategories?.find(sc => sc._id.toString() === subcategoryId);
+         if (match) {
+           selectedSubcategoryName = match.name;
+           break;
+         }
+        }
+        const [products, totalCount] = await Promise.all([
+            Product.find(query).sort(sortCriteria).lean(),
+            Product.countDocuments(query)
+          ]);
+        let findProducts = products;
+
+        // ✅ Set display price based on the lowest priced variant
+findProducts.forEach(product => {
+  if (product.variants && product.variants.length > 0) {
+
+    // Calculate total stock
+    product.totalQuantity = product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0);
+    product.isOutOfStock = product.totalQuantity === 0;
+
+    // Find minimum sale price variant
+    const minVariant = product.variants.reduce((a, b) =>
+      a.salePrice < b.salePrice ? a : b
+    );
+
+    product.displaySalePrice = Math.round(minVariant.salePrice);
+    product.displayRegularPrice = Math.round(minVariant.regularPrice);
+    
+    // Needed for sorting
+    product.minPriceForSort = minVariant.salePrice;
+
+  } else {
+    product.displaySalePrice = null;
+    product.displayRegularPrice = null;
+    product.minPriceForSort = Infinity;
+    product.isOutOfStock = true;
+  }
+});
+
+        const categories = await Category.find({ isListed: true });
+        // Pagination setup
+        let itemsPerPage = 12;
+        let currentPage = parseInt(req.query.page) || 1;
+        let startIndex = (currentPage - 1) * itemsPerPage;
+        let endIndex = startIndex + itemsPerPage;
+        let totalPages = Math.ceil(findProducts.length / itemsPerPage);
+        const currentProduct = findProducts.slice(startIndex, endIndex);
+
+         // Handle user data and search history
+         let userData = null;
+         if (user) {
+             userData = await User.findOne({ _id: user });
+             if (userData) {
+                 const searchEntry = {
+                    category : findCategory ? findCategory._id:null,
+                    brand : findBrand ?findBrand.name : null,
+                    searchedOn : new Date(),                 }
+                 userData.searchHistory.push(searchEntry)
+                 await userData.save();
+                }
+            }
+    req.session.filteredProducts = currentProduct;   
+     // Render the results
+     res.render("user/shop", {
+        user: userData,
+        products: currentProduct,
+        category: categories,
+        brands:brands,
+        totalPages,
+        currentPage,
+        selectedCategory: category || null,
+        selectedBrand: brand || null,
+        selectedSubcategory: subcategoryId,
+        selectedColor: color || null,
+        selectedprice: price || null,
+        selectedPrice: req.query.price || null,
+        selectedSort: sort || null,
+        selectedSubcategoryName,
+        wishlistIds,
+        search: req.query.search || '',
+        query: req.query,
+    });
+    }catch (error)
+    {
+        console.error('Error in filterProduct:', error);
+        res.redirect('/pagenotfound');
+    }
+  }
+
+
+
+
+
+module.exports = {
+    loadHomepage,
+    pageNotFound,
+    loadRegister,
+    register,
+    confirmOtp,
+    resendOTP,
+    loadLogin,
+    login,
+    logout,
+    loadShoppingPage,
+    filterProduct
+  
+} 
+<%- include('../partials/user/header') %>
+<div class="pt-5 mt-4">
+
+  <style>
+    .address-card {
+      cursor: pointer;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: border-color 0.3s ease, background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+    }
+    .address-card:hover {
+      border-color: #0d6efd;
+      background-color: #e7f1ff;
+    }
+    .address-data{
+      margin-left: 40px;
+    }
+    .address-card.selected {
+      border-color: #0d6efd;
+      background-color: #d0e2ff;
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+    .address-card.selected .form-check-input {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    .address-type {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: white;
+      background-color: #0d6efd;
+      margin-right: 15px;
+      white-space: nowrap;
+    }
+    .address-type.office {
+      background-color: #fd7e14;
+    }
+    .address-name {
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .address-text {
+      margin-top: 6px;
+      font-size: 1rem;
+      color: #444;
+      line-height: 1.5;
+    }
+    .address-actions {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    .address-actions button {
+      border: none;
+      background: transparent;
+      color: #0d6efd;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+    .address-actions button:hover {
+      text-decoration: underline;
+    }
+    /* For the radio */
+    .form-check-input {
+      cursor: pointer;
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      margin: 0;
+    }
+    /* Order summary styling */
+    .order-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 18px;
+    }
+    .order-item-icon {
+      background: #e0e7ff;
+      color: #4338ca;
+      border-radius: 10px;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+    }
+    .order-item-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .order-item-qty {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .order-item-price {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-left: auto;
+    }
+    .order-summary-line {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      margin: 8px 0;
+      font-size: 1rem;
+    }
+    .order-summary-line.total {
+      font-size: 1.25rem;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+      margin-top: 16px;
+    }
+    .coupon-section input {
+      flex-grow: 1;
+      border-radius: 0.375rem;
+      border: 1.5px solid #ced4da;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+    }
+    .coupon{
+      max-width: 100%;
+    }
+    .coupon-section button {
+      border-radius: 0.375rem;
+      background: #0d6efd;
+      border: none;
+      color: white;
+      font-weight: 700;
+      padding: 0.5rem 1.5rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .coupon-section button:hover {
+      background: #0b5ed7;
+    }
+    .payment-method label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+    .btn-place-order {
+      background: #0d6efd;
+      color: white;
+      border: none;
+      padding: 15px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 25px;
+      transition: background-color 0.3s ease;
+    }
+    .btn-place-order:hover {
+      background: #0b5ed7;
+    }
+
+    /* Coupon */
+    .coupon-card {
+      border: 2px solid #eaeaea;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+  }
+
+  .coupon-name {
+      font-size: 12px;
+      font-weight: bold;
+  }
+
+  .use-button {
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+  }
+   .couponModal{
+    z-index: 4000;
+   }
+  .use-button:hover {
+      background-color: #45a049;
+  }
+  </style>
+<!-- </head>
+<body> -->
+
+<div class="container my-5">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item"><a href="/cart">Cart</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Left: Shipping Addresses -->
+    <div class="col-lg-7">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h2 class="mb-0">Shipping Address</h2>
+          <small class="text-muted">Select where you want your order delivered</small>
+        </div>
+        <a href="/address?redirect=checkout" class="btn btn-outline-primary btn-sm">
+          <i class="fi-rs-plus"></i> Add New Address
+        </a>
+      </div>
+
+      <!-- <form id="checkoutForm"> -->
+        <div role="list" aria-label="Shipping addresses">
+          <% if(userAddress && userAddress.address && userAddress.address.length > 0) { %>
+            <% userAddress.address.forEach((addr, idx) => { %>
+              <div
+                class="address-card <%= idx === 0 ? 'selected' : '' %>"
+                role="listitem"
+                aria-checked="<%= idx === 0 ? 'true' : 'false' %>"
+                tabindex="0"
+                onclick="selectAddress(this)"
+              >
+                <input 
+                  class="form-check-input" 
+                  type="radio" 
+                  id="addr<%= idx %>" 
+                  name="shippingAddress" 
+                  value="<%= addr._id %>" 
+                  <%= idx === 0 ? 'checked' : '' %>
+                />
+                <div class="address-data">
+                  <div class="mb-2">
+                    <span class="address-type <%= addr.addressType.toLowerCase() === 'office' ? 'office' : '' %>"><%= addr.addressType %></span>
+                    <% if(idx === 0) { %><span class="badge bg-success ms-2">Default</span><% } %>
+                  </div>
+                  <div class="address-name"><%= addr.name %></div>
+                  <p class="address-text mb-0">
+                    <%= addr.houseNo %><br />
+                    <%= addr.city %>, <%= addr.state %><br />
+                    Pincode: <%= addr.pincode %><br />
+                    Phone: <%= addr.phone %><br />
+                    <% if(addr.altPhone) { %>Alternate Phone: <%= addr.altPhone %><br /><% } %>
+                  </p>
+                </div>
+                <div class="address-actions">
+                  <a href="/address/<%= addr._id %>?redirect=checkout" class="btn btn-sm btn-link p-0 me-3" title="Edit address">
+                    <i class="fi-rs-edit"></i> Edit
+                  </a>                  
+                  <a href="javascript:void(0)" onclick="deleteAddress('<%= addr._id %>')" class="btn btn-sm btn-link p-0 text-danger" title="Delete address">
+                    <i class="fi-rs-trash"></i> Delete
+                  </a>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div class="alert alert-info text-center py-4">
+              <i class="fi-rs-marker" style="font-size: 48px;"></i>
+              <h5 class="mt-3">No Delivery Address Found</h5>
+              <p class="text-muted mb-3">Please add a delivery address to continue with your order</p>
+              <a href="/address?redirect=checkout" class="btn btn-primary">
+                <i class="fi-rs-plus"></i> Add Delivery Address
+              </a>
+            </div>
+          <% } %>
+        </div>
+    </div>
+    <!-- Right: Order Summary -->
+    <div class="col-lg-5 bg-white p-4 rounded shadow-sm">
+      <h2>Your Order</h2>
+
+      <% if(cartItems && cartItems.length > 0) { %>
+        <% cartItems.forEach(item => { 
+             const variant = item.productId.variants.find(v => v.color === item.color) || item.productId.variants[0];
+             const variantImage = (variant && variant.productImage && variant.productImage[0]) || '';
+             const lineTotal = (typeof item.totalPrice === 'number'
+               ? item.totalPrice
+               : ((variant && variant.salePrice ? variant.salePrice : 0) * item.quantity));
+        %>
+          <div class="order-item" role="listitem">
+            <div class="order-item-icon" aria-hidden="true">
+              <img src="/<%= variantImage %>" alt="<%= item.productId.name%>" style="width:32px; height:32px; border-radius:4px;">
+            </div>
+            <div>
+              <div class="order-item-name"><%= item.productId.name.split('|')[0].trim() %></div>
+              <div class="order-item-qty">x <%= item.quantity %></div>
+              <div class="order-item-size-color small text-muted">Color: <%= item.color %></div>
+            </div>
+            <div class="order-item-price">₹ <%= Number(lineTotal || 0).toFixed(2) %></div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <p>Your cart is empty.</p>
+      <% } %>
+
+      <div class="order-summary-line d-flex justify-content-between fw-semibold mt-3">
+        <span>Subtotal</span>
+        <span>₹ <%= grandTotal %></span>
+      </div>
+      <!-- You can add discount or coupon here if needed -->
+      <div class="order-summary-line d-flex justify-content-between mt-2">
+        <span>Shipping</span>
+        <span id="shippingCharge">₹ <%= shippingCharge %></span>
+      </div>
+            <!-- Discount line placeholder (hidden initially) -->
+      <div class="order-summary-line d-flex justify-content-between mt-2 text-success" id="discountLine" style="display:none;">
+        <span >Discount</span>
+        <span id="discountAmount">- ₹<%= appliedCoupon ? appliedCoupon.discount : 0 %></span>
+      </div>
+      <div class="order-summary-line total d-flex justify-content-between fw-bold mt-2 border-top pt-2">
+        <span>Total</span>
+        <span id="totalAmount">₹ <%= parseFloat(totalPayable).toFixed(2) %></span>
+      </div>
+      <input type="hidden" name="finalAmount" id="totalPayable" value="<%= totalPayable %>">
+      <input type="hidden" id="originalGrandTotal" value="<%= grandTotal %>">
+      <input type="hidden" id="originalShippingCharge" value="<%= shippingCharge %>">
+
+      
+      <!-- Coupon -->
+      
+      <div class="col-md-5 mt-5 coupon" >
+        <div class="card shadow-sm p-4 mb-4">
+          <h5 class="mb-3">Apply Coupon</h5>
+          <div class="input-group">
+            <input 
+              type="text" 
+              id="couponCode" 
+              class="form-control" 
+              placeholder="Enter coupon code"
+              <%= appliedCoupon ? 'value="'+ appliedCoupon.code +'" disabled' : '' %>
+            >
+            <button 
+              type="button" 
+              class="btn btn-success" 
+              id="applyBtn" 
+              onclick="toggleCoupon()"
+            >
+              <%= appliedCoupon ? 'Remove Coupon' : 'Apply' %>
+            </button>
+          </div>
+          <small id="couponMessage" class="mt-2 d-block">
+            <% if(appliedCoupon){ %> Coupon "<%= appliedCoupon.code %>" applied! <% } %>
+          </small>
+          <button type="button" class="btn  btn-info mb-3 mt-3" id="showCouponsBtn">
+            Available Coupons
+          </button>
+        </div>
+      </div>
+     <!-- place order -->
+    <div><br></div>
+    <div class="payment-method mt-4">
+      <h3 class="fw-semibold mb-3">Payment Method</h3>
+      <label class="d-flex align-items-center gap-2 mb-3" for="online">
+        <input type="radio" id="online" name="paymentMethod" value="wallet" />
+        <span>Wallet </span>
+      </label>
+      <label class="d-flex align-items-center gap-2 mb-3" for="razorpay">
+        <input type="radio" id="razorpay" name="paymentMethod" value="razorpay" />
+        <span> Razorpay</span>
+      </label>
+      <label class="d-flex align-items-center gap-2" for="cod">
+        <input type="radio" id="cod" name="paymentMethod" value="cod" checked />
+        <span>Cash on Delivery</span>
+      </label>
+    </div>
+    
+    <button type="button" id="placeOrderBtn" class="btn-place-order">Place Order</button>
+  
+    </div>
+     <!-- Coupons Modal -->
+  <div class="modal couponModal fade" id="couponsModal" tabindex="-1" aria-labelledby="couponsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="couponsModalLabel">Available Coupons</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="couponsModalBody">
+        <!-- Coupons will be loaded here dynamically -->
+        <p>Loading coupons...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+  function selectAddress(card) {
+    document.querySelectorAll('.address-card').forEach(c => {
+      c.classList.remove('selected');
+      c.setAttribute('aria-checked', 'false');
+      const radio = c.querySelector('input[type="radio"]');
+      if(radio) radio.checked = false;
+    });
+    card.classList.add('selected');
+    card.setAttribute('aria-checked', 'true');
+    const radio = card.querySelector('input[type="radio"]');
+    if(radio) radio.checked = true;
+  }
+
+  // Add keyboard support for address selection
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.address-card').forEach(card => {
+      card.addEventListener('keypress', function(e) {
+        if(e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectAddress(this);
+        }
+      });
+    });
+  });
+
+  function deleteAddress(addressId) {
+    Swal.fire({
+      title: 'Delete Address?',
+      text: 'Are you sure you want to delete this address? This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = `/deleteAddress?id=${addressId}&redirect=checkout`;
+      }
+    });
+  }
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  // returns a Promise so you can .then(...) after the Swal closes
+  let razorpayOpen = false;
+  function safeShowSwalAfterRazorpayClose(opts) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Swal.fire returns a Promise; resolve after it finishes
+        Promise.resolve(Swal.fire(opts)).then(resolve);
+      }, 150);
+    });
+  }
+  </script>
+  
+<script>
+  async function removeItem(itemId){
+   const confirmuser = confirm('Are you sure want to remove this item from the cart?')
+   if(!confirmuser){
+       return
+   }
+
+   try {
+       const response = await fetch(`/removeItem/${itemId}`, {
+           method: 'DELETE',
+       })
+
+       const result = await response.json()
+       if(response.ok && result.success){
+           Swal.fire({
+               icon: 'success',
+               title: 'Item removed',
+               text:'Item is removed from the cart',
+               timer: 1200,
+               showConfirmButton: false
+           })
+           .then(()=>{
+               location.reload()
+           })
+       }else{
+           Swal.fire({
+               icon: 'warning',
+               title: 'Oops!',
+               text: result.message || 'Something went wrong',
+               timer: 1200,
+               showConfirmButton: false
+           })
+       }
+   } catch (error) {
+       console.error('Error while removing item ', error)
+       Swal.fire({
+           icon: 'error',
+           title: 'Error',
+           text: error.message || 'Internal server error'
+       })
+   }
+ }
+</script>
+<script>
+ // place order 2
+  
+  function checkStockAvailability() {
+    return fetch('/check-stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({})
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.message);
+        return data;
+      });
+  }
+  document.getElementById('placeOrderBtn').addEventListener('click', async function (e) {
+      e.preventDefault();
+    
+      try {
+        const address = document.querySelector('input[name="shippingAddress"]:checked')?.value;
+        const payment = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        const discountText = document.getElementById('discountAmount').textContent;
+        const discount = parseFloat(discountText.replace(/[^\d.]/g, '')) || 0;
+    
+        const totalText = document.querySelector('#totalAmount')?.textContent || '<%= parseFloat(totalPayable).toFixed(2) %>';
+        const numericValue = parseFloat(totalText.replace(/[^\d.]/g, ''));
+    
+        if (!payment) return Swal.fire('NO PAYMENT FOUND!', 'Please select your payment method.', 'error');
+        if (!address) return Swal.fire('NO ADDRESS FOUND!', 'Please select a shipping address.', 'error');
+        if (payment === "cod" && numericValue > 10000)
+          return Swal.fire('COD Not Allowed!', 'Orders above ₹10000 are not allowed for COD.', 'error');
+              
+              const stockResponse = await checkStockAvailability();
+          const stockStatus = stockResponse.items || [];
+          const hasBlocked = stockResponse.hasBlocked;
+
+          // If cart is empty (after filtering out blocked/out-of-stock)
+          if (stockStatus.length === 0 && hasBlocked) {
+            await Swal.fire('Cart Invalid', 'All items in your cart are blocked or unavailable.', 'warning');
+            return window.location.href = '/cart';
+          }
+
+          //  If any product is blocked (admin-blocked or deleted)
+          const blockedItem = stockStatus.find(i => i.isBlocked);
+          if (blockedItem) {
+            await Swal.fire({
+              title: 'Blocked Product Found',
+              text: `${blockedItem.name || 'A product'} has been blocked. Please remove it to continue.`,
+              icon: 'warning',
+              confirmButtonText: 'Go to Cart'
+            });
+            return window.location.href = '/cart';
+          }
+
+          // If any quantity exceeds stock
+          const changedStock = stockStatus.some(item => item.stockChanged && !item.isBlocked);
+          if (changedStock) {
+            return Swal.fire('Stock Changed', 'Some quantities were adjusted due to stock limits.', 'warning')
+            .then(() => {
+              window.location.href = '/cart';  
+            });
+          }
+       // All Good → Proceed
+        placeOrder(address, payment, numericValue, discount);
+    
+      } catch (error) {
+        console.error("Order Validation Error:", error);
+        Swal.fire('Error', error.message || 'Something went wrong!', 'error');
+      }
+    });
+   
+    function placeOrder(address, payment, numericValue, discount) {
+      $.ajax({
+        url: '/placeOrder',
+        method: 'POST',
+        contentType: "application/json",
+        data: JSON.stringify({
+          totalPrice: numericValue,
+          addressId: address,
+          payment: payment,
+          discount: discount
+        }),
+        success: function (response) {
+          const orderId = response.order && response.order._id;
+
+if (!orderId) {
+  console.error("Order ID missing in response", response);
+  Swal.fire("Error", "Order created but ID missing", "error");
+  return;
+}
+    
+          if (response.method === "cod" || (response.method === "wallet" && response.success === true)) {
+            Swal.fire({
+              title: "Order Success!",
+              text: `Your order #${response.order.orderId} has been placed successfully!`,
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "View Order Details",
+              cancelButtonText: "Continue Shopping",
+              confirmButtonColor: "#198754",
+              cancelButtonColor: "#6c757d",
+              reverseButtons: true
+            }).then(result => {
+              if (result.isConfirmed) {
+                window.location.href = `/viewOrderDetails/${response.order._id}`;
+              } else {
+                window.location.href = '/shop';
+              }
+            });
+    
+          } else if (response.method === "wallet" && response.success === false) {
+            Swal.fire({
+              title: "Order Failed",
+              text: response.message || "Wallet amount is not enough",
+              icon: "error"
+            }).then(() => {
+              location.href = '/checkout';
+            });
+    
+          } else if (response.method === "razorpay") {
+            const orderAmount = Math.round(numericValue * 100);
+    
+            const options = {
+              key: "rzp_test_ClMWweWS70Dbkd",
+              amount: orderAmount,
+              currency: "INR",
+              name: "TrendiQue",
+              description: "Checkout",
+              order_id: response.razorPayOrder.id,
+    
+              // SUCCESS → verify then create order
+              handler: function (payment) {
+                razorpayOpen = false;
+                verifyAndPlaceOrder(payment, address, numericValue, discount);
+              },
+    
+              // USER closed popup (ESC/close/backdrop)
+              modal: {
+                ondismiss: function () {
+                  razorpayOpen = false;
+                 // safeShowSwalAfterRazorpayClose({
+                 //   title: "Payment Cancelled",
+                 //text: "You closed the payment window.",
+                  //  icon: "info",
+                 //   confirmButtonText: "Back to checkout"
+                 // }).then(() => {
+                 //   window.location.href = '/checkout';
+                  //});
+                }
+              },
+    
+              prefill: {
+                name: "Customer Name",
+                email: "customer@example.com",
+                contact: "9961618585"
+              },
+              theme: { color: "#3399cc" }
+            };
+    
+            const rzp = new Razorpay(options);
+    
+           
+            // GATEWAY/BANK FAILURE → show SweetAlert reliably
+          rzp.on('payment.failed', function (resp) {
+            console.log("RZP payment.failed fired:", resp);
+
+            razorpayOpen = false;
+            try { rzp.close(); } catch (_) {}
+
+            const err = resp && resp.error ? resp.error : {};
+            const msg = err.description
+              || "Your payment didn't go through as it was declined by the bank. Try another payment method or contact your bank.";
+
+            //   direct setTimeout instead of safeShowSwalAfterRazorpayClose
+            setTimeout(() => {
+              Swal.fire({
+                title: "Payment Failed",
+                text: msg,
+                icon: "error",
+                confirmButtonText: "Try Again"
+              }).then(() => {
+                window.location.href = '/checkout';
+              });
+            }, 600); // small delay ensures Razorpay overlay is gone
+          });
+          try {
+              if (!razorpayOpen) {
+                razorpayOpen = true;
+                rzp.open();
+              }
+            } catch (err) {
+              razorpayOpen = false;
+              console.error("Razorpay open error:", err);
+              Swal.fire("Payment Error", "Unable to open payment window. Please try again.", "error");
+            }
+    
+            return; // stop here; don't fall through
+          } else {
+            Swal.fire('Error Occurred', 'Cannot process order.', 'error');
+          }
+        },
+        error: function (xhr) {
+          Swal.fire("Error", (xhr.responseJSON && xhr.responseJSON.message) || "Server error while creating order.", "error");
+        }
+      });
+    }
+    
+    function verifyPayment(order, payment, orderId) {
+      $.ajax({
+        url: '/verifyPayment',
+        method: 'POST',
+        data: { order, payment },
+        success: function (response) {
+          if (response.status) {
+            Swal.fire({
+              title: "Order Success!",
+              text: `Your order has been placed successfully!`,
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "View Order Details",
+              cancelButtonText: "Continue Shopping",
+              confirmButtonColor: "#198754",
+              cancelButtonColor: "#6c757d",
+              reverseButtons: true
+            }).then(result => {
+              if (result.isConfirmed) {
+                window.location.href = `/viewOrderDetails/${order._id}`;
+              } else {
+                window.location.href = '/shop';
+              }
+            });
+          } else {
+            Swal.fire("Payment Failed", "Transaction failed. Try again.", "error");
+          }
+        }
+      });
+    }
+    function verifyAndPlaceOrder(payment, addressId, totalPrice, discount) {
+      $.ajax({
+        url: '/verifyPayment',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ payment }),
+       // data: JSON.stringify({ payment: response }),
+        success: function (response) {
+          if (response.status) {
+            // Now place order after payment success
+            $.ajax({
+              url: '/confirmOrderAfterRazorpay',
+              method: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify({ addressId, payment: 'razorpay', totalPrice, discount }),
+              success: function (res) {
+                if (res.success) {
+                  Swal.fire({
+                    title: "Order Success!",
+                    text: `Your order #${res.order.orderId} has been placed successfully!`,
+                    icon: "success",
+                    showCancelButton: true,
+                    confirmButtonText: "View Order Details",
+                    cancelButtonText: "Continue Shopping",
+                    confirmButtonColor: "#198754",
+                    cancelButtonColor: "#6c757d",
+                    reverseButtons: true
+                  }).then(result => {
+                    if (result.isConfirmed) {
+                      window.location.href = `/viewOrderDetails/${res.order._id}`;
+                    } else {
+                      window.location.href = '/shop';
+                    }
+                  });
+                } else {
+                  Swal.fire("Order Failed", "Order could not be created after payment.", "error");
+                }
+              }
+            });
+          } else {
+            Swal.fire("Payment Failed", "Verification failed", "error");
+          }
+        }
+      });
+    }
+  </script>
+
+<script>
+
+  async function toggleCoupon(){
+    const codeInput = document.getElementById('couponCode')
+    const message = document.getElementById('couponMessage')
+    const applyBtn = document.getElementById('applyBtn')
+
+    if(applyBtn.innerText === 'Apply'){
+      const code = codeInput.value.trim()
+      if(!code) return message.innerText = 'Enter a coupon code'
+ 
+      console.log("Coupon code entered:", code)
+
+    
+      const response = await fetch('/apply-coupon', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({code})
+      })
+
+      const result = await response.json()
+
+      if(response.ok){
+        applyBtn.innerText = 'Remove Coupon'
+        codeInput.disabled = true
+        document.getElementById('discountAmount').innerText = `-₹${result.discount}`
+       /* document.getElementById('grandTotal').innerText = `₹${result.newTotal}`*/
+       const shippingCharge = parseFloat(document.getElementById('shippingCharge').textContent) || 0;
+       const grandTotal = parseFloat(result.newTotal) + shippingCharge;
+        document.getElementById('totalAmount').innerText = `₹${result.newTotal}`
+        document.getElementById('totalPayable').value = result.newTotal
+        message.innerText = `Coupon ${code.toUpperCase()} Applied`
+      }else{
+        message.innerText = result.message
+        message.classList.add('text-dange')
+      }
+      
+    }else{
+      await fetch('/cancel-coupon')
+      applyBtn.innerText = 'Apply'
+      codeInput.disabled = false
+      codeInput.value = ''
+      message.innerText = ''
+      document.getElementById('discountAmount').innerText = '-₹0'
+      const originalGrandTotal = parseFloat(document.getElementById('originalGrandTotal').value);
+      const originalShipping = parseFloat(document.getElementById('originalShippingCharge').value);
+      const total = (originalGrandTotal + originalShipping).toFixed(2);
+      document.getElementById('totalAmount').innerText = `₹${total}`;
+      document.getElementById('totalPayable').value = total;
+
+    }
+  }
+    //Available Coupon
+  document.getElementById('showCouponsBtn').addEventListener('click', async () => {
+    const modalBody = document.getElementById('couponsModalBody');
+    modalBody.innerHTML = '<p>Loading coupons...</p>';
+  
+    try {
+      const res = await fetch('/available-coupons');
+      const data = await res.json();
+  
+      if (data.success && data.coupons.length) {
+        modalBody.innerHTML = ''; // clear loading text
+  
+        data.coupons.forEach(coupon => {
+          const expiry = new Date(coupon.expiryDate).toLocaleDateString();
+          const offer = coupon.type === 'percentage' ? `${coupon.offerPrice}% OFF` : `₹${coupon.offerPrice} OFF`;
+  
+          const couponCard = document.createElement('div');
+          couponCard.classList.add('coupon-card', 'mb-3');
+          couponCard.innerHTML = `
+            <div>
+              <strong>${coupon.code}</strong> — ${offer} <br />
+              Min order: ₹${coupon.minimumPrice} <br />
+              Valid till: ${expiry}
+            </div>
+            <button class="btn btn-sm btn-primary copy-btn" data-code="${coupon.code}">Copy</button>
+          `;
+          modalBody.appendChild(couponCard);
+        });
+  
+        // Add copy functionality
+        modalBody.querySelectorAll('.copy-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const code = button.getAttribute('data-code');
+            navigator.clipboard.writeText(code).then(() => {
+              //alert(`Copied coupon code: ${code}`);
+              Swal.fire({
+                toast: true,
+                position: 'bottom',
+                icon: 'success',
+                title: `Copied: ${code}`,
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true
+              });
+              
+            });
+          });
+        });
+      } else {
+        modalBody.innerHTML = '<p>No coupons available.</p>';
+      }
+    } catch (error) {
+      console.error('Error loading coupons:', error);
+      modalBody.innerHTML = '<p>Failed to load coupons. Try again later.</p>';
+    }
+  
+    // Show the modal (Bootstrap 5)
+    const couponsModal = new bootstrap.Modal(document.getElementById('couponsModal'));
+    couponsModal.show();
+  });
+  </script>
+
+<%- include('../partials/user/footer') %>

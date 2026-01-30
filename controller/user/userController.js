@@ -2,8 +2,10 @@ const User = require('../../models/userSchema')
 const Category = require('../../models/categorySchema');
 const Product = require('../../models/productSchema');
 const Brand = require('../../models/brandSchema');
+const Coupon = require('../../models/couponSchema');
 const generateOtp = require('../../utils/otp');
 const sendVerificationEmail = require('../../utils/sendEmail')
+const generateReferralCode = require('../../utils/referralCode');
 const nodemailer = require('nodemailer')
 const env = require('dotenv').config()
 const bcrypt = require('bcrypt')
@@ -63,7 +65,7 @@ const loadRegister = async (req,res)=>{
 const register = async (req,res) =>{
     try {
         
-        const {username,phone,email,password,cpassword} = req.body;
+        const {username,phone,email,password,cpassword, referalCode} = req.body;
 
         if(password !== cpassword){
             return res.render("user/register",{message:"Password does not match"})
@@ -72,6 +74,20 @@ const register = async (req,res) =>{
         if(findUser){
             return res.render("user/register",{message:"User with this email already existed"})
         }
+ //Referral validation (ONLY if entered)
+    let referrerId = null;
+
+    if (referalCode && referalCode.trim() !== "") {
+      const referrer = await User.findOne({ referalCode });
+
+      if (!referrer) {
+        return res.render("user/register", {
+          message: "Invalid referral code"
+        });
+      }
+
+      referrerId = referrer._id;
+    }
 
         const otp = generateOtp();
 
@@ -83,7 +99,7 @@ const register = async (req,res) =>{
         }                                       // after successfully snding otp, we just asign otp to session
 
         req.session.userOtp = otp;
-        req.session.userData = {username,email,phone,password};
+        req.session.userData = {username,email,phone,password,referrerId };
                                     //a after session stored, we get the message varify otp
         res.render("user/confirmotp", { otpAction: "/confirmotp" });
         console.log("Otp Sent",otp)
@@ -105,41 +121,91 @@ const securePassword = async (password)=>{                            //hashing 
     }
 }
 
-const confirmOtp = async (req,res)=> {
-    try {
-        console.log("BODY RECEIVED:", req.body);
-        const { otp } = req.body;
-        console.log("Received OTP:", otp);
-        console.log("Session OTP:", req.session.userOtp);
+const confirmOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
 
-        if(String(otp) === String(req.session.userOtp)){
-            const user = req.session.userData
-
-            const passwordHash = await securePassword(user.password);
-
-            const savedUserData = new User ({
-                username:user.username,
-                email:user.email,
-                phone:user.phone,
-                password:passwordHash
-            })
-
-            await savedUserData.save();
-            req.session.user = savedUserData._id;
-            req.session.userOtp = null;
-            req.session.userData = null;
-            res.json({success:true, redirectUrl:"/"})
-            
-
-        }else{
-            res.status(400).json({success:false,message:"Invallid OTP, Please try again"})
-        }
-    } catch (error) {
-        console.error("Error verifying OTP",error);
-        res.status(500).json({success:false,message:"An error occured"})
+    if (String(otp) !== String(req.session.userOtp)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP, please try again"
+      });
     }
-}
 
+    const userData = req.session.userData;
+    if (!userData) {
+      return res.status(400).json({
+        success: false,
+        message: "Session expired. Please register again"
+      });
+    }
+
+    const passwordHash = await securePassword(userData.password);
+
+    // ✅ Create new user
+    const newUser = new User({
+      username: userData.username,
+      email: userData.email,
+      phone: userData.phone,
+      password: passwordHash,
+      referalCode: generateReferralCode(), // 👈 own referral code
+      wallet: 0
+    });
+
+    await newUser.save();
+
+    // ✅ Referral reward logic
+    if (userData.referrerId) {
+      const referrer = await User.findById(userData.referrerId);
+
+      if (referrer) {
+        console.log("🔥 REFERRER FOUND:", referrer._id);
+      
+        const coupon = await Coupon.create({
+          name: "Referral Reward",
+          code: `REF-${referrer.referalCode}-${Date.now().toString().slice(-4)}`,
+      
+          type: "fixed",
+          offerPrice: 100,
+          minimumPrice: 500,
+      
+          startingDate: new Date(),
+          expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      
+          status: "Active",
+          source: "referral",           // 👈 must be here
+          assignedUser: referrer._id,
+      
+          usageLimit: 1,
+          usagePerUser: 1,
+          usedCount: 0,
+          usedUsers: []
+        });
+      
+        console.log("🎁 REFERRAL COUPON CREATED:", coupon);
+      } else {
+        console.log("❌ NO REFERRER FOUND — coupon NOT created");
+      }
+    }
+
+    // ✅ Clear session
+    req.session.user = newUser._id;
+    req.session.userOtp = null;
+    req.session.userData = null;
+
+    res.json({
+      success: true,
+      redirectUrl: "/"
+    });
+
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred"
+    });
+  }
+};
 
 const resendOTP = async (req, res) => {
     try {

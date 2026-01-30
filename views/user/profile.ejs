@@ -721,7 +721,12 @@ tbody tr:hover {
           <div class="mb-3">
             <h5>Your Referral Code:</h5>
             <div class="d-inline-flex align-items-center border rounded px-3 py-2 bg-light">
-              <strong id="referralCode"><%= user.referalCode %></strong>
+              <% if (user.referalCode) { %>
+                <strong id="referalCode"><%= user.referalCode %></strong>
+              <% } else { %>
+                <span class="text-muted">Not available</span>
+              <% } %>
+              
               <button class="btn btn-sm btn-outline-primary ms-3" onclick="copyReferralCode()">Copy</button>
             </div>
           </div>
@@ -1010,13 +1015,23 @@ tbody tr:hover {
 </script>
 
 <script>
-  function copyReferralCode() {
-    const code = document.getElementById("referralCode").textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      Swal.fire("Referral code copied to clipboard!");
-    }).catch(err => {
-      Swal.fire("Failed to copy code.");
-    });
+ function copyReferralCode() {
+    const codeElement = document.getElementById("referalCode");
+
+    if (!codeElement) {
+      alert("Referral code not found");
+      return;
+    }
+
+    const code = codeElement.textContent.trim();
+
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        Swal.fire("Referral code copied to clipboard!");
+      })
+      .catch(() => {
+        Swal.fire("Failed to copy code.");
+      });
   }
 </script>
 
@@ -1035,7 +1050,7 @@ tbody tr:hover {
       form.classList.remove('active');
       document.getElementById('walletAmount').value = ''; 
     });
-  })();
+  })();copyReferralCode
 </script>
 
 <%- include('../partials/user/footer') %>

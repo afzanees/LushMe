@@ -52,24 +52,62 @@ const userAuth = asyncHandler(async (req, res, next) => {
  * Admin authentication middleware
  * Protects admin routes and verifies admin privileges
  */
-const adminAuth = asyncHandler(async (req, res, next) => {
-  // Check if admin session exists
-  if (!req.session.admin) {
-    return res.redirect("/admin/login");
-  }
+// const adminAuth = asyncHandler(async (req, res, next) => {
+//   // Check if admin session exists
+//   if (!req.session.admin) {
+//     return res.redirect("/admin/login");
+//   }
 
-  // Verify admin exists and has admin privileges
-  const admin = await User.findById(req.session.admin);
+//   // Verify admin exists and has admin privileges
+//   const admin = await User.findById(req.session.admin);
   
-  if (!admin || !admin.isAdmin) {
-    req.session.destroy((err) => {
-      if (err) console.error("Session destroy error:", err);
-      res.redirect("/admin/login");
-    });
-    return;
+//   if (!admin || !admin.isAdmin) {
+//     req.session.destroy((err) => {
+//       if (err) console.error("Session destroy error:", err);
+//       res.redirect("/admin/login");
+//     });
+//     return;
+//   }
+
+//   // Attach admin to response locals and request for use in views/controllers
+//   res.locals.admin = admin;
+//   req.admin = admin;
+//   next();
+// });
+
+
+const adminAuth = asyncHandler(async (req, res, next) => {
+  // ❗ Check admin session
+  if (!req.session.admin) {
+
+    // If request comes from fetch / AJAX
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Admin login required'
+      });
+    }
+
+    // Normal browser navigation
+    return res.redirect('/admin/login');
   }
 
-  // Attach admin to response locals and request for use in views/controllers
+  // Verify admin user
+  const admin = await User.findById(req.session.admin);
+
+  if (!admin || !admin.isAdmin) {
+    req.session.destroy(() => {});
+
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized admin access'
+      });
+    }
+
+    return res.redirect('/admin/login');
+  }
+
   res.locals.admin = admin;
   req.admin = admin;
   next();

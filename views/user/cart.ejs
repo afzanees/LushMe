@@ -16,11 +16,7 @@
     background-color: #fff3cd !important;
   }
 </style>
-<section class="bg-img1 txt-center p-lr-15 p-tb-92" style="background-image: url('images/bg-02.jpg');">
-  <h2 class="ltext-105 cl0 txt-center">
-    
-  </h2>
-</section>
+
 
 <!-- breadcrumb -->
 <div class="container">
@@ -76,7 +72,10 @@
                             onclick="changeQuantity(
                               '<%= item.productId %>',
                               <%= item.variantIndex %>,
-                              -1
+                              -1,
+                              <%= item.productPrice %>,
+                              <%= item.productStock %>,
+                              '<%= item.color %>'
                             )"
                             <%= (item.isOutOfStock || item.isBlocked || !item.isCategoryListed) ? 'disabled' : '' %>
                             >
@@ -87,7 +86,7 @@
                             class="mtext-104 cl3 txt-center num-product" 
                             type="number" 
                             name="quantity" 
-                            id="cartProductQuantity<%= item.variantIndex %>"
+                            id="cartProductQuantity_<%= item.productId %>_<%= item.variantIndex %>"
                             value="<%= item.quantity %>" 
                             min="1" 
                             max="<%= item.productStock %>" 
@@ -98,7 +97,14 @@
                             <button 
                             type="button" 
                             class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m" 
-                            onclick="changeQuantity( '<%= item.productId %>',<%= item.variantIndex %>,1)"
+                            onclick="changeQuantity(
+                              '<%= item.productId %>',
+                              <%= item.variantIndex %>,
+                              1,
+                              <%= item.productPrice %>,
+                              <%= item.productStock %>,
+                              '<%= item.color %>'
+                            )"
                             <%= (item.isOutOfStock || item.isBlocked || !item.isCategoryListed) ? 'disabled' : '' %>
                             >
                             +
@@ -123,7 +129,7 @@
                     </td>
 
                     <!-- Subtotal with id for JS update -->
-                    <td class="column-5" id="subTotal<%= item.variantIndex %>">₹ <%= (item.productPrice * item.quantity).toFixed(2) %></td>
+                    <td class="column-5" id="subTotal_<%= item.productId %>_<%= item.variantIndex %>">₹ <%= (item.productPrice * item.quantity).toFixed(2) %></td>
 
                     <!-- Remove item -->
                  
@@ -238,10 +244,10 @@
  function changeQuantity(productId, variantIndex, count, productPrice, maxStock, color) {
     maxStock = parseInt(maxStock);
     const quantityInput =
-  document.getElementById(`cartProductQuantity${variantIndex}`);
+  document.getElementById(`cartProductQuantity_${productId}_${variantIndex}`);
 
 const subtotalElement =
-  document.getElementById(`subTotal${variantIndex}`);
+  document.getElementById(`subTotal_${productId}_${variantIndex}`);
     const totalElement = document.getElementById('total');
     const shippingChargeElement = document.getElementById('shippingCharge');
     const totalPayableElement = document.getElementById('totalPayable');

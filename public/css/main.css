@@ -51,27 +51,39 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
   
   @font-face {
     font-family: Poppins-ExtraLight;
-    src: url('../fonts/Poppins/Poppins-ExtraLight.ttf'); 
+    src: local('Poppins'), local('Poppins-ExtraLight');
+    font-weight: 200;
   }
   
   @font-face {
     font-family: Poppins-Medium;
-    src: url('../fonts/Poppins/Poppins-Medium.ttf'); 
+    src: local('Poppins'), local('Poppins-Medium');
+    font-weight: 500;
+  }
+  
+  /* Use system fonts or Google Fonts instead of local files */
+  @font-face {
+    font-family: Poppins-Regular;
+    src: local('Poppins'), local('Poppins-Regular');
+    font-weight: 400;
   }
   
   @font-face {
     font-family: Poppins-Italic;
-    src: url('../fonts/Poppins/Poppins-Italic.ttf'); 
+    src: local('Poppins'), local('Poppins-Italic');
+    font-style: italic;
   }
   
   @font-face {
     font-family: Poppins-Bold;
-    src: url('../fonts/Poppins/Poppins-Bold.ttf'); 
+    src: local('Poppins'), local('Poppins-Bold');
+    font-weight: 700;
   }
   
   @font-face {
     font-family: Poppins-SemiBold;
-    src: url('../fonts/Poppins/Poppins-SemiBold.ttf'); 
+    src: local('Poppins'), local('Poppins-SemiBold');
+    font-weight: 600;
   }
   
   

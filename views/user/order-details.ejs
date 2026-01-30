@@ -344,6 +344,13 @@
           <p>
             <strong>Payment:</strong> <%= orderObj.paymentMethod.toUpperCase() %> <br />
             <strong>Status:</strong> <%= orderObj.status.charAt(0).toUpperCase() + orderObj.status.slice(1) %> <br />
+            <% if (orderObj.paymentMethod === 'razorpay' && orderObj.paymentStatus !== 'paid') { %>
+              <strong>Payment Status:</strong> <span class="badge bg-warning text-dark">Pending</span> <br />
+              <a href="/payment-failed/<%= orderObj._id %>" class="btn btn-sm btn-danger mt-2">
+                <i class="bi bi-arrow-repeat"></i> Retry Payment
+              </a>
+              <br />
+            <% } %>
             <strong>Grand Total:</strong> ₹<%= orderObj.finalAmount.toFixed(2) %> <br />
            
             <strong>Delivery Charge:</strong> ₹<%= (orderObj.deliveryCharge || 0).toFixed(2) %>

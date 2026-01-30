@@ -1,0 +1,165 @@
+<%- include('../partials/user/header') %>
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body text-center p-5">
+          <div class="mb-4">
+            <svg width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="#dc3545" stroke-width="2" fill="none"/>
+              <line x1="15" y1="9" x2="9" y2="15" stroke="#dc3545" stroke-width="2"/>
+              <line x1="9" y1="9" x2="15" y2="15" stroke="#dc3545" stroke-width="2"/>
+            </svg>
+          </div>
+
+          <h2 class="mb-3 text-danger">Payment Failed</h2>
+          <p class="text-muted mb-4">
+            We're sorry, but your payment could not be processed. 
+            <% if (order) { %>
+              Your order <strong>#<%= order.orderId %></strong> has been saved.
+            <% } %>
+          </p>
+
+          <div class="bg-light p-3 rounded mb-4">
+            <div class="d-flex justify-content-between mb-2">
+              <span>Order ID:</span>
+              <strong><%= order.orderId %></strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Order Total:</span>
+              <strong>₹<%= order.finalAmount.toFixed(2) %></strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>Payment Method:</span>
+              <strong class="text-uppercase"><%= order.paymentMethod %></strong>
+            </div>
+          </div>
+
+          <button id="retryPaymentBtn" class="btn btn-danger btn-lg w-100 mb-3">
+            <i class="bi bi-arrow-repeat"></i> Retry Payment
+          </button>
+
+          <a href="/viewOrderDetails/<%= order._id %>" class="btn btn-outline-secondary w-100 mb-2">
+            View Order Details
+          </a>
+
+          <a href="/shop" class="btn btn-outline-primary w-100 mb-2">
+            Continue Shopping
+          </a>
+
+          <a href="/profile" class="btn btn-link text-decoration-none">Go to My Orders</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  document.getElementById('retryPaymentBtn').addEventListener('click', function() {
+    // Show loading
+    Swal.fire({
+      title: 'Creating Payment...',
+      text: 'Please wait',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // Create new Razorpay order
+    $.ajax({
+      url: '/retry-payment/<%= order._id %>',
+      method: 'GET',
+      success: function(data) {
+        Swal.close();
+
+        if (!data.success) {
+          Swal.fire('Error', data.message || 'Failed to create payment', 'error');
+          return;
+        }
+
+        const options = {
+          key: data.key_id,
+          amount: data.razorPayOrder.amount,
+          currency: "INR",
+          name: "LushMe",
+          description: "Retry Payment for Order #<%= order.orderId %>",
+          order_id: data.razorPayOrder.id,
+          handler: function (response) {
+            // Verify payment
+            $.ajax({
+              url: '/verify-razorpay-payment',
+              method: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: "<%= order._id %>"
+              }),
+              success: function (verifyData) {
+                if (verifyData.success) {
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Payment Successful!',
+                    text: 'Your order has been confirmed.',
+                    confirmButtonText: 'View Order'
+                  }).then(() => {
+                    window.location.href = '/order-success/<%= order._id %>';
+                  });
+                } else {
+                  Swal.fire('Payment Verification Failed', verifyData.message || 'Please contact support', 'error');
+                }
+              },
+              error: function () {
+                Swal.fire('Error', 'Payment verification failed. Please contact support.', 'error');
+              }
+            });
+          },
+          prefill: {
+            name: "<%= user?.name || '' %>",
+            email: "<%= user?.email || '' %>",
+            contact: "<%= user?.phone || '' %>"
+          },
+          theme: {
+            color: "#0d6efd"
+          },
+          modal: {
+            ondismiss: function() {
+              Swal.fire({
+                title: 'Payment Cancelled',
+                text: 'You can retry the payment anytime.',
+                icon: 'info',
+                confirmButtonText: 'OK'
+              });
+            }
+          }
+        };
+
+        const razorpay = new Razorpay(options);
+        razorpay.on('payment.failed', function (response) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Payment Failed',
+            text: response.error.description || 'Please try again',
+            confirmButtonText: 'OK'
+          });
+        });
+        razorpay.open();
+      },
+      error: function(xhr) {
+        Swal.close();
+        const errorMsg = xhr.responseJSON?.message || 'Failed to create payment. Please try again.';
+        Swal.fire('Error', errorMsg, 'error');
+      }
+    });
+  });
+</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+<%- include('../partials/user/footer') %>

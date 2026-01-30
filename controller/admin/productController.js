@@ -7,6 +7,7 @@ const User = require('../../models/userSchema');
 const path = require("path")
 const fs = require("fs")
 const sharp = require("sharp")
+const slugify = require("slugify");
 
 // const calculateEffectivePrice = async (product) => {
  
@@ -116,11 +117,22 @@ const addProducts = async (req, res) => {
       });
     }
 
+    let slug = slugify(name, {
+      lower: true,
+      strict: true,
+    });
+
+    const slugExists = await Product.findOne({ slug });
+    if (slugExists) {
+      slug = `${slug}-${Date.now()}`;
+    }
+
    // ✅ Create new product document without images
    const newProduct = new Product({
     name,
     description,
     brand,
+    slug,
     category,
     subcategory,
     productImage: [], // Empty array, images will be added via variants
@@ -318,6 +330,27 @@ const editProduct = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Product with this name already exists. Please try another name." })
     }
+    
+    const product = await Product.findById(id)
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" })
+    }
+    
+    // Update slug if name has changed
+    if (product.name !== name) {
+      let slug = slugify(name, {
+        lower: true,
+        strict: true,
+      });
+      
+      // Check if slug already exists
+      const slugExists = await Product.findOne({ slug, _id: { $ne: id } });
+      if (slugExists) {
+        slug = `${slug}-${Date.now()}`;
+      }
+      product.slug = slug;
+    }
+    
     const updateFields = {
       name,
       description,
@@ -325,10 +358,6 @@ const editProduct = async (req, res) => {
       category,
       subcategory,
       status
-    }
-    const product = await Product.findById(id)
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" })
     }
 
     

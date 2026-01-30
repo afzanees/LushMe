@@ -1,4 +1,4 @@
-<%- include('../partials/user/header') %>
+<%- include("../partials/user/header") -%>
 
 <!-- ============ STYLES ============ -->
 <style>
@@ -418,13 +418,25 @@ document.getElementById('colorSelect').addEventListener('change', function () {
           });
         }
       })
-      .fail(()=> 
-        Swal.fire({
-          icon: 'error',
-          title: 'Failed',
-          text: 'Failed to add to wishlist'
-        })
-      );
+      .fail((xhr, status, error) => {
+        console.error('Wishlist error:', xhr, status, error);
+        if (xhr.status === 401) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Please Login',
+            text: 'You need to login to add items to wishlist',
+            confirmButtonText: 'Go to Login'
+          }).then(() => {
+            window.location.href = '/login';
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Failed',
+            text: xhr.responseJSON?.message || 'Failed to add to wishlist'
+          });
+        }
+      });
   }
 </script>
 

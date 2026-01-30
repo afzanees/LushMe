@@ -143,9 +143,19 @@ const getWishlistPage = async (req, res) => {
             return res.redirect('/login');
         }
 
+        // Filter out null/deleted products from wishlist
+        const validWishlist = (user.wishlist || []).filter(item => item != null);
+        
+        // Clean up the user's wishlist in database if there were null values
+        if (user.wishlist && validWishlist.length !== user.wishlist.length) {
+            console.log(`Cleaning wishlist: had ${user.wishlist.length}, keeping ${validWishlist.length}`);
+            user.wishlist = validWishlist.map(item => item._id);
+            await user.save();
+        }
+
         res.render('user/wishlist', { 
             user,
-            wishlist: user.wishlist || []
+            wishlist: validWishlist
         });
 
     } catch (error) {
@@ -154,8 +164,13 @@ const getWishlistPage = async (req, res) => {
     }
 };
 
+
+
+
+
 module.exports = {
     addToWishlist,
     removeFromWishlist,
-    getWishlistPage
+    getWishlistPage,
+   
 };

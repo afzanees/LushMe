@@ -29,7 +29,7 @@ router.post('/login',userController.login);
 router.get('/logout',userController.logout);
 router.get("/shop",userController.loadShoppingPage);
 router.get("/filter",userController.filterProduct);
-router.get("/productDetails",productController.productDetails);
+router.get("/productDetails/:slug",productController.productDetails);
 
 // router.get('/userProfile',userAuth,profileController.userProfile);
 router.get('/profile',userAuth,profileController.userProfile);
@@ -71,12 +71,11 @@ router.get('/validate-cart', userAuth, cartController.validateCartBeforeCheckout
 router.get("/checkout", userAuth, orderController.getCheckoutPage)
 router.post('/check-stock', userAuth, orderController.checkStock)
 router.post('/placeOrder', userAuth, orderController.placeOrder)
-router.post('/verifyPayment', userAuth, orderController.verifyPayment)
-//router.post('/confirmOrderAfterRazorpay', userAuth, orderController.confirmOrderAfterRazorpay)
 router.get('/order-success/:orderId', userAuth, orderController.getOrderSuccessPage);
+router.get('/payment-failed/:orderId', userAuth, orderController.retryPayment);
+router.get('/retry-payment/:orderId', userAuth, orderController.createRetryPayment);
 router.get('/viewOrderDetails/:orderId', userAuth, orderController.viewOrderDetails)
 router.post('/paymentConfirm',userAuth, orderController.paymentConfirm);
-//router.get("/retryPayment", userAuth, orderController.retryPayment);
 
 router.post("/cancelOrder",userAuth,orderController.cancelOrder);
 router.post('/orders/return-request', userAuth, orderController.returnRequest);
@@ -87,6 +86,13 @@ router.post('/addToWishlist', userAuth, wishlistController.addToWishlist);
 router.post('/removeFromWishlist', userAuth, wishlistController.removeFromWishlist);
 
 
+//coupon management
+router.get('/available-coupons', userAuth, orderController.getAvailableCoupons)
+router.post('/apply-coupon', userAuth, orderController.applyCoupon)
+router.get('/cancel-coupon', userAuth, orderController.deleteCoupon)
 
+//Razor pay
+router.post("/create-razorpay-order", userAuth, orderController.createRazorpayOrder);
+router.post("/verify-razorpay-payment",userAuth, orderController.verifyRazorpayPayment);
 
 module.exports = router

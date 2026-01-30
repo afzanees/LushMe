@@ -10,6 +10,7 @@ const authRoute = require("./routes/authRoute");
 const passport = require("./config/passport"); 
 const User = require('./models/userSchema');
 const { errorHandler, notFound } = require('./middlewares/errorhandling');
+const userHeaderData = require("./middlewares/userHeaderData");
 db();
 
 const app = express()
@@ -41,7 +42,15 @@ app.use((req,res,next)=>{
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Serve static files FIRST (before routes)
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/css', express.static(path.join(__dirname, 'public/css')));
+app.use('/js', express.static(path.join(__dirname, 'public/js')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/fonts', express.static(path.join(__dirname, 'public/fonts')));
+app.use('/vendor', express.static(path.join(__dirname, 'public/vendor')));
 
 app.use(async (req, res, next) => {
     try {
@@ -60,6 +69,8 @@ app.use(async (req, res, next) => {
       next();
     }
   });
+
+  app.use(userHeaderData);
 
 app.use('/',userRouter)
 app.use('/admin',adminRouter)

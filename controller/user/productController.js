@@ -4,6 +4,7 @@ const User = require("../../models/userSchema");
 const Brand = require("../../models/brandSchema")
 const mongoose = require('mongoose');
 
+
 const productDetails = async (req,res) => {
 
     try {
@@ -14,18 +15,33 @@ const productDetails = async (req,res) => {
             wishlistIds = userDoc?.wishlist?.map(id => id.toString()) || [];
         }
         const userData =  userId ? await User.findById(userId) : null;
-        const productId = req.query.id;
-        const product = await Product.findOne({ _id: productId})
-        .populate('category')
-        .populate({ path: 'ratings.userId', select: 'name profilePicture' })
-        .populate('brand');
+        const identifier = req.params.slug;
+        
+        // Try to find by slug first, then by ID as fallback
+        let product;
+        if (mongoose.Types.ObjectId.isValid(identifier)) {
+            // If it's a valid ObjectId, try finding by ID
+            product = await Product.findById(identifier)
+                .populate('category')
+                .populate({ path: 'ratings.userId', select: 'name profilePicture' })
+                .populate('brand');
+        }
+        
+        // If not found by ID or not a valid ObjectId, try by slug
+        if (!product) {
+            product = await Product.findOne({ slug: identifier })
+                .populate('category')
+                .populate({ path: 'ratings.userId', select: 'name profilePicture' })
+                .populate('brand');
+        }
+        
         if (!product) {
             return res.redirect('/pageNotFound');
-          }
-          if (product.isBlocked) {
+        }
+        if (product.isBlocked) {
             // Product exists but blocked by admin
-            return res.redirect('/shop'); // or render unavailable page
-          }
+            return res.redirect('/shop');
+        }
         const ratingsCount = product?.ratings?.length || 0;  
         let totalQuantity = 0;
         if (product.variants && product.variants.length > 0) {

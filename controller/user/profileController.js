@@ -6,7 +6,7 @@ const Address = require('../../models/addressSchema')
 const Order = require("../../models/orderSchema");
 const generateOtp = require('../../utils/otp');
 const sendVerificationEmail = require('../../utils/sendEmail')
-
+const generateReferralCode = require('../../utils/referralCode');
 const nodemailer = require('nodemailer')
 const env = require('dotenv').config()
 const bcrypt = require('bcrypt')
@@ -142,6 +142,8 @@ const userProfile = async (req,res)=>{
         const userAddress = await Address.findOne({ userId: userId });
         const addresses = userAddress ? userAddress.address : [];
         console.log("View Loaded")
+        console.log("✅ USER FROM DB:", userData);
+        console.log("✅ REFERRAL CODE FROM DB:", userData.referalCode);
         //for order
         const page = parseInt(req.query.page) || 1;
         const limit = 5;
@@ -158,6 +160,12 @@ const userProfile = async (req,res)=>{
         console.log('🔍 Orders Retrieved:', orders.length);
         console.log('🔍 Orders Data:', JSON.stringify(orders, null, 2));
         const totalPages = Math.ceil(totalOrders / limit);
+
+        if (!userData.referalCode) {
+          userData.referalCode = generateReferralCode();
+          await userData.save();
+          console.log("✅ Referral code generated & saved to DB:", userData.referalCode);
+        }
 
         // Wallet history pagination
         const walletPage = parseInt(req.query.walletPage) || 1;
@@ -689,6 +697,8 @@ const verifyWalletPayment = async (req, res) => {
         res.status(500).json({ status: false, message: 'Server error' });
     }
 };
+
+
 
 
 module.exports = {
