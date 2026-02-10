@@ -213,15 +213,55 @@ const updateItemStatus = async (req, res) => {
             order.status = 'Pending'; // 'Confirmed' is not in order-level enum, keep as Pending
         }
 
-        // Handle product stock updates for cancellations and deliveries
+        // Handle product stock updates and wallet refunds for cancellations
         const item = order.orderedItems[itemIndex];
         const product = item.product;
         
-        if (status.toLowerCase() === 'cancelled' && !allStatuses.includes('cancelled')) {
-            // Restore stock when item is cancelled
+        if (status.toLowerCase() === 'cancelled') {
+            // Calculate refund amount with proportional discount
+            const itemTotal = item.price * item.quantity;
+            let refundAmount = itemTotal;
+
+            if (order.discount > 0 && order.totalPrice > 0) {
+                const proportionalDiscount = (itemTotal / order.totalPrice) * order.discount;
+                refundAmount -= proportionalDiscount;
+                refundAmount = Math.round(refundAmount);
+            }
+
+            // WALLET REFUND for Razorpay and Wallet payments
+            const paymentMethod = (order.paymentMethod || '').toLowerCase();
+            if (paymentMethod === 'razorpay' || paymentMethod === 'wallet') {
+                try {
+                    const user = await User.findById(order.userId);
+                    if (user) {
+                        // Credit refund to user wallet
+                        user.wallet = (user.wallet || 0) + refundAmount;
+                        
+                        if (!user.walletTransactions) {
+                            user.walletTransactions = [];
+                        }
+                        
+                        user.walletTransactions.push({
+                            amount: refundAmount,
+                            status: "credited",
+                            method: 'refund',
+                            description: `Refund for cancelled item in order ${order.orderId} (Admin cancelled)`,
+                        });
+                        
+                        await user.save();
+                        console.log(`✅ Admin cancelled - Refunded ₹${refundAmount} to user's wallet`);
+                    }
+                } catch (refundError) {
+                    console.error('❌ Wallet refund failed:', refundError);
+                    // Continue with cancellation even if refund fails, but log it
+                }
+            }
+
+            // Restore product stock
             if (product.variants && product.variants[item.variantIndex]) {
                 product.variants[item.variantIndex].quantity += item.quantity;
                 await product.save();
+                console.log('✅ Product stock restored');
             }
         }
 
@@ -267,6 +307,30 @@ const cancelOrder = async (req, res) => {
             });
         }
 
+        // Wallet refund for prepaid orders (Razorpay/Wallet)
+        const paymentMethod = (order.paymentMethod || '').toLowerCase();
+        if (paymentMethod === 'razorpay' || paymentMethod === 'wallet') {
+            const user = await User.findById(order.userId);
+            if (user) {
+                const refundAmount = order.finalAmount;
+                user.wallet = (user.wallet || 0) + refundAmount;
+                
+                if (!user.walletTransactions) {
+                    user.walletTransactions = [];
+                }
+                
+                user.walletTransactions.push({
+                    amount: refundAmount,
+                    status: "credited",
+                    method: 'refund',
+                    description: `Refund for cancelled order ${order.orderId} (Admin cancelled)`,
+                });
+                
+                await user.save();
+                console.log(`✅ Admin cancelled - Refunded ₹${refundAmount} to user ${user.email}`);
+            }
+        }
+
         // Restore product stock
         for (const item of order.orderedItems) {
             const product = item.product;
@@ -282,7 +346,7 @@ const cancelOrder = async (req, res) => {
 
         res.json({ 
             success: true, 
-            message: 'Order cancelled successfully' 
+            message: 'Order cancelled successfully and refund processed' 
         });
     } catch (error) {
         console.error('Error cancelling order:', error);
@@ -360,6 +424,132 @@ const handleReturnRequest = async (req, res) => {
     }
 };
 
+// Approve user cancellation request (for Razorpay/Wallet orders)
+const approveCancellation = async (req, res) => {
+    try {
+        const { orderId, itemIndex } = req.params;
+        const { adminNote } = req.body;
+
+        const order = await Order.findOne({ orderId }).populate('orderedItems.product');
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Order not found' 
+            });
+        }
+
+        if (itemIndex >= order.orderedItems.length) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid item index' 
+            });
+        }
+
+        const item = order.orderedItems[itemIndex];
+        
+        if (item.status.toLowerCase() !== 'cancellation_requested') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No cancellation request pending for this item' 
+            });
+        }
+
+        // Calculate refund amount with proportional discount
+        const itemTotal = item.price * item.quantity;
+        let refundAmount = itemTotal;
+
+        if (order.discount > 0 && order.totalPrice > 0) {
+            const proportionalDiscount = (itemTotal / order.totalPrice) * order.discount;
+            refundAmount -= proportionalDiscount;
+            refundAmount = Math.round(refundAmount);
+        }
+
+        // STEP 1: Process refund to user wallet FIRST
+        const user = await User.findById(order.userId);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'User not found' 
+            });
+        }
+
+        try {
+            user.wallet = (user.wallet || 0) + refundAmount;
+            
+            if (!user.walletTransactions) {
+                user.walletTransactions = [];
+            }
+            
+            user.walletTransactions.push({
+                amount: refundAmount,
+                status: "credited",
+                method: 'refund',
+                description: `Refund for cancelled item in order ${order.orderId} (Admin approved)`,
+            });
+            
+            await user.save();
+            console.log(`✅ Refund processed: ₹${refundAmount} credited to ${user.email}'s wallet`);
+        } catch (refundError) {
+            console.error('❌ Refund failed:', refundError);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Refund processing failed. Please try again.' 
+            });
+        }
+
+        // STEP 2: ONLY after successful refund, confirm cancellation
+        item.status = 'cancelled';
+        if (adminNote) {
+            item.adminNote = adminNote;
+        }
+
+        // Restore product stock
+        const product = item.product;
+        if (product.variants && product.variants[item.variantIndex]) {
+            product.variants[item.variantIndex].quantity += item.quantity;
+            await product.save();
+            console.log('✅ Product stock restored');
+        }
+
+        // Recalculate order totals
+        let newTotal = 0;
+        order.orderedItems.forEach(orderItem => {
+            const status = (orderItem.status || '').toLowerCase();
+            if (status !== "cancelled" && status !== "cancellation_requested") {
+                newTotal += orderItem.price * orderItem.quantity;
+            }
+        });
+
+        order.totalPrice = newTotal;
+        const deliveryCharge = newTotal > 0 && newTotal < 500 ? 50 : 0;
+        order.deliveryCharge = deliveryCharge;
+        order.finalAmount = newTotal - order.discount + deliveryCharge;
+
+        // Update overall order status if all items cancelled
+        const allCancelled = order.orderedItems.every(p => {
+            const s = (p.status || '').toLowerCase();
+            return s === "cancelled";
+        });
+        if (allCancelled) {
+            order.status = 'Cancelled';
+        }
+
+        await order.save();
+
+        res.json({ 
+            success: true, 
+            message: `Cancellation approved. ₹${refundAmount} refunded to user's wallet.` 
+        });
+    } catch (error) {
+        console.error('Error approving cancellation:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error processing cancellation approval' 
+        });
+    }
+};
+
 // Get order statistics for dashboard
 const getOrderStats = async (req, res) => {
     try {
@@ -399,5 +589,6 @@ module.exports = {
     updateItemStatus,
     cancelOrder,
     handleReturnRequest,
+    approveCancellation,
     getOrderStats
 };

@@ -77,6 +77,9 @@ slug: {
     type: Number, 
     default: 0 
 },
+  offerValidUntil: {
+    type: Date
+  },
 
 variants: [variantSchema], 
 

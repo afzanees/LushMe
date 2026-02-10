@@ -721,8 +721,8 @@ tbody tr:hover {
           <div class="mb-3">
             <h5>Your Referral Code:</h5>
             <div class="d-inline-flex align-items-center border rounded px-3 py-2 bg-light">
-              <% if (user.referalCode) { %>
-                <strong id="referalCode"><%= user.referalCode %></strong>
+              <% if (user.referralCode) { %>
+                <strong id="referralCode"><%= user.referralCode %></strong>
               <% } else { %>
                 <span class="text-muted">Not available</span>
               <% } %>
@@ -1016,7 +1016,7 @@ tbody tr:hover {
 
 <script>
  function copyReferralCode() {
-    const codeElement = document.getElementById("referalCode");
+    const codeElement = document.getElementById("referralCode");
 
     if (!codeElement) {
       alert("Referral code not found");

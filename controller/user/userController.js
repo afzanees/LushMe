@@ -62,55 +62,71 @@ const loadRegister = async (req,res)=>{
 
 
 
-const register = async (req,res) =>{
-    try {
-        
-        const {username,phone,email,password,cpassword, referalCode} = req.body;
+const register = async (req, res) => {
+  try {
+    const { username, phone, email, password, cpassword, referralCode} = req.body;
 
-        if(password !== cpassword){
-            return res.render("user/register",{message:"Password does not match"})
-        }
-        const findUser = await User.findOne({email});         // checking email exist
-        if(findUser){
-            return res.render("user/register",{message:"User with this email already existed"})
-        }
- //Referral validation (ONLY if entered)
+    console.log("📝 Referral code entered by user:", referralCode);
+
+    if (password !== cpassword) {
+      return res.render("user/register", { 
+        message: "Password does not match",
+        formData: { username, email, phone, referralCode }
+      });
+    }
+
+    const findUser = await User.findOne({ email });
+    if (findUser) {
+      return res.render("user/register", {
+        message: "User with this email already existed",
+        formData: { username, email, phone, referralCode }
+      });
+    }
+
+    // Referral validation (ONLY if entered)
     let referrerId = null;
 
-    if (referalCode && referalCode.trim() !== "") {
-      const referrer = await User.findOne({ referalCode });
+    if (referralCode && referralCode.trim() !== "") {
+      const referrer = await User.findOne({
+        referralCode: referralCode.trim()
+      });
+
+      console.log("🔍 Referrer found:", referrer);
 
       if (!referrer) {
         return res.render("user/register", {
-          message: "Invalid referral code"
+          message: "Invalid referral code",
+          formData: { username, email, phone, referralCode }
         });
       }
 
       referrerId = referrer._id;
     }
 
-        const otp = generateOtp();
+    const otp = generateOtp();
 
-        // to send generate otp to user registered mail
-
-        const emailSent = await sendVerificationEmail(email,otp)
-        if(!emailSent){
-            return res.json("email-error")
-        }                                       // after successfully snding otp, we just asign otp to session
-
-        req.session.userOtp = otp;
-        req.session.userData = {username,email,phone,password,referrerId };
-                                    //a after session stored, we get the message varify otp
-        res.render("user/confirmotp", { otpAction: "/confirmotp" });
-        console.log("Otp Sent",otp)
-
-    } catch (error) {
-        
-        console.error("register error",error)
-        res.redirect("/pageNotFound")
+    const emailSent = await sendVerificationEmail(email, otp);
+    if (!emailSent) {
+      return res.json("email-error");
     }
 
-}
+    console.log("📦 Session userData:", {
+      username,
+      email,
+      referrerId
+    });
+
+    req.session.userOtp = otp;
+    req.session.userData = { username, email, phone, password, referrerId };
+
+    res.render("user/confirmotp", { otpAction: "/confirmotp" });
+    console.log("Otp Sent", otp);
+
+  } catch (error) {
+    console.error("register error", error);
+    res.redirect("/pageNotFound");
+  }
+};
 
 const securePassword = async (password)=>{                            //hashing password
     try{
@@ -120,9 +136,10 @@ const securePassword = async (password)=>{                            //hashing 
 
     }
 }
-
 const confirmOtp = async (req, res) => {
   try {
+    console.log("📦 Session userData in confirmOtp:", req.session.userData);
+
     const { otp } = req.body;
 
     if (String(otp) !== String(req.session.userOtp)) {
@@ -140,56 +157,95 @@ const confirmOtp = async (req, res) => {
       });
     }
 
-    const passwordHash = await securePassword(userData.password);
-
-    // ✅ Create new user
-    const newUser = new User({
+    console.log("📋 Registration Data:", {
       username: userData.username,
       email: userData.email,
-      phone: userData.phone,
-      password: passwordHash,
-      referalCode: generateReferralCode(), // 👈 own referral code
-      wallet: 0
+      hasReferrerId: !!userData.referrerId
     });
 
-    await newUser.save();
+    const passwordHash = await securePassword(userData.password);
+
+    let user = await User.findOne({ email: userData.email });
+
+    if (!user) {
+      // ✅ Create user ONLY ONCE
+      user = new User({
+        username: userData.username,
+        email: userData.email,
+        phone: userData.phone,
+        password: passwordHash,
+        referralCode: generateReferralCode(), // ✅ generated once
+        referredBy: userData.referrerId,
+        wallet: 0,
+        walletTransactions: []
+      });
+    
+      await user.save();
+      console.log("✅ New user created:", user._id);
+    } else {
+      console.log("ℹ️ User already exists, using existing referral code");
+    }
 
     // ✅ Referral reward logic
-    if (userData.referrerId) {
+    if (userData.referrerId && !user.referralRewardGiven) {
+      console.log("🎯 Processing referral reward for referrerId:", userData.referrerId);
+    
       const referrer = await User.findById(userData.referrerId);
-
+    
       if (referrer) {
-        console.log("🔥 REFERRER FOUND:", referrer._id);
-      
-        const coupon = await Coupon.create({
-          name: "Referral Reward",
-          code: `REF-${referrer.referalCode}-${Date.now().toString().slice(-4)}`,
-      
-          type: "fixed",
-          offerPrice: 100,
-          minimumPrice: 500,
-      
-          startingDate: new Date(),
-          expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      
-          status: "Active",
-          source: "referral",           // 👈 must be here
-          assignedUser: referrer._id,
-      
-          usageLimit: 1,
-          usagePerUser: 1,
-          usedCount: 0,
-          usedUsers: []
+        const referralReward = 100;
+    
+        // Credit wallet
+        referrer.wallet = (referrer.wallet || 0) + referralReward;
+        referrer.walletTransactions = referrer.walletTransactions || [];
+    
+        referrer.walletTransactions.push({
+          date: new Date(),
+          amount: referralReward,
+          status: "credited",
+          method: "reward",
+          description: `Referral reward for ${user.username}'s registration`
         });
-      
-        console.log("🎁 REFERRAL COUPON CREATED:", coupon);
-      } else {
-        console.log("❌ NO REFERRER FOUND — coupon NOT created");
+    
+        await referrer.save();
+
+        user.referralRewardGiven = true;
+        await user.save();
+
+          console.log(`✅ ₹${referralReward} credited to referrer's wallet`);
+
+          // ✅ Create referral coupon
+          const coupon = await Coupon.create({
+            name: "Referral Reward",
+            code: `REF-${referrer.referralCode}-${Date.now().toString().slice(-4)}`,
+            type: "fixed",
+            offerPrice: 100,
+            minimumPrice: 500,
+            startingDate: new Date(),
+            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            status: "Active",
+            source: "referral",
+            assignedUser: referrer._id,
+            usageLimit: 1,
+            usagePerUser: 1,
+            usedCount: 0,
+            usedUsers: []
+          });
+
+          console.log("🎁 Referral coupon created:", coupon.code);
+        } else {
+          console.log("❌ Referrer not found for ID:", userData.referrerId);
+      //   }
+      // } catch (referralError) {
+      //   console.error("❌ Error during referral processing:", referralError);
+      //   // Do NOT fail user registration
       }
+    } else {
+      console.log("ℹ️ No referral used during registration");
     }
 
     // ✅ Clear session
-    req.session.user = newUser._id;
+    req.session.user = user._id;
     req.session.userOtp = null;
     req.session.userData = null;
 
@@ -206,6 +262,7 @@ const confirmOtp = async (req, res) => {
     });
   }
 };
+
 
 const resendOTP = async (req, res) => {
     try {
@@ -357,8 +414,8 @@ const logout = async (req, res, next) => {
     // ✅ Apply offer discount
     const finalSalePrice = minVariant.salePrice * (1 - effectiveOffer / 100);
 
-    product.displayRegularPrice = minVariant.regularPrice;
-    product.displaySalePrice = Math.round(finalSalePrice * 100) / 100;
+    product.displayRegularPrice = Math.round(minVariant.regularPrice);
+    product.displaySalePrice = Math.round(finalSalePrice);
   } else {
     product.displayRegularPrice = product.displaySalePrice = null;
   }

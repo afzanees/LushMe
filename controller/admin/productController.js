@@ -9,28 +9,31 @@ const fs = require("fs")
 const sharp = require("sharp")
 const slugify = require("slugify");
 
-// const calculateEffectivePrice = async (product) => {
+
+const calculateEffectivePrice = async (product) => {
  
-//   const category = await Category.findById(product.category).lean();
+  const category = await Category.findById(product.category).lean();
 
-//   const categoryOffer = category?.categoryOffer || 0;
+  const categoryOffer = category?.categoryOffer || 0;
 
 
-//   const subcat = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory.toString());
-//   const subcategoryOffer = subcat?.offer || 0;
+  const subcat = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory.toString());
+  const subcategoryOffer = subcat?.offer || 0;
 
-//   const productOffer = product.offer || 0; 
+  const productOffer = product.productOffer || 0; 
 
   
-//   const effectiveOffer = Math.max(categoryOffer, subcategoryOffer, productOffer);
+  const effectiveOffer = Math.max(categoryOffer, subcategoryOffer, productOffer);
 
 
-//   const effectivePrice = product.price * (1 - effectiveOffer / 100);
-//   // const effectivePrice = product.finalPrice * (1 - effectiveOffer / 100);
+  const effectivePrice = product.price * (1 - effectiveOffer / 100);
+  // const effectivePrice = product.finalPrice * (1 - effectiveOffer / 100);
 
  
-//   return Math.round(effectivePrice * 100) / 100;
-// };
+  return Math.round(effectivePrice * 100) / 100;
+};
+
+
 
 
 
@@ -704,7 +707,7 @@ const addProductOffer = async (req, res) => {
     //   }
     // );
       // product.baseFinalPrice = product.finalPrice; 
-      product.offer = parseInt(percentage);
+      product.productOffer = parseInt(percentage);
       product.offerValidUntil = new Date(validUntil)
       product.finalPrice = await calculateEffectivePrice(product);
       await product.save();
@@ -731,7 +734,7 @@ const removeProductOffer = async (req, res) => {
       { _id: productId },
       {
         $unset: {
-          offer: "",
+          productOffer: "",
           offerValidUntil: ""
         }
       }
@@ -781,5 +784,5 @@ module.exports={
      updateVariant,
      addProductOffer,
      removeProductOffer,
-    //  calculateEffectivePrice 
+     calculateEffectivePrice 
    }

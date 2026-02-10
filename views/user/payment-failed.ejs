@@ -115,8 +115,10 @@
                   Swal.fire('Payment Verification Failed', verifyData.message || 'Please contact support', 'error');
                 }
               },
-              error: function () {
-                Swal.fire('Error', 'Payment verification failed. Please contact support.', 'error');
+              error: function (xhr) {
+                console.error('Payment verification error:', xhr);
+                const errorMsg = xhr.responseJSON?.message || 'Payment verification failed. Please contact support.';
+                Swal.fire('Error', errorMsg, 'error');
               }
             });
           },

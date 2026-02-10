@@ -13,6 +13,7 @@ const orderSchema = new Schema ({
         ref:"User",
         required:true,
     },
+    
     orderedItems:[{
         product:{
             type: Schema.Types.ObjectId,
@@ -34,7 +35,7 @@ const orderSchema = new Schema ({
         status:{
             type:String,
             default:'Pending',
-            enum:['Pending','confirmed','Shipped','Delivered','cancelled','Returned','return_requested']
+            enum:['Pending','confirmed','Shipped','Delivered','cancelled','Returned','return_requested','cancellation_requested']
         },
         cancellationReason:{
             type:String,

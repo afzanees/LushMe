@@ -42,6 +42,31 @@ const productDetails = async (req,res) => {
             // Product exists but blocked by admin
             return res.redirect('/shop');
         }
+        
+        // Calculate effective offer (product, category, subcategory)
+        const category = await Category.findById(product.category);
+        const subcategory = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory?.toString());
+        
+        const productOffer = product.productOffer || 0;
+        const categoryOffer = category?.categoryOffer || 0;
+        const subcategoryOffer = subcategory?.offer || 0;
+        
+        const effectiveOffer = Math.max(productOffer, categoryOffer, subcategoryOffer);
+        
+        // Apply offer to all variants
+        if (product.variants && product.variants.length > 0) {
+            product.variants = product.variants.map(variant => {
+                const variantObj = variant.toObject ? variant.toObject() : variant;
+                // Apply offer discount to salePrice
+                const discountedPrice = variantObj.salePrice * (1 - effectiveOffer / 100);
+                return {
+                    ...variantObj,
+                    salePrice: Math.round(discountedPrice),
+                    regularPrice: Math.round(variantObj.regularPrice)
+                };
+            });
+        }
+        
         const ratingsCount = product?.ratings?.length || 0;  
         let totalQuantity = 0;
         if (product.variants && product.variants.length > 0) {

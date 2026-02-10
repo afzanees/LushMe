@@ -55,7 +55,6 @@ router.get('/address/:addressId', userAuth, addressController.getAddressPage);  
 router.post('/address/save', userAuth, addressController.saveAddress);  
 
 //Wallet Management
-router.post("/addWalletMoney", userAuth, profileController.addWalletMoney);
 router.post("/createWalletOrder", userAuth, profileController.createWalletOrder);
 router.post("/verifyWalletPayment", userAuth, profileController.verifyWalletPayment);
 

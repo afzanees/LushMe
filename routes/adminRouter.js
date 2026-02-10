@@ -85,6 +85,7 @@ router.post('/orders/:orderId/status', adminAuth, orderController.updateOrderSta
 router.post('/orders/:orderId/items/:itemIndex/status', adminAuth, orderController.updateItemStatus);
 router.post('/orders/:orderId/cancel', adminAuth, orderController.cancelOrder);
 router.post('/orders/:orderId/items/:itemIndex/return', adminAuth, orderController.handleReturnRequest);
+router.post('/orders/:orderId/items/:itemIndex/approve-cancellation', adminAuth, orderController.approveCancellation);
 router.get('/orders/stats', adminAuth, orderController.getOrderStats);
 
 //Couponmanagement
@@ -95,5 +96,8 @@ router.get('/coupons/edit/:id', adminAuth, couponController.getEditPage)
 router.post('/coupons/edit/:id', adminAuth, couponController.editCoupon)
 router.delete('/coupons/delete/:id', adminAuth, couponController.deleteCoupon)
 
+router.get('/sales', adminAuth,  adminController.loadSalesPage);
+router.get('/report/generate', adminAuth, adminController.loadSalesPage)
+ router.get('/dashboard-data', adminController.getDashboardData)
 
 module.exports = router;

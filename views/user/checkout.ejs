@@ -700,7 +700,7 @@
               window.location.href = '/shop';
             }
           });
-        } else {
+        } else {receipt:
  Swal.fire({
             title: 'Transaction Failed!',
             text: 'Payment verification failed. You can retry the payment.',
@@ -732,6 +732,113 @@
         });
       }
     });
+  }
+</script>
+
+<script>
+  // Coupon functionality
+  document.getElementById('showCouponsBtn').addEventListener('click', async function() {
+    try {
+      const response = await fetch('/available-coupons');
+      const data = await response.json();
+      
+      const modalBody = document.getElementById('couponsModalBody');
+      
+      if (data.success && data.coupons && data.coupons.length > 0) {
+        modalBody.innerHTML = data.coupons.map(coupon => `
+          <div class="card coupon-card mb-3 p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="coupon-name fw-bold">${coupon.name}</h6>
+                <p class="mb-1">Code: <strong>${coupon.code}</strong></p>
+                <p class="mb-1 text-success">Discount: ₹${coupon.offerPrice || coupon.discount || 0}</p>
+                <p class="mb-1 text-muted small">Min Purchase: ₹${coupon.minimumPrice || 0}</p>
+                <p class="mb-0 text-muted small">Valid till: ${new Date(coupon.expireOn).toLocaleDateString()}</p>
+              </div>
+              <button class="btn btn-sm btn-primary" onclick="applyCouponFromModal('${coupon.code}')">Apply</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        modalBody.innerHTML = '<p class="text-center text-muted">No coupons available at this time.</p>';
+      }
+      
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('couponsModal'));
+      modal.show();
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+      Swal.fire('Error', 'Failed to load coupons. Please try again.', 'error');
+    }
+  });
+
+  // Apply coupon from modal
+  function applyCouponFromModal(code) {
+    document.getElementById('couponCode').value = code;
+    bootstrap.Modal.getInstance(document.getElementById('couponsModal')).hide();
+    applyCoupon();
+  }
+
+  // Toggle coupon (Apply/Remove)
+  async function toggleCoupon() {
+    const couponCode = document.getElementById('couponCode').value.trim();
+    const applyBtn = document.getElementById('applyBtn');
+    
+    if (applyBtn.textContent.trim() === 'Remove Coupon') {
+      removeCoupon();
+    } else {
+      applyCoupon();
+    }
+  }
+
+  // Apply coupon
+  async function applyCoupon() {
+    const couponCode = document.getElementById('couponCode').value.trim();
+    
+    if (!couponCode) {
+      Swal.fire('Error', 'Please enter a coupon code', 'warning');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/apply-coupon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ couponCode })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        Swal.fire('Success!', data.message || 'Coupon applied successfully', 'success');
+        location.reload(); // Reload to update prices
+      } else {
+        Swal.fire('Error', data.message || 'Invalid coupon code', 'error');
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      Swal.fire('Error', 'Failed to apply coupon. Please try again.', 'error');
+    }
+  }
+
+  // Remove coupon
+  async function removeCoupon() {
+    try {
+      const response = await fetch('/cancel-coupon');
+      const data = await response.json();
+      
+      if (data.success) {
+        Swal.fire('Removed', 'Coupon removed successfully', 'success');
+        location.reload(); // Reload to update prices
+      } else {
+        Swal.fire('Error', data.message || 'Failed to remove coupon', 'error');
+      }
+    } catch (error) {
+      console.error('Error removing coupon:', error);
+      Swal.fire('Error', 'Failed to remove coupon. Please try again.', 'error');
+    }
   }
 </script>
 

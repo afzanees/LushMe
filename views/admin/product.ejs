@@ -177,7 +177,7 @@
                           <span class="badge badge-discontinued">Discontinued</span>
                         <% } %>
                       </td>
-                       <td><%= product.offer ? product.offer + "%" : "-" %></td>
+                       <td><%= product.productOffer ? product.productOffer + "%" : "-" %></td>
                       <% let formattedDate = product.offerValidUntil
                           ? new Date(product.offerValidUntil).toLocaleDateString('en-GB')
                           : "-"; %>
@@ -197,7 +197,7 @@
                       <td>
                         
                      
-                        <% if (!product.offer || product.offer === 0) { %>
+                        <% if (!product.productOffer || product.productOffer === 0) { %>
                      
                           <button class="btn btn-sm btn-primary me-1" title="Add Offer" onclick="addOffer('<%= product._id %>')" >Add Offer</button>
                         <% } else { %>

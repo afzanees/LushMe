@@ -81,9 +81,17 @@ const userSchema = new Schema({       // creating model
         type:Date,
         default:Date.now,
     }],
-    referalCode:{
+    referralCode:{
         type:String,
     },
+    referralRewardGiven: {
+        type: Boolean,
+        default: false
+      },
+      referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      },
     redeemed:{
         type:Boolean,
     },
