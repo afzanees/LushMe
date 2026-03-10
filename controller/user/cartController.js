@@ -3,8 +3,31 @@ const Product = require('../../models/productSchema');
 const Cart = require('../../models/cartSchema');
 const User = require("../../models/userSchema");
 const Category = require("../../models/categorySchema");
+const Coupon = require("../../models/couponSchema");
 const mongodb = require("mongodb");
 const errorHandler = require('../../middlewares/errorhandling');
+
+const getEffectiveOffer = (product, categoryDoc) => {
+  const productOffer = Number(product?.productOffer || 0);
+  const categoryOffer = Number(categoryDoc?.categoryOffer || 0);
+  const subcategoryOffer = Number(
+    categoryDoc?.subcategories?.find(
+      sc => sc?._id?.toString() === product?.subcategory?.toString()
+    )?.offer || 0
+  );
+
+  return Math.max(productOffer, categoryOffer, subcategoryOffer);
+};
+
+const getEffectiveVariantPrice = (product, variantIndex, categoryDoc) => {
+  const variant = product?.variants?.[variantIndex];
+  if (!variant) return 0;
+
+  const offer = getEffectiveOffer(product, categoryDoc);
+  const baseSalePrice = Number(variant.salePrice || 0);
+  const discounted = baseSalePrice * (1 - offer / 100);
+  return Math.round(discounted);
+};
 
 //Add to cart
 const addToCart = async (req, res) => {
@@ -67,12 +90,14 @@ if (!variant) {
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       // Create new cart with this item
+      const effectivePrice = getEffectiveVariantPrice(product, Number(variantIndex), category);
+
       const newItem = {
         productId: product._id,
-        variantIndex,
+        variantIndex: Number(variantIndex),
         quantity: Math.min(qty, 3),
-        price: variant.salePrice,
-        totalPrice: variant.salePrice * Math.min(qty, 3),
+        price: effectivePrice,
+        totalPrice: effectivePrice * Math.min(qty, 3),
 
       };
 
@@ -82,26 +107,36 @@ if (!variant) {
       });
 
       await cart.save();
+      
+      // Update session cartTotal
+      req.session.cartTotal = newItem.totalPrice;
+      
       return res.json({ status: true, cartLength: 1 });
     }
 
     // Find existing item index for same product variant
     const itemIndex = cart.items.findIndex(item =>
       item.productId.toString() === productId &&
-      item.variantIndex === variantIndex
+      item.variantIndex === Number(variantIndex)
     );
 
     if (itemIndex === -1) {
       // Add new item
       const quantityToAdd = Math.min(qty, 3);
+      const effectivePrice = getEffectiveVariantPrice(product, Number(variantIndex), category);
       cart.items.push({
         productId: product._id,
-        variantIndex,   
+        variantIndex: Number(variantIndex),
         quantity: quantityToAdd,
-        price: variant.salePrice,
-        totalPrice: variant.salePrice * quantityToAdd,
+        price: effectivePrice,
+        totalPrice: effectivePrice * quantityToAdd,
       });
       await cart.save();
+      
+      // Update session cartTotal
+      const grandTotal = cart.items.reduce((sum, i) => sum + i.totalPrice, 0);
+      req.session.cartTotal = grandTotal;
+      
       console.log("cart found",cart)
       return res.json({ status: true, cartLength: cart.items.length });
     } else {
@@ -118,9 +153,16 @@ if (!variant) {
       }
 
       cart.items[itemIndex].quantity = newQuantity;
-      cart.items[itemIndex].totalPrice = variant.salePrice * newQuantity;
+      const effectivePrice = getEffectiveVariantPrice(product, Number(variantIndex), category);
+      cart.items[itemIndex].price = effectivePrice;
+      cart.items[itemIndex].totalPrice = effectivePrice * newQuantity;
 
       await cart.save();
+      
+      // Update session cartTotal
+      const grandTotal = cart.items.reduce((sum, i) => sum + i.totalPrice, 0);
+      req.session.cartTotal = grandTotal;
+      
       return res.json({ status: true, cartLength: cart.items.length });
     }
   } catch (error) {
@@ -133,102 +175,63 @@ if (!variant) {
 //Load Cart page
 const getCartPage = async (req, res) => {
   try {
-    const userId = req.session.user;
-   
+    const userId = req.session.user?._id || req.session.user;
+
     if (!userId) return res.redirect('/login');
-    const oid = new mongodb.ObjectId(userId);
+    const cart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      populate: [{ path: 'category' }, { path: 'brand', select: 'name' }]
+    });
 
-    //e cart items with product, category, and variant info
-    const cartData = await Cart.aggregate([
-      { $match: { userId:oid } },
-      { $unwind: "$items" },
+    const cartData = [];
+    let cartChanged = false;
 
-      // Lookup product details
-      {
-        $lookup: {
-          from: "products",
-          localField: "items.productId",
-          foreignField: "_id",
-          as: "productDetails"
+    if (cart && cart.items && cart.items.length > 0) {
+      for (const item of cart.items) {
+        const product = item.productId;
+        if (!product) continue;
+
+        const selectedVariant = product.variants?.[item.variantIndex];
+        const category = product.category;
+        const effectivePrice = getEffectiveVariantPrice(product, item.variantIndex, category);
+        const effectiveTotal = effectivePrice * item.quantity;
+
+        if (item.price !== effectivePrice || item.totalPrice !== effectiveTotal) {
+          item.price = effectivePrice;
+          item.totalPrice = effectiveTotal;
+          cartChanged = true;
         }
-      },
-      { $unwind: "$productDetails" },
-        // Lookup brand details (new)
-      {
-       $lookup: {
-      from: "brands",                   
-      localField: "productDetails.brand", 
-      foreignField: "_id",
-      as: "brandDetails"
-       }
-      },
-  { $unwind: { path: "$brandDetails", preserveNullAndEmptyArrays: true } },
 
-      // Lookup category details
-      {
-        $lookup: {
-          from: "categories",
-          localField: "productDetails.category",
-          foreignField: "_id",
-          as: "categoryDetails"
-        }
-      },
-      { $unwind: { path: "$categoryDetails", preserveNullAndEmptyArrays: true } },
+        const isBlocked = !!product.isBlocked;
+        const isCategoryListed = !!category?.isListed;
+        const isOutOfStock = !selectedVariant || selectedVariant.quantity <= 0 || product.status !== "Available";
+        const exceedsStock = selectedVariant ? item.quantity > selectedVariant.quantity : true;
+        const exceedsLimit = item.quantity > 3;
 
-      // Unwind product variants to find matching variant by color
-      {
-        $addFields: {
-          selectedVariant: {
-            $arrayElemAt: ["$productDetails.variants", "$items.variantIndex"]
-          }
-        }
-      },
-       {
-        $addFields: {
-          isBlocked: "$productDetails.isBlocked",
-          isCategoryListed: "$categoryDetails.isListed",
-          productStatus: "$productDetails.status",
-          isOutOfStock: { 
-            $or: [
-              { $lte: ["$selectedVariant.quantity", 0] },
-              { $ne: ["$productDetails.status", "Available"] }
-            ]
-          },
-          exceedsStock: { $gt: ["$items.quantity", "$selectedVariant.quantity"] },
-          exceedsLimit: { $gt: ["$items.quantity", 3] }
-        }
-      },
-      
-      {
-        $project: {
-          _id: 0,
-          productId: "$items.productId",
-          variantIndex: "$items.variantIndex",
-          quantity: "$items.quantity",
-          totalPrice: "$items.totalPrice",
-
-          productName: "$productDetails.name",
-          color: "$selectedVariant.color",
-          productPrice: "$selectedVariant.salePrice",
-          productImage: { $arrayElemAt: ["$selectedVariant.productImage", 0] },
-          productStock: "$selectedVariant.quantity",
-          productStatus: "$productDetails.status",
-
-          brandName: "$brandDetails.name",
-
-          isBlocked: "$productDetails.isBlocked",
-          isCategoryListed: "$categoryDetails.isListed",
-          isOutOfStock: { 
-            $or: [
-              { $lte: ["$selectedVariant.quantity", 0] },
-              { $ne: ["$productDetails.status", "Available"] }
-            ]
-          },
-          exceedsStock: { $gt: ["$items.quantity", "$selectedVariant.quantity"] },
-          exceedsLimit: { $gt: ["$items.quantity", 3] }  
-            }
+        cartData.push({
+          productId: product._id,
+          variantIndex: item.variantIndex,
+          quantity: item.quantity,
+          totalPrice: effectiveTotal,
+          productName: product.name,
+          color: selectedVariant?.color || 'N/A',
+          productPrice: effectivePrice,
+          productImage: selectedVariant?.productImage?.[0] || '',
+          productStock: selectedVariant?.quantity || 0,
+          productStatus: product.status,
+          brand: product.brand || null,
+          isBlocked,
+          isCategoryListed,
+          isOutOfStock,
+          exceedsStock,
+          exceedsLimit
+        });
       }
-    ]);
+    }
+
+    if (cartChanged) {
+      await cart.save();
+    }
 
     // Calculate grand total for cart
     let grandTotal = 0;
@@ -237,22 +240,52 @@ const getCartPage = async (req, res) => {
     });
 
     console.log("cart data :",cartData)
+    
+    // Update session cartTotal
+    req.session.cartTotal = grandTotal;
+    
+    // Validate and recalculate applied coupon
+    let discount = 0;
+    if (req.session.appliedCoupon) {
+      const coupon = await Coupon.findById(req.session.appliedCoupon.couponId);
+      
+      if (!coupon || grandTotal < coupon.minimumPrice) {
+        // Remove coupon if it's no longer valid
+        req.session.appliedCoupon = null;
+        req.session.discount = 0;
+        req.session.newTotal = null;
+      } else {
+        // Recalculate discount
+        if (coupon.type === "percentage") {
+          discount = Math.floor(grandTotal * coupon.offerPrice / 100);
+        } else {
+          discount = coupon.offerPrice;
+        }
+        req.session.discount = discount;
+        req.session.appliedCoupon.discount = discount;
+      }
+    }
+    
+    const totalAfterDiscount = Math.max(grandTotal - discount, 0);
+    req.session.newTotal = totalAfterDiscount;
+    
     let shippingCharge = 0;
     if (grandTotal > 0 && grandTotal < 500) {
          shippingCharge = 50;
     } else {
      shippingCharge = 0; // free shipping for 500 and above
     }
-    const totalPayable = grandTotal + shippingCharge;
+    const totalPayable = totalAfterDiscount + shippingCharge;
     console.log(totalPayable,shippingCharge)
 
-    req.session.cartTotal = grandTotal
     res.render('user/cart', {
       user: req.session.user,
       cartItems: cartData,
       grandTotal,
+      discount,
       shippingCharge,
-      totalPayable
+      totalPayable,
+      appliedCoupon: req.session.appliedCoupon || null
     });
 
   } catch (error) {
@@ -332,7 +365,7 @@ const changeQuantity = async (req, res) => {
       return res.json({ status: false, error: "Cart not found." });
     }
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).populate('category').lean();
     if (!product) {
       return res.json({ status: false, error: "Product not found." });
     }
@@ -378,21 +411,66 @@ const changeQuantity = async (req, res) => {
 
     // ✅ update
     cartItem.quantity = newQuantity;
-    cartItem.price = variant.salePrice;
-    cartItem.totalPrice = variant.salePrice * newQuantity;
+    const effectivePrice = getEffectiveVariantPrice(product, Number(variantIndex), product.category);
+    cartItem.price = effectivePrice;
+    cartItem.totalPrice = effectivePrice * newQuantity;
 
     await cart.save();
 
     const grandTotal = cart.items.reduce((sum, i) => sum + i.totalPrice, 0);
+    
+    // Update session cartTotal so available coupons can be fetched correctly
+    req.session.cartTotal = grandTotal;
+
+    let discount = req.session.discount || 0;
+    let couponRemoved = false;
+
+if (req.session.appliedCoupon) {
+
+  const coupon = await Coupon.findById(req.session.appliedCoupon.couponId);
+
+  if (!coupon || grandTotal < coupon.minimumPrice) {
+
+    // remove coupon if cart total below minimum
+    req.session.appliedCoupon = null;
+    req.session.discount = 0;
+    req.session.newTotal = null;
+    discount = 0;
+    couponRemoved = true;
+
+  } else {
+
+    // recalculate discount
+    if (coupon.type === "percentage") {
+      discount = Math.floor(grandTotal * coupon.offerPrice / 100);
+    } else {
+      discount = coupon.offerPrice;
+    }
+
+    req.session.discount = discount;
+    req.session.appliedCoupon.discount = discount;
+  }
+}
+
+    // Calculate final total after discount
+    const totalAfterDiscount = Math.max(grandTotal - discount, 0);
+    req.session.newTotal = totalAfterDiscount;
+
     const shippingCharge = grandTotal > 0 && grandTotal < 500 ? 50 : 0;
+    const finalTotal = totalAfterDiscount + shippingCharge;
 
     res.json({
       status: true,
       newQuantity,
+      unitPrice: effectivePrice,
+      itemTotal: cartItem.totalPrice,
       grandTotal,
+      discount,
       shippingCharge,
-      totalPayable: grandTotal + shippingCharge,
-      updatedStock: variant.quantity
+      totalPayable: finalTotal,
+      updatedStock: variant.quantity,
+      couponRemoved,
+      appliedCoupon: req.session.appliedCoupon || null
     });
 
   } catch (error) {
@@ -423,6 +501,26 @@ const deleteProduct = async (req, res) => {
       );
 
       await cart.save();
+      
+      // Update session cartTotal after removing item
+      const grandTotal = cart.items.reduce((sum, i) => sum + i.totalPrice, 0);
+      req.session.cartTotal = grandTotal;
+      
+      // Remove applied coupon if cart total is below minimum or cart is empty
+      if (req.session.appliedCoupon && cart.items.length > 0) {
+        const coupon = await Coupon.findById(req.session.appliedCoupon.couponId);
+        if (!coupon || grandTotal < coupon.minimumPrice) {
+          req.session.appliedCoupon = null;
+          req.session.discount = 0;
+          req.session.newTotal = grandTotal;
+        }
+      } else if (cart.items.length === 0) {
+        // Clear all coupon-related session data if cart is empty
+        req.session.appliedCoupon = null;
+        req.session.discount = 0;
+        req.session.newTotal = 0;
+        req.session.cartTotal = 0;
+      }
 
       return res.json({
         status: true,

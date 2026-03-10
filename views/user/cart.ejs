@@ -305,16 +305,16 @@ const subtotalElement =
     quantityInput.value = newQuantity;
 
     if (subtotalElement) {
-      subtotalElement.innerText = (newQuantity * productPrice).toFixed(2);
+      subtotalElement.innerText = `₹ ${(response.itemTotal ?? (newQuantity * productPrice)).toFixed(2)}`;
     }
     if (totalElement) {
-      totalElement.innerText = response.grandTotal.toFixed(2);
+      totalElement.innerText = `₹ ${response.grandTotal.toFixed(2)}`;
     }
     if (shippingChargeElement) {
-      shippingChargeElement.innerText = response.shippingCharge.toFixed(2);
+      shippingChargeElement.innerText = `₹ ${response.shippingCharge.toFixed(2)}`;
     }
     if (totalPayableElement) {
-      totalPayableElement.innerText = response.totalPayable.toFixed(2);
+      totalPayableElement.innerText = `₹ ${response.totalPayable.toFixed(2)}`;
     }
     quantityInput.setAttribute('max', response.updatedStock);
   } else {

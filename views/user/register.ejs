@@ -7,10 +7,30 @@
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 
   <link href="/css/login.css" rel="stylesheet">
 </head>
+<style>
+  .password-box {
+    position: relative;
+  }
+  
+  .password-box .form-control {
+    padding-right: 40px; /* space for eye icon */
+  }
+  
+  .password-box .eye {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: gray;
+    z-index: 5;
+  }
+  </style>
 <body>
 
   <div class="container login-container row">
@@ -51,18 +71,20 @@
           <input type="text" id="phone" class="form-control" name="phone" placeholder="Phone Number" value="<%= typeof formData !== 'undefined' ? formData.phone || '' : '' %>" required />
           <div id="error3" class="error-message"></div>
         </div>
-        <div class="mb-3">
+        <div class="mb-3 password-box">
           <input type="password" id="password" class="form-control" name="password" placeholder="Password" required />
+          <i class="fa fa-eye-slash eye" onclick="togglePassword('password', this)"></i>
           <div id="error4" class="error-message"></div>
         </div>
-        <div class="mb-3">
+        <div class="mb-3 password-box" >
           <input type="password" id="cpassword" class="form-control" name="cpassword" placeholder="Confirm Password" required />
+          <i class="fa fa-eye-slash eye" onclick="togglePassword('cpassword', this)"></i>
           <div id="error5" class="error-message"></div>
         </div>
 
         <div class="mb-3">
-          <label class="form-label text-muted small">Have a referral code?</label>referralCode
-          <input type="text" id="referralCode" class="form-control" name="referralCode" placeholder="Enter referral code (optional)" value="<%= typeof formData !== 'undefined' ? formData. || '' : '' %>" />
+          <label class="form-label text-muted small">Have a referral code?</label>
+          <input type="text" id="referralCode" class="form-control" name="referralCode" placeholder="Enter referral code (optional)" value="<%= typeof formData !== 'undefined' ? formData.referralCode || '' : '' %>" />
           <div id="error6" class="error-message"></div>
         </div>
 
@@ -144,46 +166,56 @@
 
   }
 
-  function phoneValidateChecking(e){
-    const phoneval = phoneid.value;
+  function phoneValidateChecking(e) {
+  const phoneval = phoneid.value.trim();
 
-    if(phoneval.trim() === ""){
-      error3.style.display = "block";
-      error3.innerHTML = "Enter valid phone number"
-    }else if(phoneval.length !==10){
-      error3.style.display = "block";
-      error3.innerHTML="Enter 10 digits"
-    }else{
-      error3.style.display = "none";
-      error3.innerHTML=""
-    }
+  if (phoneval === "") {
+    error3.style.display = "block";
+    error3.innerHTML = "Enter valid phone number";
+
+  } else if (!/^(?!0{10})\d{10}$/.test(phoneval)) {
+    error3.style.display = "block";
+    error3.innerHTML = "Enter a valid 10-digit phone number";
+
+  } else {
+    error3.style.display = "none";
+    error3.innerHTML = "";
+  }
+}
+
+function passValidateChecking(e) {
+  const passval = passid.value.trim();
+  const cpassval = cpassid.value.trim();
+
+  const strongPassword =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  // password strength check
+  if (passval === "") {
+    error4.style.display = "block";
+    error4.innerHTML = "Enter password";
+
+  } else if (!strongPassword.test(passval)) {
+    error4.style.display = "block";
+    error4.innerHTML =
+      "Password must have uppercase, lowercase, number & special character";
+
+  } else {
+    error4.style.display = "none";
+    error4.innerHTML = "";
   }
 
-  function passValidateChecking(e){
-    const passval = passid.value;
-    const cpassval = cpassid.value;
-    const alpha = /[a-zA-Z]/;
-    const digit = /\d/;
-    
-    if(passval.length<8){
-      error4.style.display="block";
-      error4.innerHTML = "should contain atleast 8 characters"
-    }else if(!alpha.test(passval) || !digit.test(passval)){
-      error4.style.display="block"
-      error4.innerHTML = "Should contain numbers and alphabets"
-    }else{
-      error4.style.display ="none";
-      error4.innerHTML=""
-    }
-
-    if(passval !==cpassval){
-      error5.style.display = "block"
-      error5.innerHTML="password does not match";
-    }else{
-      error5.style.display="none"
-      error5.innerHTML=""
-    }
+  // confirm password check
+  if (cpassval !== "" && passval !== cpassval) {
+    error5.style.display = "block";
+    error5.innerHTML = "Password does not match";
+  } else {
+    error5.style.display = "none";
+    error5.innerHTML = "";
   }
+}
+
+
   
 
   document.addEventListener("DOMContentLoaded",function(){
@@ -221,5 +253,18 @@
     })
   })
 
+  function togglePassword(inputId, icon) {
+  const pwd = document.getElementById(inputId);
+
+  if (pwd.type === "password") {
+    pwd.type = "text";
+    icon.classList.replace("fa-eye-slash", "fa-eye"); // FIXED
+  } else {
+    pwd.type = "password";
+    icon.classList.replace("fa-eye", "fa-eye-slash"); // FIXED
+  }
+}
+
 
 </script>
+

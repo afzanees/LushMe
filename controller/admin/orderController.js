@@ -24,6 +24,7 @@ const getOrderList = async (req, res) => {
                 $or: [
                     { orderId: { $regex: search, $options: 'i' } },
                     { status: { $regex: search, $options: 'i' } },
+                    { paymentStatus: { $regex: search, $options: 'i' } },
                     { userId: { $in: userIds } }
                 ]
             };
@@ -392,6 +393,38 @@ const handleReturnRequest = async (req, res) => {
             item.status = 'Returned'; // Match schema enum case
             item.returnRejected = false;
             item.returnRejectionReason = '';
+
+            // Refund to wallet for prepaid orders (Razorpay / Wallet)
+            const paymentMethod = (order.paymentMethod || '').toLowerCase();
+            if (paymentMethod === 'razorpay' || paymentMethod === 'wallet') {
+                const user = await User.findById(order.userId);
+                if (user) {
+                    const itemTotal = item.price * item.quantity;
+                    const orderSubtotal = order.orderedItems.reduce((sum, orderItem) => {
+                        return sum + ((orderItem.price || 0) * (orderItem.quantity || 0));
+                    }, 0);
+                    const totalDiscount = Number(order.couponDiscount || order.discount || 0);
+
+                    let refundAmount = itemTotal;
+                    if (totalDiscount > 0 && orderSubtotal > 0) {
+                        const proportionalDiscount = (itemTotal / orderSubtotal) * totalDiscount;
+                        refundAmount = Math.max(Math.round(itemTotal - proportionalDiscount), 0);
+                    }
+
+                    user.wallet = (user.wallet || 0) + refundAmount;
+                    if (!user.walletTransactions) {
+                        user.walletTransactions = [];
+                    }
+                    user.walletTransactions.push({
+                        amount: refundAmount,
+                        status: "credited",
+                        method: "refund",
+                        description: `Refund for returned item in order ${order.orderId} (Admin approved)`,
+                    });
+                    await user.save();
+                    console.log(`✅ Return approved - Refunded ₹${refundAmount} to user's wallet`);
+                }
+            }
             
             // Restore product stock
             const product = item.product;

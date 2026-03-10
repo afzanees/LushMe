@@ -121,21 +121,27 @@
             <% orders.forEach(order => { %>
               <tr>
                 <td><%= order.orderId %></td>
-                <td><%= order.user?.name || 'N/A' %></td>
-                <td><%= new Date(order.createdOn).toLocaleDateString() %></td>
+                <td><%= order.userId?.name || 'N/A' %></td>
+                <td><%= new Date(order.createdOn).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) %></td>
                 <td>
+                  <%
+                    const isPaymentFailed = (order.paymentStatus || '').toLowerCase() === 'failed';
+                    const displayStatus = isPaymentFailed ? 'Payment Failed' : order.status;
+                    const statusKey = (displayStatus || '').toLowerCase();
+                  %>
                   <span class="badge bg-<%= 
-                    order.status.toLowerCase() === 'pending' ? 'warning' :
-                    order.status.toLowerCase() === 'processing' ? 'info' :
-                    order.status.toLowerCase() === 'shipped' ? 'primary' :
-                    order.status.toLowerCase() === 'delivered' ? 'success' :
-                    order.status.toLowerCase() === 'cancelled' ? 'danger' :
-                    order.status.toLowerCase() === 'return request' ? 'warning' :
-                    order.status.toLowerCase() === 'returned' ? 'secondary' :
-                    order.status.toLowerCase() === 'confirmed' ? 'success' :
+                    statusKey === 'payment failed' ? 'danger' :
+                    statusKey === 'pending' ? 'warning' :
+                    statusKey === 'processing' ? 'info' :
+                    statusKey === 'shipped' ? 'primary' :
+                    statusKey === 'delivered' ? 'success' :
+                    statusKey === 'cancelled' ? 'danger' :
+                    statusKey === 'return request' ? 'warning' :
+                    statusKey === 'returned' ? 'secondary' :
+                    statusKey === 'confirmed' ? 'success' :
                     'secondary'
                   %>">
-                    <%= order.status %>
+                    <%= displayStatus %>
                   </span>
                 </td>
                 <td>₹<%= order.finalAmount.toFixed(2) %></td>

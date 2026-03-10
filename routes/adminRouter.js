@@ -9,6 +9,15 @@ const orderController = require('../controller/admin/orderController')
 const couponController = require('../controller/admin/couponController')
 const {adminAuth} = require('../middlewares/auth')
 const upload = require('../middlewares/multer')
+const { handleMulterError } = require('../middlewares/multer')
+
+// Root admin route - redirect to dashboard if authenticated, otherwise to login
+router.get('/', (req, res) => {
+  if (req.session.admin) {
+    return res.redirect('/admin/dashboard');
+  }
+  res.redirect('/admin/login');
+});
 
 router.get('/pageerror',adminController.pageerror)
 router.get('/login',adminController.loadLogin);
@@ -25,12 +34,12 @@ router.get('/unblockCustomer',adminAuth,customerController.customerUnblocked)
 
 //Category management
 router.get('/category', adminAuth, categoryController.categoryInfo);
-router.post('/addCategory', adminAuth, upload.single('categoryImage'), categoryController.addCategory);
+router.post('/addCategory', adminAuth, upload.single('categoryImage'), handleMulterError, categoryController.addCategory);
 router.post('/addCategoryOffer', adminAuth, categoryController.addCategoryOffer);
 router.post('/removeCategoryOffer', adminAuth, categoryController.removeCategoryOffer);
 router.get('/listCategory', adminAuth, categoryController.getListCategory);
 router.get('/unListCategory', adminAuth, categoryController.getUnlistCategory);
-router.post('/editCategory/:id', upload.single('categoryImage'), adminAuth, categoryController.editCategory);
+router.post('/editCategory/:id', upload.single('categoryImage'), handleMulterError, adminAuth, categoryController.editCategory);
 router.delete('/deleteCategory/:id', adminAuth, categoryController.deleteCategory);
 router.post('/addSubcategory', adminAuth, categoryController.addSubcategory);
 //product management
@@ -62,16 +71,16 @@ router.post("/deleteBrand", adminAuth, brandController.deleteBrand);
 router.post("/toggleBrandStatus", adminAuth, brandController.toggleBrandStatus);
 
 //product varient
-router.get('/product/:id/variants', productController.showProductVariants);
-router.post('/product/:productId/variants/add', upload.fields([
+router.get('/product/:id/variants', adminAuth, productController.showProductVariants);
+router.post('/product/:productId/variants/add', adminAuth, upload.fields([
   { name: 'image1', maxCount: 1 },
   { name: 'image2', maxCount: 1 },
   { name: 'image3', maxCount: 1 },
   { name: 'image4', maxCount: 1 }
 ]), productController.addProductVariants);
 // router.post('/product/:productId/variant/:variantId/delete',productController.deleteVariant);
-router.post('/product/:productId/variants/:variantId/delete', productController.deleteVariant);
-router.post('/product/:productId/variants/:variantId/edit', upload.fields([
+router.post('/product/:productId/variants/:variantId/delete', adminAuth, productController.deleteVariant);
+router.post('/product/:productId/variants/:variantId/edit', adminAuth, upload.fields([
   { name: 'image1', maxCount: 1 },
   { name: 'image2', maxCount: 1 },
   { name: 'image3', maxCount: 1 },
@@ -98,6 +107,6 @@ router.delete('/coupons/delete/:id', adminAuth, couponController.deleteCoupon)
 
 router.get('/sales', adminAuth,  adminController.loadSalesPage);
 router.get('/report/generate', adminAuth, adminController.loadSalesPage)
- router.get('/dashboard-data', adminController.getDashboardData)
+router.get('/dashboard-data', adminAuth, adminController.getDashboardData)
 
 module.exports = router;

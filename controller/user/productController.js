@@ -10,11 +10,24 @@ const productDetails = async (req,res) => {
     try {
         const userId = req.session.user;
         let wishlistIds = [];
+        let userData = null;
+        
         if(userId) {
-            const userDoc = await User.findById(userId).select('wishlist').lean();
-            wishlistIds = userDoc?.wishlist?.map(id => id.toString()) || [];
+            userData = await User.findById(userId);
+            
+            // Check if user is blocked
+            if (userData && userData.isBlocked) {
+                req.session.destroy((err) => {
+                    if (err) {
+                        console.error("Error destroying session:", err);
+                    }
+                });
+                return res.redirect("/login?error=blocked");
+            }
+            
+            wishlistIds = userData?.wishlist?.map(id => id.toString()) || [];
         }
-        const userData =  userId ? await User.findById(userId) : null;
+        
         const identifier = req.params.slug;
         
         // Try to find by slug first, then by ID as fallback

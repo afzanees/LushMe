@@ -77,8 +77,8 @@
         <div class="col-md-6">
           <label class="form-label">Status</label>
           <select name="status" id="status" class="form-select">
-            <option value="true" selected <%= coupon.status ? 'selected' : '' %>>Active</option>
-            <option value="false" <%= !coupon.status ? 'selected' : '' %>>Inactive</option>
+            <option value="Active" <%= coupon.status === 'Active' ? 'selected' : '' %>>Active</option>
+            <option value="Inactive" <%= coupon.status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
           </select>
           <div class="error-message" id="statusError"></div>
         </div>

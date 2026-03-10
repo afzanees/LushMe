@@ -76,7 +76,7 @@
           placeholder="Enter password"
           required
         />
-          <i class="fa fa-eye eye" onclick="togglePassword()"></i>
+          <i class="fa fa-eye-slash eye" onclick="togglePassword()"></i>
       </div>
 
      
@@ -98,10 +98,10 @@
 
   if (pwd.type === "password") {
     pwd.type = "text";
-    eye.classList.replace("fa-eye", "fa-eye-slash");
+    eye.classList.replace("fa-eye-slash", "fa-eye");
   } else {
     pwd.type = "password";
-    eye.classList.replace("fa-eye-slash", "fa-eye");
+    eye.classList.replace("fa-eye", "fa-eye-slash");
   }
 }
 </script>

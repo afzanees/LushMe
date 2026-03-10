@@ -110,17 +110,150 @@ const addProducts = async (req, res) => {
 
     console.log("Received subcategory:", subcategory);
 
-    // ✅ Validate required fields
-    if (
-      !name || !description || !brand || !category || !subcategory 
-    ) {
+    // ✅ Validate required fields with specific messages
+    const missingFields = [];
+    if (!name || !name.trim()) missingFields.push("Product Name");
+    if (!description || !description.trim()) missingFields.push("Description");
+    if (!brand) missingFields.push("Brand");
+    if (!category) missingFields.push("Category");
+    if (!subcategory) missingFields.push("Subcategory");
+    
+    if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Missing or invalid required fields",
+        message: `Missing required fields: ${missingFields.join(", ")}`,
+      });
+    }
+    
+    // ✅ Strong validation for product name
+    const trimmedName = name.trim();
+    
+    if (trimmedName.length < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must be at least 3 characters long",
+      });
+    }
+    
+    if (trimmedName.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must not exceed 100 characters",
+      });
+    }
+    
+    // Check if name contains at least one alphanumeric character
+    if (!/[a-zA-Z0-9]/.test(trimmedName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must contain at least one letter or number",
+      });
+    }
+    
+    // Prevent names with only special characters
+    if (/^[^a-zA-Z0-9]+$/.test(trimmedName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name cannot contain only special characters",
+      });
+    }
+    
+    // Prevent names with only spaces or whitespace characters
+    if (/^\s+$/.test(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name cannot contain only spaces",
+      });
+    }
+    
+    // Check if name starts with alphanumeric character
+    if (!/^[a-zA-Z0-9]/.test(trimmedName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must start with a letter or number",
+      });
+    }
+    
+    // Check for duplicate product names (case-insensitive)
+    const existingProduct = await Product.findOne({ 
+      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') } 
+    });
+    
+    if (existingProduct) {
+      return res.status(400).json({
+        success: false,
+        message: "A product with this name already exists",
+      });
+    }
+    
+    // Validate description
+    const trimmedDescription = description.trim();
+    if (trimmedDescription.length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: "Description must be at least 10 characters long",
+      });
+    }
+    
+    if (trimmedDescription.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: "Description must not exceed 2000 characters",
+      });
+    }
+    
+    // Validate brand exists
+    const brandExists = await Brand.findById(brand);
+    if (!brandExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected brand does not exist",
+      });
+    }
+    
+    if (!brandExists.isListed) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected brand is not active",
+      });
+    }
+    
+    // Validate category exists
+    const categoryExists = await Category.findById(category);
+    if (!categoryExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected category does not exist",
+      });
+    }
+    
+    if (!categoryExists.isListed) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected category is not active",
+      });
+    }
+    
+    // Validate subcategory exists within the category
+    const subcategoryExists = categoryExists.subcategories.find(
+      sub => sub._id.toString() === subcategory.toString()
+    );
+    
+    if (!subcategoryExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected subcategory does not exist in this category",
+      });
+    }
+    
+    if (!subcategoryExists.isListed || subcategoryExists.isDeleted) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected subcategory is not active",
       });
     }
 
-    let slug = slugify(name, {
+    let slug = slugify(trimmedName, {
       lower: true,
       strict: true,
     });
@@ -132,8 +265,8 @@ const addProducts = async (req, res) => {
 
    // ✅ Create new product document without images
    const newProduct = new Product({
-    name,
-    description,
+    name: trimmedName,
+    description: trimmedDescription,
     brand,
     slug,
     category,
@@ -143,23 +276,48 @@ const addProducts = async (req, res) => {
       ? status
       : "Available",
   });
-    console.log({ name, description, brand, category, subcategory, status });
-
-    await newProduct.validate().catch(err => {
-      console.error("❌ Mongoose validation error:", err.message);
-      throw err;
-    });
+    console.log({ name: trimmedName, description: trimmedDescription, brand, category, subcategory, status });
 
     await newProduct.save();
 
     
-    return res.status(200).json({ success: true, message: "Product added successfully" });
+    return res.status(200).json({ 
+      success: true, 
+      message: "Product added successfully",
+      productId: newProduct._id 
+    });
   } catch (error) {
     console.error("🔥 ERROR adding product:");
     console.error("Message:", error.message);
     console.error("Stack:", error.stack);
-    console.error("Full error object:", error);
-    return res.status(500).json({ success: false, message: "Server error while adding product" });
+    
+    // Handle specific error types
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: `Validation error: ${errors.join(", ")}` 
+      });
+    }
+    
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "A product with this name or slug already exists" 
+      });
+    }
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Invalid ${error.path}: ${error.value}` 
+      });
+    }
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message || "An unexpected error occurred while adding product" 
+    });
   }
 };
 
@@ -322,9 +480,58 @@ const editProduct = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(subcategory)) {
       return res.status(400).json({ success: false, message: "Invalid subcategory id" });
     }
+    
+    // ✅ Strong validation for product name
+    const trimmedName = name.trim();
+    
+    if (trimmedName.length < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must be at least 3 characters long",
+      });
+    }
+    
+    if (trimmedName.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must not exceed 100 characters",
+      });
+    }
+    
+    // Check if name contains at least one alphanumeric character
+    if (!/[a-zA-Z0-9]/.test(trimmedName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must contain at least one letter or number",
+      });
+    }
+    
+    // Prevent names with only special characters
+    if (/^[^a-zA-Z0-9]+$/.test(trimmedName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name cannot contain only special characters",
+      });
+    }
+    
+    // Prevent names with only spaces
+    if (/^\s+$/.test(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name cannot contain only spaces",
+      });
+    }
+    
+    // Check if name starts with alphanumeric character
+    if (!/^[a-zA-Z0-9]/.test(trimmedName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Product name must start with a letter or number",
+      });
+    }
 
     const existingProduct = await Product.findOne({
-      name: name,
+      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
       _id: { $ne: id },
     })
 
@@ -340,8 +547,8 @@ const editProduct = async (req, res) => {
     }
     
     // Update slug if name has changed
-    if (product.name !== name) {
-      let slug = slugify(name, {
+    if (product.name !== trimmedName) {
+      let slug = slugify(trimmedName, {
         lower: true,
         strict: true,
       });
@@ -355,7 +562,7 @@ const editProduct = async (req, res) => {
     }
     
     const updateFields = {
-      name,
+      name: trimmedName,
       description,
       brand,
       category,

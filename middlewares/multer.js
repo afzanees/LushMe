@@ -35,14 +35,57 @@ const fileFilter = (req, file, cb) => {
   if (extname && mimetype) {
     cb(null, true);
   } else {
-    cb(new Error('Only images are allowed'));
+    const error = new Error(`Invalid file type: ${file.mimetype}. Only JPEG, JPG, PNG and WEBP images are allowed`);
+    error.code = 'INVALID_FILE_TYPE';
+    cb(error, false);
   }
 };
+
 
 // Create the multer instance
 const upload = multer({
   storage: storage,
-  fileFilter: fileFilter
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
 });
 
+// Error handling middleware for multer
+const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    // A Multer error occurred when uploading
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File size too large. Maximum size is 5MB'
+      });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Unexpected field in file upload'
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: `Upload error: ${err.message}`
+    });
+  } else if (err) {
+    // An unknown error occurred
+    if (err.code === 'INVALID_FILE_TYPE') {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'Error uploading file'
+    });
+  }
+  next();
+};
+
 module.exports = upload;
+module.exports.handleMulterError = handleMulterError;

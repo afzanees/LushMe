@@ -36,8 +36,22 @@ const login = async (req, res) => {
     const match = await bcrypt.compare(password, admin.password);
     if (!match) return res.render("admin/login", { message: "Incorrect password" });
 
-    req.session.admin = admin._id;
-    res.redirect("/admin/dashboard");
+    // Regenerate session after authentication to prevent fixation and ensure clean state.
+    req.session.regenerate((regenErr) => {
+      if (regenErr) {
+        console.error("Admin session regeneration failed:", regenErr);
+        return res.render("admin/login", { message: "Server error" });
+      }
+
+      req.session.admin = admin._id.toString();
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("Admin session save failed:", saveErr);
+          return res.render("admin/login", { message: "Server error" });
+        }
+        return res.redirect("/admin/dashboard");
+      });
+    });
   } catch (err) {
     console.error("Admin login error:", err);
     res.render("admin/login", { message: "Server error" });
@@ -68,19 +82,23 @@ const loadDashboard = async (req, res) => {
       res.render("admin/dashboard", { admin, stats });
     } catch (error) {
       console.error("Dashboard load error:", error);
-      res.redirect("admin/pageerror");
+      res.redirect("/admin/pageerror");
     }
   };
 
   const logout = async (req, res) => {
     try {
-        if (req.session.admin) {
-            delete req.session.admin; 
-        }
-        res.redirect('/admin/login'); 
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Admin logout session destroy failed:", err);
+            return res.redirect('/admin/pageerror');
+          }
+          res.clearCookie('connect.sid');
+          return res.redirect('/admin/login');
+        });
     } catch (error) {
         console.log('Logout Error', error);
-        res.redirect('admin/pageerror');
+        res.redirect('/admin/pageerror');
     }
 };
 
@@ -142,20 +160,20 @@ const loadSalesPage = async (req, res) => {
   let totalOffer = 0;
 
   allOrders.forEach(order => {
-    const orderTotal = order.finalAmount || 0;
-    const discount = order.discount || 0;
+    const orderTotal = Number(order.finalAmount || 0);
+    const discount = Number(order.couponDiscount ?? order.discount ?? 0);
 
     totalAmount += orderTotal;
     totalDiscount += discount;
     
     // Calculate offer based on order's original total vs final amount
     // Offer = (sum of item prices) - finalAmount - discount
-    const itemsTotal = order.orderedItems.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
+    const itemsTotal = Number(order.totalPrice || 0) || order.orderedItems.reduce((sum, item) => {
+      return sum + ((Number(item.price) || 0) * (Number(item.quantity) || 0));
     }, 0);
     
     // Add delivery charge to get original total before discounts
-    const deliveryCharge = order.deliveryCharge || 0;
+    const deliveryCharge = Number(order.deliveryCharge || 0);
     const offerAmount = (itemsTotal + deliveryCharge) - orderTotal - discount;
     
     if (offerAmount > 0) {
@@ -181,15 +199,15 @@ const loadSalesPage = async (req, res) => {
       // let totalOffer = 0
 
       const salesData = orders.map(order => {
-           let orderTotal = order.finalAmount || 0
-           let discount = order.discount || 0
+           const orderTotal = Number(order.finalAmount || 0)
+           const discount = Number(order.couponDiscount ?? order.discount ?? 0)
            
            // Calculate offer for this order
-           const itemsTotal = order.orderedItems.reduce((sum, item) => {
-              return sum + (item.price * item.quantity);
+           const itemsTotal = Number(order.totalPrice || 0) || order.orderedItems.reduce((sum, item) => {
+              return sum + ((Number(item.price) || 0) * (Number(item.quantity) || 0));
            }, 0);
            
-           const deliveryCharge = order.deliveryCharge || 0;
+           const deliveryCharge = Number(order.deliveryCharge || 0);
            const offerAmount = (itemsTotal + deliveryCharge) - orderTotal - discount;
            const offer = offerAmount > 0 ? offerAmount : 0;
 
@@ -199,11 +217,11 @@ const loadSalesPage = async (req, res) => {
 
            return {
               orderId: order.orderId,
-              user: order.userId.name,
+              user: order.userId?.username || order.userId?.name || order.address?.name || 'N/A',
               date: moment(order.createdOn).format('YYYY-MM-DD'),
-              totalAmount: orderTotal,
-              discount: discount,
-              payment: order.paymentMethod,
+              totalAmount: Math.round(orderTotal),
+              discount: Math.round(discount),
+              payment: String(order.paymentMethod || '').toUpperCase(),
               offer: Math.round(offer)
            }
       })
@@ -484,5 +502,3 @@ module.exports = {
     getDashboardData,
     loadSalesPage
 };
-
-

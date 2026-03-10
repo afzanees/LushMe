@@ -7,6 +7,7 @@
     display: flex;
     max-width: 1100px;
     margin: 60px auto;
+    width: calc(100% - 24px);
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 5px 25px rgba(0,0,0,0.1);
@@ -62,6 +63,7 @@
     padding: 40px 50px;
     box-sizing: border-box;
     position: relative;
+    min-width: 0;
   }
   .profile-header {
     display: flex;
@@ -119,20 +121,20 @@
   .edit-icon:hover {
     background-color: #e9ecef;
   }
-  form {
+  .profile-main form {
     max-width: 600px;
   }
   .input-wrapper {
     margin-bottom: 36px;
   }
-  label {
+  .profile-main label {
     display: block;
     font-weight: 600;
     margin-bottom: 8px;
     color: #333;
     user-select: none;
   }
-  input.form-control {
+  .profile-main input.form-control {
     width: 100%;
     padding: 14px 18px;
     font-size: 1.1rem;
@@ -141,7 +143,7 @@
     background: #f5f5f5;
     transition: border-color 0.3s ease;
   }
-  input.form-control:focus {
+  .profile-main input.form-control:focus {
     outline: none;
     border-color: #4a3aff;
     background: white;
@@ -204,7 +206,7 @@
 .card {
   border-radius: 12px;
   box-shadow: 0 4px 18px rgb(0 0 0 / 0.1);
-  max-width: 1000px;
+  max-width: 100%;
   margin: 0 auto;
 }
 .card-header {
@@ -369,6 +371,31 @@ tbody tr:hover {
   .wallet-header { flex-direction: column; align-items:flex-start; gap:8px; }
   .wallet-actions { width:100%; justify-content:space-between; }
 }
+
+@media (max-width: 991px) {
+  .profile-page {
+    flex-direction: column;
+    margin: 20px auto;
+  }
+  .sidebar1 {
+    width: 100%;
+    padding: 20px;
+    border-right: 0;
+    border-bottom: 1px solid #ddd;
+  }
+  .profile-main {
+    padding: 24px 16px;
+  }
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .buttons {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
   
 </style>
 
@@ -380,26 +407,26 @@ tbody tr:hover {
       <span class="username"><%= user ? user.username : 'Guest' %></span>
     </div>
 
-    <a href="#profile" class="nav-link active" data-target="profile">Profile</a>
-    <a href="#orders" class="nav-link" data-target="orders">My Orders</a>
-    <a href="#Wallet" class="nav-link" data-target="wallet">Wallet</a>
-    <a href="#wallet-history" class="nav-link" data-target="Wallet-History">Wallet History</a>
-    <a href="#" class="nav-link" data-target="Referral">Referral</a>
-    <a href="#" class="nav-link" data-target="address">Address</a>
+    <a href="#profile" class="nav-link <%= activeTab === 'profile' ? 'active' : '' %>" data-target="profile">Profile</a>
+    <a href="#orders" class="nav-link <%= activeTab === 'orders' ? 'active' : '' %>" data-target="orders">My Orders</a>
+    <a href="#Wallet" class="nav-link <%= activeTab === 'wallet' ? 'active' : '' %>" data-target="wallet">Wallet</a>
+    <a href="#wallet-history" class="nav-link <%= activeTab === 'Wallet-History' ? 'active' : '' %>" data-target="Wallet-History">Wallet History</a>
+    <a href="#" class="nav-link <%= activeTab === 'Referral' ? 'active' : '' %>" data-target="Referral">Referral</a>
+    <a href="#" class="nav-link <%= activeTab === 'address' ? 'active' : '' %>" data-target="address">Address</a>
     <a href="/logout" class="nav-link">Logout</a>
   </nav>
 
   <!-- Main content -->
   <section class="profile-main">
     <!-- Profile Section -->
-    <div id="profile" class="section-content active">
+    <div id="profile" class="section-content <%= activeTab === 'profile' ? 'active' : '' %>">
       <div class="profile-header">
         <h2>PROFILE </h2>
 
         <div class="profile-image-wrapper" title="Change profile picture">
-          <img id="profileImagePreview" 
-               src="<%= user && user.profileImage ? '/uploads/profile/' + user.profileImage : '/images/profile.png' %>"
-               alt="Profile Image" />
+          <img id="profileImagePreview"
+          src="<%= !user?.profileImage ? '/images/profile.png' : (user.profileImage.startsWith('http') || user.profileImage.startsWith('/') ? user.profileImage : '/uploads/profile/' + user.profileImage) %>"
+          alt="Profile Image">
           <label for="profileImageInput" class="edit-icon" title="Change Profile Picture">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                  class="bi bi-pencil-fill text-primary" viewBox="0 0 16 16">
@@ -420,7 +447,7 @@ tbody tr:hover {
             <input type="text" id="firstName" name="name" class="form-control" value="<%= user ? user.username : '' %>" readonly />
             <button type="button" class="btn btn-sm btn-outline-primary edit-btn" onclick="toggleEdit('firstName', this)">Edit</button>
           </div>
-          <div id="nameError" class="error-message" style="display:none;"></div>
+          <div id="firstNameError" class="error-message" style="display:none;"></div>
         </div>
 
         <div class="input-wrapper">
@@ -453,7 +480,7 @@ tbody tr:hover {
     </div>
 
     <!-- Orders Section -->
-    <div id="orders" class="section-content">
+    <div id="orders" class="section-content <%= activeTab === 'orders' ? 'active' : '' %>">
       <h2>My Orders</h2>
       <div class="underline"></div>
       <div class="card">
@@ -488,18 +515,24 @@ tbody tr:hover {
                     <% }) %>
                   </td>
                   <td>
+                    <% 
+                      const paymentFailed = (order.paymentStatus || '').toLowerCase() === 'failed';
+                      const displayStatus = paymentFailed ? 'Payment Failed' : order.status;
+                      const statusKey = (displayStatus || '').toLowerCase();
+                    %>
                     <span class="badge bg-<%= 
-                      order.status.toLowerCase() === 'pending' ? 'warning' :
-                      order.status.toLowerCase() === 'processing' ? 'info' :
-                      order.status.toLowerCase() === 'shipped' ? 'primary' :
-                      order.status.toLowerCase() === 'delivered' ? 'success' :
-                      order.status.toLowerCase() === 'cancelled' ? 'danger' :
-                      order.status.toLowerCase() === 'return request' ? 'warning' :
-                      order.status.toLowerCase() === 'returned' ? 'secondary' :
-                      order.status.toLowerCase() === 'confirmed' ? 'success' :
+                      statusKey === 'payment failed' ? 'danger' :
+                      statusKey === 'pending' ? 'warning' :
+                      statusKey === 'processing' ? 'info' :
+                      statusKey === 'shipped' ? 'primary' :
+                      statusKey === 'delivered' ? 'success' :
+                      statusKey === 'cancelled' ? 'danger' :
+                      statusKey === 'return request' ? 'warning' :
+                      statusKey === 'returned' ? 'secondary' :
+                      statusKey === 'confirmed' ? 'success' :
                       'secondary'
                     %>">
-                      <%= order.status %>
+                      <%= displayStatus %>
                     </span>
                   </td>
                   <td>₹<%= order.finalAmount %></td>
@@ -543,10 +576,46 @@ tbody tr:hover {
          <!-- Pagination -->
          <% if (totalPages > 1) { %>
           <div class="d-flex justify-content-center mt-3">
-            <ul class="pagination">
-              <% for (let i = 1; i <= totalPages; i++) { %>
+            <ul class="pagination flex-wrap justify-content-center">
+              <%
+                const orderVisiblePages = 5;
+                const orderStartPage = Math.max(1, currentPage - Math.floor(orderVisiblePages / 2));
+                const orderEndPage = Math.min(totalPages, orderStartPage + orderVisiblePages - 1);
+              %>
+
+              <% if (currentPage > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= currentPage - 1 %>&tab=orders#orders">&laquo;</a>
+                </li>
+              <% } %>
+
+              <% if (orderStartPage > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=1&tab=orders#orders">1</a>
+                </li>
+                <% if (orderStartPage > 2) { %>
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                <% } %>
+              <% } %>
+
+              <% for (let i = orderStartPage; i <= orderEndPage; i++) { %>
                 <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                  <a class="page-link" href="?page=<%= i %>#orders"><%= i %></a>
+                  <a class="page-link" href="?page=<%= i %>&tab=orders#orders"><%= i %></a>
+                </li>
+              <% } %>
+
+              <% if (orderEndPage < totalPages) { %>
+                <% if (orderEndPage < totalPages - 1) { %>
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                <% } %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= totalPages %>&tab=orders#orders"><%= totalPages %></a>
+                </li>
+              <% } %>
+
+              <% if (currentPage < totalPages) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= currentPage + 1 %>&tab=orders#orders">&raquo;</a>
                 </li>
               <% } %>
             </ul>
@@ -558,7 +627,7 @@ tbody tr:hover {
     </div>
 
     <!-- Wallet Section -->
-    <div id="wallet" class="section-content">
+    <div id="wallet" class="section-content <%= activeTab === 'wallet' ? 'active' : '' %>">
       <div class="wallet-wrapper">
         <div class="wallet-header">
           <div class="wallet-balance">
@@ -612,7 +681,7 @@ tbody tr:hover {
     </div>
 
      <!-- Wallet History Section -->
-     <div id="Wallet-History" class="section-content">
+     <div id="Wallet-History" class="section-content <%= activeTab === 'Wallet-History' ? 'active' : '' %>">
       <h2>Wallet History</h2>
       <div class="underline"></div>
       <p>Your wallet details will appear here.</p>
@@ -667,13 +736,13 @@ tbody tr:hover {
 
               <% if (walletCurrentPage > 1) { %>
                 <li class="page-item">
-                  <a class="page-link" href="?walletPage=<%= walletCurrentPage - 1 %>#wallet-history">&laquo;</a>
+                  <a class="page-link" href="?walletPage=<%= walletCurrentPage - 1 %>&tab=Wallet-History#Wallet-History">&laquo;</a>
                 </li>
               <% } %>
 
               <% if (startPage > 1) { %>
                 <li class="page-item">
-                  <a class="page-link" href="?walletPage=1#wallet-history">1</a>
+                  <a class="page-link" href="?walletPage=1&tab=Wallet-History#Wallet-History">1</a>
                 </li>
                 <% if (startPage > 2) { %>
                   <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -682,7 +751,7 @@ tbody tr:hover {
 
               <% for (let i = startPage; i <= endPage; i++) { %>
                 <li class="page-item <%= i === walletCurrentPage ? 'active' : '' %>">
-                  <a class="page-link" href="?walletPage=<%= i %>#wallet-history"><%= i %></a>
+                  <a class="page-link" href="?walletPage=<%= i %>&tab=Wallet-History#Wallet-History"><%= i %></a>
                 </li>
               <% } %>
 
@@ -691,13 +760,13 @@ tbody tr:hover {
                   <li class="page-item disabled"><span class="page-link">...</span></li>
                 <% } %>
                 <li class="page-item">
-                  <a class="page-link" href="?walletPage=<%= walletTotalPages %>#wallet-history"><%= walletTotalPages %></a>
+                  <a class="page-link" href="?walletPage=<%= walletTotalPages %>&tab=Wallet-History#Wallet-History"><%= walletTotalPages %></a>
                 </li>
               <% } %>
 
               <% if (walletCurrentPage < walletTotalPages) { %>
                 <li class="page-item">
-                  <a class="page-link" href="?walletPage=<%= walletCurrentPage + 1 %>#wallet-history">&raquo;</a>
+                  <a class="page-link" href="?walletPage=<%= walletCurrentPage + 1 %>&tab=Wallet-History#Wallet-History">&raquo;</a>
                 </li>
               <% } %>
             </ul>
@@ -708,7 +777,7 @@ tbody tr:hover {
       
     </div>
     <!-- Referral section -->
-    <div id="Referral" class="section-content">
+    <div id="Referral" class="section-content <%= activeTab === 'Referral' ? 'active' : '' %>">
       <h2>Referral</h2>
       <div class="underline"></div>
 
@@ -737,7 +806,7 @@ tbody tr:hover {
 
 
     <!-- Address Section -->
-    <div id="address" class="section-content">
+    <div id="address" class="section-content <%= activeTab === 'address' ? 'active' : '' %>">
       <h2>Address</h2>
       <div class="underline"></div>
       <% if (!addresses || addresses.length === 0) { %>
@@ -767,26 +836,59 @@ tbody tr:hover {
     </div>
  </section>
 </div>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.sidebar1 .nav-link[data-target]');
     const sections = document.querySelectorAll('.section-content');
+    const targetMap = {
+      profile: 'profile',
+      orders: 'orders',
+      wallet: 'wallet',
+      'wallet-history': 'Wallet-History',
+      'Wallet-History': 'Wallet-History',
+      referral: 'Referral',
+      Referral: 'Referral',
+      address: 'address'
+    };
+
+    function activateSection(rawTarget) {
+      const target = targetMap[rawTarget] || rawTarget;
+      const section = document.getElementById(target);
+      if (!section) return false;
+
+      navLinks.forEach(l => l.classList.remove('active'));
+      sections.forEach(s => s.classList.remove('active'));
+
+      section.classList.add('active');
+      const activeLink = document.querySelector(`.sidebar1 .nav-link[data-target="${target}"]`);
+      if (activeLink) activeLink.classList.add('active');
+      return true;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    const hashTarget = decodeURIComponent(window.location.hash.replace('#', ''));
+    if (!activateSection(tabParam) && !activateSection(hashTarget)) {
+      if (params.has('page')) {
+        activateSection('orders');
+      } else if (params.has('walletPage')) {
+        activateSection('Wallet-History');
+      } else {
+        activateSection('profile');
+      }
+    }
 
     navLinks.forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
-
-        navLinks.forEach(l => l.classList.remove('active'));
-        sections.forEach(s => s.classList.remove('active'));
-
-        link.classList.add('active');
         const target = link.getAttribute('data-target');
-        document.getElementById(target).classList.add('active');
+        activateSection(target);
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('tab', target);
+        nextUrl.hash = target;
+        history.replaceState(null, '', nextUrl.toString());
       });
     });
 
@@ -1024,6 +1126,21 @@ tbody tr:hover {
     }
 
     const code = codeElement.textContent.trim();
+    if (!navigator.clipboard || !window.isSecureContext) {
+      const tempInput = document.createElement('input');
+      tempInput.value = code;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand('copy');
+        Swal.fire("Referral code copied to clipboard!");
+      } catch (e) {
+        Swal.fire("Failed to copy code.");
+      } finally {
+        document.body.removeChild(tempInput);
+      }
+      return;
+    }
 
     navigator.clipboard.writeText(code)
       .then(() => {
@@ -1050,7 +1167,7 @@ tbody tr:hover {
       form.classList.remove('active');
       document.getElementById('walletAmount').value = ''; 
     });
-  })();copyReferralCode
+  })();
 </script>
 
 <%- include('../partials/user/footer') %>

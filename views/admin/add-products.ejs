@@ -65,7 +65,11 @@
 
       
       <label class="form-label mt-3">Status</label>
-      <input type="text" id="status" name="status" class="form-control">
+      <select id="status" name="status" class="form-control">
+        <option value="">Select Status</option>
+        <option value="Available">Available</option>
+        <option value="Out Of Stock">Out Of Stock</option>
+      </select>
       <div id="status-error" class="text-danger"></div>
 
     </div>
@@ -104,30 +108,173 @@
   });
 
   // --------------------- FORM VALIDATION + SUBMIT ----------------------
+  let isSubmitting = false;
+
+  function validateProductName(value) {
+    if (!value || value.trim() === '') {
+      return 'Product name is required.';
+    }
+    const trimmed = value.trim();
+    if (trimmed.length < 3) {
+      return 'Product name must be at least 3 characters long.';
+    }
+    if (trimmed.length > 100) {
+      return 'Product name must not exceed 100 characters.';
+    }
+    if (!/[a-zA-Z0-9]/.test(trimmed)) {
+      return 'Product name must contain at least one letter or number.';
+    }
+    if (/^[^a-zA-Z0-9]+$/.test(trimmed)) {
+      return 'Product name cannot contain only special characters.';
+    }
+    if (!/^[a-zA-Z0-9]/.test(trimmed)) {
+      return 'Product name must start with a letter or number.';
+    }
+    return null;
+  }
+
+  function validateDescription(value) {
+    if (!value || value.trim() === '') {
+      return 'Description is required.';
+    }
+    const trimmed = value.trim();
+    if (trimmed.length < 10) {
+      return 'Description must be at least 10 characters long.';
+    }
+    if (trimmed.length > 2000) {
+      return 'Description must not exceed 2000 characters.';
+    }
+    return null;
+  }
+
+  function validateDropdown(value, fieldName) {
+    if (!value || value.trim() === '') {
+      return `${fieldName} is required.`;
+    }
+    return null;
+  }
+
+  function showError(fieldId, errorMessage) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(`${fieldId}-error`);
+    
+    if (field) {
+      field.classList.remove('is-valid');
+      field.classList.add('is-invalid');
+    }
+    if (errorDiv) {
+      errorDiv.textContent = errorMessage;
+    }
+  }
+
+  function clearError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(`${fieldId}-error`);
+    
+    if (field) {
+      field.classList.remove('is-invalid');
+      field.classList.add('is-valid');
+    }
+    if (errorDiv) {
+      errorDiv.textContent = '';
+    }
+  }
+
+  function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(`${fieldId}-error`);
+    
+    if (field) {
+      field.classList.remove('is-invalid', 'is-valid');
+    }
+    if (errorDiv) {
+      errorDiv.textContent = '';
+    }
+  }
+
   function validateForm(e) {
     e.preventDefault();
+    
+    if (isSubmitting) {
+      return false;
+    }
+    
     let isValid = true;
 
-    const required = ['name','description','category','subcategory','brand'];
-    required.forEach(field => {
-      const el = document.getElementById(field);
-      const err = document.getElementById(field + '-error');
-      if (el) el.classList.remove('is-invalid');
-      if (err) err.textContent = '';
+    // Clear all previous validations
+    ['name', 'description', 'category', 'subcategory', 'brand', 'status'].forEach(clearFieldError);
 
-      if (!el || !el.value.trim()) {
-        isValid = false;
-        if (err) err.textContent = 'Required field.';
-        if (el) el.classList.add('is-invalid');
-      }
-    });
+    // Validate product name
+    const nameValue = document.getElementById('name').value;
+    const nameError = validateProductName(nameValue);
+    if (nameError) {
+      showError('name', nameError);
+      isValid = false;
+    }
 
-    if (!isValid) return false;
+    // Validate description
+    const descValue = document.getElementById('description').value;
+    const descError = validateDescription(descValue);
+    if (descError) {
+      showError('description', descError);
+      isValid = false;
+    }
+
+    // Validate category
+    const categoryValue = document.getElementById('category').value;
+    const categoryError = validateDropdown(categoryValue, 'Category');
+    if (categoryError) {
+      showError('category', categoryError);
+      isValid = false;
+    }
+
+    // Validate subcategory
+    const subcategoryValue = document.getElementById('subcategory').value;
+    const subcategoryError = validateDropdown(subcategoryValue, 'Subcategory');
+    if (subcategoryError) {
+      showError('subcategory', subcategoryError);
+      isValid = false;
+    }
+
+    // Validate brand
+    const brandValue = document.getElementById('brand').value;
+    const brandError = validateDropdown(brandValue, 'Brand');
+    if (brandError) {
+      showError('brand', brandError);
+      isValid = false;
+    }
+
+    // Validate status
+    const statusValue = document.getElementById('status').value;
+    const statusError = validateDropdown(statusValue, 'Status');
+    if (statusError) {
+      showError('status', statusError);
+      isValid = false;
+    }
+
+    if (!isValid) {
+      Swal.fire('Validation Error', 'Please fix all errors before submitting.', 'warning');
+      return false;
+    }
+
+    // Prevent double submission
+    isSubmitting = true;
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    }
 
     const formData = new FormData(document.getElementById('productForm'));
     fetch('/admin/addProducts', { method: 'POST', body: formData })
       .then(res => res.json())
       .then(data => {
+        isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Save';
+        }
+        
         if (data.success) {
           Swal.fire('Success', 'Product added successfully!', 'success').then(() => {
             window.location.href = '/admin/products';
@@ -137,11 +284,56 @@
         }
       })
       .catch(err => {
+        isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Save';
+        }
         Swal.fire('Error', 'Unexpected error occurred.', 'error');
       });
 
     return false;
   }
+  
+  // Real-time validation for product name
+  document.getElementById('name').addEventListener('input', function() {
+    const error = validateProductName(this.value);
+    if (error) {
+      showError('name', error);
+    } else if (this.value.trim()) {
+      clearError('name');
+    } else {
+      clearFieldError('name');
+    }
+  });
+
+  // Real-time validation for description
+  document.getElementById('description').addEventListener('input', function() {
+    const error = validateDescription(this.value);
+    if (error) {
+      showError('description', error);
+    } else if (this.value.trim()) {
+      clearError('description');
+    } else {
+      clearFieldError('description');
+    }
+  });
+
+  // Real-time validation for dropdowns
+  ['category', 'subcategory', 'brand', 'status'].forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.addEventListener('change', function() {
+        const fieldName = fieldId.charAt(0).toUpperCase() + fieldId.slice(1);
+        const error = validateDropdown(this.value, fieldName);
+        if (error) {
+          showError(fieldId, error);
+        } else {
+          clearError(fieldId);
+        }
+      });
+    }
+  });
 </script>
 
 <%- include('partials/footer') %>

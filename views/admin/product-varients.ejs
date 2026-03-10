@@ -69,8 +69,7 @@
         <tr>
           <th style="width: 5%;">#</th>
           <th style="width: 10%;">Color</th>
-          <th style="width: 10%;">Regular Price</th>
-          <th style="width: 10%;">Final Price</th>
+          <th style="width: 10%;">Price</th>
           <th style="width: 10%;">Quantity</th>
           <th style="width: 30%;">Images</th>
           <th style="width: 25%;">Actions</th>
@@ -84,8 +83,7 @@
             <tr>
               <td><%= index + 1 %></td>
               <td><input type="text" value="<%= variant.color %>" disabled></td>
-              <td>₹<%= variant.regularPrice %></td>
-              <td>₹<%= variant.salePrice.toFixed(2) %></td>
+              <td>₹<%= variant.price %></td>
               <td><%= variant.quantity %></td>
               <td>
                 <div class="d-flex flex-wrap">
@@ -109,8 +107,7 @@
                 <button class="btn btn-info btn-sm" 
                         data-variant-id="<%= variant._id %>"
                         data-variant-color="<%= variant.color %>"
-                        data-variant-regular-price="<%= variant.regularPrice %>"
-                        data-variant-sale-price="<%= variant.salePrice %>"
+                        data-variant-price="<%= variant.price %>"
                         data-variant-quantity="<%= variant.quantity %>"
                         data-variant-images='<%- JSON.stringify(variant.productImage || []) %>'
                         onclick="openEditVariantModalData(this)" 
@@ -134,7 +131,7 @@
   <!-- Add Variant Form -->
   <div class="card p-4">
     <h3>Add New Variant</h3>
-<form id="addVariantForm" action="/admin/product/<%= product._id %>/variants/add" method="POST" enctype="multipart/form-data">   
+<form id="addVariantForm" action="/admin/product/<%= product._id %>/variants/add" method="POST" enctype="multipart/form-data" novalidate>   
      <input type="hidden" name="productId" value="<%= product._id %>" />
 
       <div class="mb-3">
@@ -147,30 +144,20 @@
         placeholder="Enter color name or hex code"
         required
       />
-      
+      <div id="color-error" class="text-danger small mt-1"></div>
       </div>
 
       <div class="mb-3">
-        <label for="price" class="form-label">Regular Price</label>
+        <label for="price" class="form-label">Price</label>
         <input
           type="text"
-          id="regularPrice"
-          name="regularPrice"
-          placeholder="Enter the regular price"
+          id="price"
+          name="price"
+          placeholder="Enter the price"
           class="form-control"
           required
         />
-      </div>
-            <div class="mb-3">
-        <label for="price" class="form-label">Final Price</label>
-        <input
-          type="text"
-          id="salePrice"
-          name="salePrice"
-          placeholder="Enter the final price"
-          class="form-control"
-          required
-        />
+        <div id="price-error" class="text-danger small mt-1"></div>
       </div>
 
       <div class="mb-3">
@@ -187,6 +174,7 @@
           />
           <button type="button" id="increment">+</button>
         </div>
+        <div id="quantity-error" class="text-danger small mt-1"></div>
       </div>
 
 <!-- 
@@ -221,7 +209,7 @@
 <!-- Edit Variant Modal -->
 <div class="modal fade" id="editVariantModal" tabindex="-1" aria-labelledby="editVariantModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
-    <form id="editVariantForm" method="POST" enctype="multipart/form-data">
+    <form id="editVariantForm" method="POST" enctype="multipart/form-data" novalidate>
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="editVariantModalLabel">Edit Variant</h5>
@@ -233,21 +221,19 @@
             <div class="mb-3">
               <label for="editColor" class="form-label">Color</label>
               <input type="text" class="form-control" id="editColor" name="color" required />
+              <div id="editColor-error" class="text-danger small mt-1"></div>
             </div>
 
             <div class="mb-3">
-              <label for="editRegularPrice" class="form-label">Regular Price</label>
-              <input type="text" class="form-control" id="editRegularPrice" name="regularPrice" required />
-            </div>
-
-            <div class="mb-3">
-              <label for="editSalePrice" class="form-label">Final Price</label>
-              <input type="text" class="form-control" id="editSalePrice" name="salePrice" required />
+              <label for="editPrice" class="form-label">Price</label>
+              <input type="text" class="form-control" id="editPrice" name="price" required />
+              <div id="editPrice-error" class="text-danger small mt-1"></div>
             </div>
 
             <div class="mb-3">
               <label for="editQuantity" class="form-label">Quantity</label>
               <input type="number" class="form-control" id="editQuantity" name="quantity" min="0" required />
+              <div id="editQuantity-error" class="text-danger small mt-1"></div>
             </div>
 
             <!-- Edit Variant Images -->
@@ -596,76 +582,304 @@ function deleteCurrentImage(index) {
 }
 </script>
 <script>
+  // Quantity increment/decrement
   const quantityInput = document.getElementById('quantity');
   document.getElementById('increment').addEventListener('click', () => {
     quantityInput.value = parseInt(quantityInput.value || '0') + 1;
+    validateQuantity(quantityInput.value, 'quantity');
   });
   document.getElementById('decrement').addEventListener('click', () => {
     if (parseInt(quantityInput.value) > 0) {
       quantityInput.value = parseInt(quantityInput.value) - 1;
+      validateQuantity(quantityInput.value, 'quantity');
     }
   });
 
-  function isValidColorName(colorName) {
-  const regex = /^[A-Za-z0-9\s\-]+$/;
-  return regex.test(colorName.trim());
-}
-
-  // Validate price (e.g.positive numbers)
-  function isValidPrice(price) {
-    const priceRegex = /^\d+(\.\d{1,2})?$/;
-    return priceRegex.test(price.trim());
+  // Validation Functions
+  function validateColor(value, fieldPrefix = '') {
+    const fieldId = fieldPrefix ? `${fieldPrefix}Color` : 'color';
+    if (!value || value.trim() === '') {
+      return 'Color is required.';
+    }
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      return 'Color must be at least 2 characters long.';
+    }
+    if (trimmed.length > 50) {
+      return 'Color must not exceed 50 characters.';
+    }
+    
+    // Allow hex codes (#RRGGBB or #RGB)
+    const hexPattern = /^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/;
+    if (hexPattern.test(trimmed)) {
+      return null; // Valid hex code
+    }
+    
+    // Allow color names (letters, spaces, hyphens, parentheses for rgb/rgba)
+    const colorNamePattern = /^[A-Za-z0-9\s\-(),]+$/;
+    if (!colorNamePattern.test(trimmed)) {
+      return 'Color must be a valid name (e.g., Red, Sky Blue) or hex code (e.g., #FF5733).';
+    }
+    
+    // Color names should start with a letter
+    if (!/^[A-Za-z]/.test(trimmed)) {
+      return 'Color name must start with a letter.';
+    }
+    
+    return null;
   }
 
-  // Validate quantity (non-negative integer)
-  function isValidQuantity(qty) {
-    const n = Number(qty);
-    return Number.isInteger(n) && n >= 0;
+  function validatePrice(value, fieldPrefix = '') {
+    if (!value || value.trim() === '') {
+      return 'Price is required.';
+    }
+    const price = parseFloat(value);
+    if (isNaN(price)) {
+      return 'Price must be a valid number.';
+    }
+    if (price <= 0) {
+      return 'Price must be greater than zero.';
+    }
+    if (price > 1000000) {
+      return 'Price cannot exceed 1,000,000.';
+    }
+    if (!/^\d+(\.\d{1,2})?$/.test(value.trim())) {
+      return 'Price can have at most 2 decimal places.';
+    }
+    return null;
   }
 
+  function validateQuantity(value, fieldPrefix = '') {
+    if (value === '' || value === null || value === undefined) {
+      return 'Quantity is required.';
+    }
+    const qty = parseInt(value);
+    if (isNaN(qty)) {
+      return 'Quantity must be a valid number.';
+    }
+    if (qty < 0) {
+      return 'Quantity cannot be negative.';
+    }
+    if (qty > 100000) {
+      return 'Quantity cannot exceed 100,000.';
+    }
+    return null;
+  }
+
+  function showError(fieldId, errorMessage) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(`${fieldId}-error`);
+    
+    if (field) {
+      field.classList.remove('is-valid');
+      field.classList.add('is-invalid');
+    }
+    if (errorDiv) {
+      errorDiv.textContent = errorMessage;
+    }
+  }
+
+  function clearError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(`${fieldId}-error`);
+    
+    if (field) {
+      field.classList.remove('is-invalid');
+      field.classList.add('is-valid');
+    }
+    if (errorDiv) {
+      errorDiv.textContent = '';
+    }
+  }
+
+  function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(`${fieldId}-error`);
+    
+    if (field) {
+      field.classList.remove('is-invalid', 'is-valid');
+    }
+    if (errorDiv) {
+      errorDiv.textContent = '';
+    }
+  }
+
+  // Real-time validation for Add Variant form
+  document.getElementById('color').addEventListener('input', function() {
+    const error = validateColor(this.value);
+    if (error) {
+      showError('color', error);
+    } else if (this.value.trim()) {
+      clearError('color');
+    } else {
+      clearFieldError('color');
+    }
+  });
+
+  document.getElementById('price').addEventListener('input', function() {
+    const error = validatePrice(this.value);
+    if (error) {
+      showError('price', error);
+    } else if (this.value.trim()) {
+      clearError('price');
+    } else {
+      clearFieldError('price');
+    }
+  });
+
+  document.getElementById('quantity').addEventListener('input', function() {
+    const error = validateQuantity(this.value);
+    if (error) {
+      showError('quantity', error);
+    } else if (this.value !== '') {
+      clearError('quantity');
+    } else {
+      clearFieldError('quantity');
+    }
+  });
+
+  // Real-time validation for Edit Variant form
+  document.getElementById('editColor').addEventListener('input', function() {
+    const error = validateColor(this.value, 'edit');
+    if (error) {
+      showError('editColor', error);
+    } else if (this.value.trim()) {
+      clearError('editColor');
+    } else {
+      clearFieldError('editColor');
+    }
+  });
+
+  document.getElementById('editPrice').addEventListener('input', function() {
+    const error = validatePrice(this.value, 'edit');
+    if (error) {
+      showError('editPrice', error);
+    } else if (this.value.trim()) {
+      clearError('editPrice');
+    } else {
+      clearFieldError('editPrice');
+    }
+  });
+
+  document.getElementById('editQuantity').addEventListener('input', function() {
+    const error = validateQuantity(this.value, 'edit');
+    if (error) {
+      showError('editQuantity', error);
+    } else if (this.value !== '') {
+      clearError('editQuantity');
+    } else {
+      clearFieldError('editQuantity');
+    }
+  });
+
+  // Add Variant Form Submission
+  let isSubmittingAdd = false;
   document.getElementById('addVariantForm').addEventListener('submit', function(e) {
-    const color = document.getElementById('color').value.trim();
-    const regularPrice = document.getElementById('regularPrice').value.trim();
-    const salePrice = document.getElementById('salePrice').value.trim();
-    const quantity = document.getElementById('quantity').value.trim();
-
-    function showError(message) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Validation Error',
-        text: message,
-      });
-    }
-
-    if (!isValidColorName(color)) {
-      e.preventDefault();
-      showError('Please enter a valid CSS color name (e.g., red, blue, green).');
-      return;
-    }
-
-    if (isNaN(regularPrice) || regularPrice <= 0) {
-  e.preventDefault();
-  showError('Regular price must be greater than zero.');
-  return;
-}
-
-if (isNaN(salePrice) || salePrice <= 0) {
-  e.preventDefault();
-  showError('Final price must be greater than zero.');
-  return;
-}
-
-if (parseFloat(salePrice) > parseFloat(regularPrice)) {
-  +
-  showError('Final price cannot be higher than regular price.');
-  return;
-}
-
-  if (isNaN(quantity) || quantity < 0) {
     e.preventDefault();
-    showError('Quantity must be a non-negative number.');
-    return;
-  }
+    
+    if (isSubmittingAdd) {
+      return false;
+    }
+    
+    let isValid = true;
+    
+    // Clear all previous validations
+    ['color', 'price', 'quantity'].forEach(clearFieldError);
+    
+    // Get values
+    const colorValue = document.getElementById('color').value;
+    const priceValue = document.getElementById('price').value;
+    const quantityValue = document.getElementById('quantity').value;
+    
+    // Validate all fields
+    const colorError = validateColor(colorValue);
+    if (colorError) {
+      showError('color', colorError);
+      isValid = false;
+    }
+    
+    const priceError = validatePrice(priceValue);
+    if (priceError) {
+      showError('price', priceError);
+      isValid = false;
+    }
+    
+    const quantityError = validateQuantity(quantityValue);
+    if (quantityError) {
+      showError('quantity', quantityError);
+      isValid = false;
+    }
+    
+    if (!isValid) {
+      Swal.fire('Validation Error', 'Please fix all errors before submitting.', 'warning');
+      return false;
+    }
+    
+    // Prevent double submission
+    isSubmittingAdd = true;
+    const submitBtn = this.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+    }
+    
+    // Submit the form
+    this.submit();
+  });
+
+  // Edit Variant Form Submission
+  let isSubmittingEdit = false;
+  document.getElementById('editVariantForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (isSubmittingEdit) {
+      return false;
+    }
+    
+    let isValid = true;
+    
+    // Clear all previous validations
+    ['editColor', 'editPrice', 'editQuantity'].forEach(clearFieldError);
+    
+    // Get values
+    const colorValue = document.getElementById('editColor').value;
+    const priceValue = document.getElementById('editPrice').value;
+    const quantityValue = document.getElementById('editQuantity').value;
+    
+    // Validate all fields
+    const colorError = validateColor(colorValue, 'edit');
+    if (colorError) {
+      showError('editColor', colorError);
+      isValid = false;
+    }
+    
+    const priceError = validatePrice(priceValue, 'edit');
+    if (priceError) {
+      showError('editPrice', priceError);
+      isValid = false;
+    }
+    
+    const quantityError = validateQuantity(quantityValue, 'edit');
+    if (quantityError) {
+      showError('editQuantity', quantityError);
+      isValid = false;
+    }
+    
+    if (!isValid) {
+      Swal.fire('Validation Error', 'Please fix all errors before submitting.', 'warning');
+      return false;
+    }
+    
+    // Prevent double submission
+    isSubmittingEdit = true;
+    const submitBtn = this.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    }
+    
+    // Submit the form
+    this.submit();
   });
 </script>
 <script>
@@ -673,15 +887,14 @@ if (parseFloat(salePrice) > parseFloat(regularPrice)) {
   function openEditVariantModalData(button) {
     const id = button.getAttribute('data-variant-id');
     const color = button.getAttribute('data-variant-color');
-    const regularPrice = button.getAttribute('data-variant-regular-price');
-    const salePrice = button.getAttribute('data-variant-sale-price');
+    const price = button.getAttribute('data-variant-price');
     const quantity = button.getAttribute('data-variant-quantity');
     const images = JSON.parse(button.getAttribute('data-variant-images') || '[]');
     
-    openEditVariantModal(id, color, regularPrice, salePrice, quantity, images);
+    openEditVariantModal(id, color, price, quantity, images);
   }
 
-  function openEditVariantModal(id, color, regularPrice, salePrice, quantity, images) {
+  function openEditVariantModal(id, color, price, quantity, images) {
     console.log('Opening modal with images:', images);
     
     // Clean up any existing croppers
@@ -737,8 +950,7 @@ if (parseFloat(salePrice) > parseFloat(regularPrice)) {
     const modal = new bootstrap.Modal(document.getElementById('editVariantModal'));
     document.getElementById('variantId').value = id;
     document.getElementById('editColor').value = color;
-    document.getElementById('editRegularPrice').value = regularPrice;
-    document.getElementById('editSalePrice').value = salePrice;
+    document.getElementById('editPrice').value = price;
     document.getElementById('editQuantity').value = quantity;
     modal.show();
   

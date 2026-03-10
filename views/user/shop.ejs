@@ -91,11 +91,11 @@
           <label class="form-label">Price</label>
           <select name="price" class="form-select" onchange="this.form.submit()">
             <option value="">All</option>
-            <option value="0-500" <%= selectedPrice=='0-500'?'selected':'' %>>₹0 - ₹500</option>
-            <option value="500-1000" <%= selectedPrice=='500-1000'?'selected':'' %>>₹500 - ₹1000</option>
-            <option value="1000-2000" <%= selectedPrice=='1000-2000'?'selected':'' %>>₹1000 - ₹2000</option>
-            <option value="2000-4000" <%= selectedPrice=='2000-4000'?'selected':'' %>>₹2000 - ₹4000</option>
-            <option value="4000+" <%= selectedPrice=='4000+'?'selected':'' %>>₹4000+</option>
+            <option value="0-500" <%= selectedPrice=='0-500'?'selected':'' %>>&#8377;0 - &#8377;500</option>
+            <option value="500-1000" <%= selectedPrice=='500-1000'?'selected':'' %>>&#8377;500 - &#8377;1000</option>
+            <option value="1000-2000" <%= selectedPrice=='1000-2000'?'selected':'' %>>&#8377;1000 - &#8377;2000</option>
+            <option value="2000-4000" <%= selectedPrice=='2000-4000'?'selected':'' %>>&#8377;2000 - &#8377;4000</option>
+            <option value="4000+" <%= selectedPrice=='4000+'?'selected':'' %>>&#8377;4000+</option>
           </select>
         </div>
 
@@ -153,33 +153,40 @@ function updateQuery(query, key, value) {
 const params = new URLSearchParams(query);
 if (value === null || value === '') params.delete(key);
 else params.set(key, value);
+if (key === 'category' && (value === null || value === '')) {
+params.delete('subcategory');
+}
+if (!params.get('category')) {
+params.delete('subcategory');
+}
+params.delete('page');
 return `/filter?${params.toString()}`;
 }
 %>
 <div class="d-flex flex-wrap gap-2 mb-4">
 <% if (selectedBrand) { %>
 <a href="<%= updateQuery(query, 'brand', null) %>" class="badge rounded-pill bg-secondary text-white">
-<%= brands.find(b => b._id.toString() === selectedBrand)?.name %> ×
+<%= brands.find(b => b._id.toString() === selectedBrand)?.name %> &times;
 </a>
 <% } %>
 <% if (selectedCategory) { %>
 <a href="<%= updateQuery(query, 'category', null) %>" class="badge rounded-pill bg-secondary text-white">
-<%= category.find(c => c._id.toString() === selectedCategory)?.name %> ×
+<%= category.find(c => c._id.toString() === selectedCategory)?.name %> &times;
 </a>
 <% } %>
 <% if (selectedSubcategory) { %>
 <a href="<%= updateQuery(query, 'subcategory', null) %>" class="badge rounded-pill bg-secondary text-white">
-Subcategory ×
+Subcategory &times;
 </a>
 <% } %>
 <% if (selectedPrice) { %>
 <a href="<%= updateQuery(query, 'price', null) %>" class="badge rounded-pill bg-secondary text-white">
-<%= selectedPrice === '4000+' ? '4000+ ₹' : selectedPrice + ' ₹' %> ×
+<%= selectedPrice === '4000+' ? '4000+ &#8377;' : selectedPrice + ' &#8377;' %> &times;
 </a>
 <% } %>
 <% if (selectedSort && selectedSort !== 'default') { %>
 <a href="<%= updateQuery(query, 'sort', null) %>" class="badge rounded-pill bg-secondary text-white">
-Sort: <%= selectedSort %> ×
+Sort: <%= selectedSort %> &times;
 </a>
 <% } %>
 </div>
@@ -198,13 +205,15 @@ Sort: <%= selectedSort %> ×
                   variantImages = product.variants[0].productImage;
                 }
               %>
-                     <button
-    class="wishlist-btn"
-    onclick="addToWishlist('<%= product._id %>')"
-    title="Add to wishlist"
-  >
-    <i class="fa-regular fa-heart"></i>
-  </button>
+              
+<button
+  class="wishlist-btn"
+  onclick="addToWishlist('<%= product._id %>', event, this)"
+  title="<%= wishlistIds.includes(product._id.toString()) ? 'Already in wishlist' : 'Add to wishlist' %>"
+>
+  <i class="<%= wishlistIds.includes(product._id.toString()) ? 'fa-solid fa-heart text-danger' : 'fa-regular fa-heart' %>"></i>
+</button>
+
               <!-- Image Carousel for Multiple Images -->
               <% if (variantImages.length > 0) { %>
                 <div id="carousel-<%= product._id %>" class="carousel slide" data-bs-ride="false" style="height:260px;">
@@ -257,10 +266,10 @@ Sort: <%= selectedSort %> ×
                 <% } %>
                 
                 <% if (product.displaySalePrice && product.displaySalePrice < product.displayRegularPrice) { %>
-                  <p class="fw-bold text-danger">₹ <%= product.displaySalePrice %></p>
-                  <p class="text-muted"><strike>₹ <%= product.displayRegularPrice %></strike></p>
+                  <p class="fw-bold text-danger">&#8377; <%= product.displaySalePrice %></p>
+                  <p class="text-muted"><strike>&#8377; <%= product.displayRegularPrice %></strike></p>
                 <% } else if (product.displayRegularPrice) { %>
-                  <p class="fw-bold">₹ <%= product.displayRegularPrice %></p>
+                  <p class="fw-bold">&#8377; <%= product.displayRegularPrice %></p>
                 <% } else { %>
                   <p class="text-muted">Price not available</p>
                 <% } %>
@@ -314,38 +323,35 @@ Sort: <%= selectedSort %> ×
     });
   }
 
-  // Wishlist action (keep your backend route)
-  function addToWishlist(productId, event) {
-    event.preventDefault();
-
-    $.ajax({
-      url: 'user/addToWishlist',
-      method: 'POST',
-      data: { productId },
-      success: (response) => {
-        if (response.status) {
-          Swal.fire('Added to wishlist ✅', '', 'success');
-          const btn = document.querySelector(`a[data-product-id="${productId}"]`);
-          if (btn) btn.classList.add('wishlisted');
-        } else {
-          Swal.fire('Already in wishlist', '', 'info');
-        }
-      },
-      error: () => {
-        Swal.fire('Error', 'Failed to add to wishlist ❌', 'error');
-      }
-    });
-  }
-
-  window.addToWishlist = addToWishlist;
-
 
   // Wishlist
-  function addToWishlist(productId, e){
+  function markWishlisted(btn){
+    if (!btn) return;
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.classList.remove('fa-regular');
+      icon.classList.add('fa-solid', 'text-danger');
+    }
+    btn.title = 'Already in wishlist';
+  }
+
+  function addToWishlist(productId, e, btn){
     e && e.preventDefault();
+    const icon = btn ? btn.querySelector('i') : null;
+    const alreadyWishlisted = icon && icon.classList.contains('fa-solid');
+
+    if (alreadyWishlisted) {
+      return Swal.fire({
+        icon: 'info',
+        title: 'Info',
+        text: 'Already in wishlist'
+      });
+    }
+
     $.post('/addToWishlist', { productId })
       .done(resp => {
         if(resp.status){ 
+          markWishlisted(btn);
           Swal.fire({
             icon: 'success',
             title: 'Success!',
@@ -355,6 +361,7 @@ Sort: <%= selectedSort %> ×
           });
         }
         else{ 
+          markWishlisted(btn);
           Swal.fire({
             icon: 'info',
             title: 'Info',

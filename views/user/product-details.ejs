@@ -39,6 +39,16 @@
   .qty-input{
     width:60px; text-align:center; border:none; outline:none;
   }
+  .wishlist-btn.wishlisted {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+  }
+  .wishlist-btn.wishlisted:hover {
+    background-color: #5c636a;
+    border-color: #565e64;
+    color: #fff;
+  }
 </style>
 
 <section class="sec-product-detail bg0 p-t-65 p-b-60 mt-4">
@@ -168,10 +178,14 @@
 
           <!-- Wishlist -->
           <div class="d-flex align-items-center gap-2">
+            <% const isWishlisted = wishlistIds && wishlistIds.includes(product._id.toString()); %>
             <button
-              class="btn btn-outline-secondary btn-sm"
+              id="wishlistBtn"
+              class="btn btn-sm wishlist-btn <%= isWishlisted ? 'btn-dark wishlisted' : 'btn-outline-secondary' %>"
+              data-wishlisted="<%= isWishlisted ? 'true' : 'false' %>"
+              title="<%= isWishlisted ? 'Already in wishlist' : 'Add to wishlist' %>"
               onclick="addToWishlist('<%= product._id %>', event)">
-              ♥ Add to Wishlist
+              <%= isWishlisted ? '♥ Wishlisted' : '♥ Add to Wishlist' %>
             </button>
           </div>
         </div>
@@ -417,11 +431,33 @@ document.getElementById('colorSelect').addEventListener('change', function () {
   }
 
   // Wishlist
+  function setWishlistButtonState(btn, wishlisted){
+    if(!btn) return;
+    btn.dataset.wishlisted = wishlisted ? 'true' : 'false';
+    btn.classList.toggle('wishlisted', wishlisted);
+    btn.classList.toggle('btn-dark', wishlisted);
+    btn.classList.toggle('btn-outline-secondary', !wishlisted);
+    btn.title = wishlisted ? 'Already in wishlist' : 'Add to wishlist';
+    btn.textContent = wishlisted ? '♥ Wishlisted' : '♥ Add to Wishlist';
+  }
+
   function addToWishlist(productId, e){
     e && e.preventDefault();
+    const btn = e?.currentTarget || document.getElementById('wishlistBtn');
+    const alreadyWishlisted = btn?.dataset?.wishlisted === 'true';
+
+    if (alreadyWishlisted) {
+      return Swal.fire({
+        icon: 'info',
+        title: 'Info',
+        text: 'Already in wishlist'
+      });
+    }
+
     $.post('/addToWishlist', { productId })
       .done(resp => {
         if(resp.status){ 
+          setWishlistButtonState(btn, true);
           Swal.fire({
             icon: 'success',
             title: 'Success!',
@@ -431,6 +467,7 @@ document.getElementById('colorSelect').addEventListener('change', function () {
           });
         }
         else{ 
+          setWishlistButtonState(btn, true);
           Swal.fire({
             icon: 'info',
             title: 'Info',

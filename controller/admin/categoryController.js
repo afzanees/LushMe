@@ -3,36 +3,60 @@ const Product = require("../../models/productSchema")
 const { calculateEffectivePrice } = require("./productController");
 
 const addCategory = async (req, res) => {
-    try {
-      const { name, description } = req.body;
-      const categoryImage = req.file ? req.file.filename : null;
+  try {
 
-      console.log('body:', req.body);
-    console.log('file:', req.file);
-  
-      if (!name || !description || !categoryImage) {
-        return res.status(400).json({ success: false, message: "All fields are required" });
-      }
-  
-      const existing = await Category.findOne({ name: new RegExp(`^${name.trim()}$`, "i") });
-      if (existing) {
-        return res.status(400).json({ success: false, message: "Category already exists" });
-      }
-  
-      const newCategory = new Category({
-        name: name.trim(),
-        description,
-        categoryImage
-      });
-  
-      await newCategory.save();
-      return res.status(200).json({ success: true, message: "Category added successfully" });
+    const { name, description } = req.body;
 
-    } catch (error) {
-      console.error("Add Category Error:", error);
-      res.status(500).json({ message: "Server Error" });
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "Category image is required" });
     }
-  };
+
+    // File validation is now handled by multer middleware
+    // But we keep this as a secondary check
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+
+    if (!allowedTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        message: "Only PNG, JPEG, JPG and WEBP images are allowed"
+      });
+    }
+
+    const categoryImage = req.file.filename;
+
+    if (!name || !description) {
+      return res.status(400).json({ success: false, message: "All fields are required" });
+    }
+
+    const existing = await Category.findOne({
+      name: new RegExp(`^${name.trim()}$`, "i")
+    });
+
+    if (existing) {
+      return res.status(400).json({ success: false, message: "Category already exists" });
+    }
+
+    const newCategory = new Category({
+      name: name.trim(),
+      description,
+      categoryImage
+    });
+
+    await newCategory.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Category added successfully"
+    });
+
+  }catch (error) {
+  console.error("Add Category Error:", error);
+  res.status(500).json({
+    success: false,
+    message: error.message || "Something went wrong"
+  });
+}
+};
  
   //Category list
   const categoryInfo = async (req, res) => {
@@ -103,6 +127,14 @@ const addCategory = async (req, res) => {
       };
   
       if (req.file) {
+        // Validate file type
+        const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+        if (!allowedTypes.includes(req.file.mimetype)) {
+          return res.status(400).json({
+            success: false,
+            message: "Only PNG, JPEG, JPG and WEBP images are allowed"
+          });
+        }
         updateFields.categoryImage = req.file.filename;
       }
   

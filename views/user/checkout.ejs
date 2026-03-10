@@ -289,7 +289,7 @@
 
       <% if(cartItems && cartItems.length > 0) { %>
         <% cartItems.forEach(item => { 
-             const variant = item.productId.variants.find(v => v.color === item.color) || item.productId.variants[0];
+             const variant = item.productId.variants[item.variantIndex] || item.productId.variants[0];
              const variantImage = (variant && variant.productImage && variant.productImage[0]) || '';
              const lineTotal = (typeof item.totalPrice === 'number'
                ? item.totalPrice
@@ -751,9 +751,9 @@
               <div>
                 <h6 class="coupon-name fw-bold">${coupon.name}</h6>
                 <p class="mb-1">Code: <strong>${coupon.code}</strong></p>
-                <p class="mb-1 text-success">Discount: ₹${coupon.offerPrice || coupon.discount || 0}</p>
+                <p class="mb-1 text-success">Discount: ${coupon.type === 'percentage' ? `${coupon.offerPrice || 0}%` : `₹${coupon.offerPrice || coupon.discount || 0}`}</p>
                 <p class="mb-1 text-muted small">Min Purchase: ₹${coupon.minimumPrice || 0}</p>
-                <p class="mb-0 text-muted small">Valid till: ${new Date(coupon.expireOn).toLocaleDateString()}</p>
+                <p class="mb-0 text-muted small">Valid till: ${new Date(coupon.expiryDate || coupon.expireOn).toLocaleDateString()}</p>
               </div>
               <button class="btn btn-sm btn-primary" onclick="applyCouponFromModal('${coupon.code}')">Apply</button>
             </div>

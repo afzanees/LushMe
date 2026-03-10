@@ -61,6 +61,7 @@
                       id="startDate"
                       name="startDate"
                       class="form-control w-full border border-gray-300 rounded-md p-2"
+                      max="<%= new Date().toISOString().split('T')[0] %>"
                     />
                   </div>
                   <div class="flex-1">
@@ -70,6 +71,7 @@
                       id="endDate"
                       name="endDate"
                       class="form-control w-full border border-gray-300 rounded-md p-2"
+                      max="<%= new Date().toISOString().split('T')[0] %>"
                     />
                   </div>
                 </div>
@@ -216,12 +218,23 @@
               return;
             }
       
-            if (startDate > today || endDate > today) {
+            // Allow current date but prevent future dates
+            if (startDate > today) {
               e.preventDefault();
               Swal.fire({
                 icon: 'warning',
                 title: 'Invalid date',
-                text: 'Dates cannot be in the future'
+                text: 'Start date cannot be in the future'
+              });
+              return;
+            }
+            
+            if (endDate > today) {
+              e.preventDefault();
+              Swal.fire({
+                icon: 'warning',
+                title: 'Invalid date',
+                text: 'End date cannot be in the future'
               });
               return;
             }

@@ -145,7 +145,10 @@
             <h6>Order Info</h6>
             <p>
               <strong>Payment:</strong> <%= order.paymentMethod.toUpperCase() %> <br />
-              <strong>Status:</strong> <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %> <br />
+              <strong>Status:</strong> <%= ((order.paymentStatus || '').toLowerCase() === 'failed') ? 'Payment Failed' : (order.status.charAt(0).toUpperCase() + order.status.slice(1)) %> <br />
+              <% if ((order.paymentStatus || '').toLowerCase() === 'failed') { %>
+                <strong>Payment Status:</strong> <span class="badge bg-danger">Failed</span> <br />
+              <% } %>
               <strong>Grand Total:</strong> ₹<%= order.finalAmount.toFixed(2) %> <br />
               <!-- <strong>Discount:</strong> ₹<%= order.discount.toFixed(2) %> <br /> -->
               <strong>Delivery Charge:</strong> ₹<%= order.deliveryCharge.toFixed(2) %>
@@ -216,13 +219,20 @@
                         <% } %>
                 </td> -->
               <td>
-                  <% var s = (item.status || '').toLowerCase(); %>
-                  <% if (s === 'cancelled') { %>
+                  <% 
+                    const isPaymentFailed = (order.paymentStatus || '').toLowerCase() === 'failed';
+                    var s = isPaymentFailed ? 'payment_failed' : (item.status || '').toLowerCase();
+                  %>
+                  <% if (s === 'payment_failed') { %>
+                    <span class="badge bg-danger">Payment Failed</span>
+                  <% } else if (s === 'cancelled') { %>
                     <span class="badge bg-danger">Cancelled</span>
                   <% } else if (s === 'delivered') { %>
                     <span class="badge bg-primary">Delivered</span>
                   <% } else if (s === 'returned') { %>
                     <span class="badge bg-info">Returned</span>
+                  <% } else if (s === 'cancellation_requested') { %>
+                    <span class="badge bg-warning text-dark">Cancellation Requested</span>
                   <% } else if (s === 'return_requested') { %>
                     <span class="badge bg-warning text-dark">Return Requested</span>
                   <% } else if (s === 'shipped') { %>
@@ -236,7 +246,15 @@
                 
             <!-- STATUS -->
             <td>
-              <% if ((item.status || '').toLowerCase() === 'return_requested') { %>
+              <% if ((order.paymentStatus || '').toLowerCase() === 'failed') { %>
+                <span class="badge bg-danger">No Action</span>
+              <% } else if ((item.status || '').toLowerCase() === 'cancellation_requested') { %>
+                <div class="d-flex gap-2 justify-content-center">
+                  <button class="btn btn-sm btn-warning" onclick="approveCancellationRequest('<%= order.orderId %>', <%= index %>)">
+                    <i class="fas fa-check"></i> Approve Cancel
+                  </button>
+                </div>
+              <% } else if ((item.status || '').toLowerCase() === 'return_requested') { %>
                 <!-- Return request actions -->
                 <div class="d-flex gap-2 justify-content-center">
                   <button class="btn btn-sm btn-success" onclick="handleReturnRequest('<%= order.orderId %>', <%= index %>, 'approve')">
@@ -413,6 +431,51 @@
             text: 'Error processing return request'
           });
           console.error(err);
+        });
+      }
+
+      function approveCancellationRequest(orderId, itemIndex) {
+        Swal.fire({
+          title: 'Approve Cancellation Request?',
+          text: 'This will cancel the item and process wallet refund (if applicable).',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, approve',
+          cancelButtonText: 'No'
+        }).then((result) => {
+          if (!result.isConfirmed) return;
+
+          fetch(`/admin/orders/${orderId}/items/${itemIndex}/approve-cancellation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Approved',
+                text: data.message,
+                timer: 1800,
+                showConfirmButton: false
+              }).then(() => location.reload());
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Failed',
+                text: data.message || 'Failed to approve cancellation request'
+              });
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Error approving cancellation request'
+            });
+          });
         });
       }
       

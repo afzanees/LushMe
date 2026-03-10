@@ -141,6 +141,13 @@ const updatePassword = async (req, res) => {
 const userProfile = async (req,res)=>{
     try{ 
         const userId =req.session.user
+        const allowedTabs = new Set(['profile', 'orders', 'wallet', 'Wallet-History', 'Referral', 'address']);
+        let activeTab = req.query.tab;
+        if (!allowedTabs.has(activeTab)) {
+          if (req.query.walletPage) activeTab = 'Wallet-History';
+          else if (req.query.page) activeTab = 'orders';
+          else activeTab = 'profile';
+        }
         const userData = await User.findById(userId)
         const userAddress = await Address.findOne({ userId: userId });
         const addresses = userAddress ? userAddress.address : [];
@@ -148,10 +155,12 @@ const userProfile = async (req,res)=>{
         console.log("✅ USER FROM DB:", userData);
         console.log("✅ REFERRAL CODE FROM DB:", userData.referralCode);
         //for order
-        const page = parseInt(req.query.page) || 1;
+        const requestedPage = Math.max(parseInt(req.query.page) || 1, 1);
         const limit = 5;
-        const skip = (page - 1) * limit;
         const totalOrders = await Order.countDocuments({ userId });
+        const totalPages = Math.max(Math.ceil(totalOrders / limit), 1);
+        const page = Math.min(requestedPage, totalPages);
+        const skip = (page - 1) * limit;
         console.log('🔍 Total Orders Found:', totalOrders);
         console.log('🔍 User ID:', userId);
         const orders = await Order.find({ userId })
@@ -162,8 +171,6 @@ const userProfile = async (req,res)=>{
           .lean();
         console.log('🔍 Orders Retrieved:', orders.length);
         console.log('🔍 Orders Data:', JSON.stringify(orders, null, 2));
-        const totalPages = Math.ceil(totalOrders / limit);
-
         if (!userData.referralCode) {
           userData.referralCode = generateReferralCode();
           await userData.save();
@@ -171,15 +178,16 @@ const userProfile = async (req,res)=>{
         }
 
         // Wallet history pagination
-        const walletPage = parseInt(req.query.walletPage) || 1;
+        const requestedWalletPage = Math.max(parseInt(req.query.walletPage) || 1, 1);
         const walletLimit = 5;
-        const walletSkip = (walletPage - 1) * walletLimit;
         const walletHistory = userData.walletTransactions || [];
+        const totalWalletPages = Math.max(Math.ceil(walletHistory.length / walletLimit), 1);
+        const walletPage = Math.min(requestedWalletPage, totalWalletPages);
+        const walletSkip = (walletPage - 1) * walletLimit;
 
         const paginatedHistory = walletHistory
         .sort((a, b) => new Date(b.date) - new Date(a.date)) // newest first
         .slice(walletSkip, walletSkip + walletLimit);
-        const totalWalletPages = Math.ceil(walletHistory.length / walletLimit);
 
         const walletTransactions = userData.walletTransactions || [];
         
@@ -191,6 +199,7 @@ const userProfile = async (req,res)=>{
             walletTransactions: paginatedHistory,
             walletCurrentPage: walletPage,
             walletTotalPages: totalWalletPages,
+            activeTab,
         })
        }catch (err){
         res.redirect("/pageNotFound")

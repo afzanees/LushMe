@@ -14,20 +14,26 @@ const userHeaderData = require("./middlewares/userHeaderData");
 db();
 
 const app = express()
+const isProduction = process.env.NODE_ENV === "production";
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
-    secret:process.env.SESSION_SECRET,
-    resave:false,
-    saveUninitialized:true,
-    cookie:{
-        secure:false,
-        httpOnly:true,
-        maxAge:72*60*60*1000
+    secret: process.env.SESSION_SECRET || "dev-session-secret",
+    resave: false,
+    saveUninitialized: false,
+    name: "connect.sid",
+    cookie: {
+        secure: isProduction,
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 72 * 60 * 60 * 1000
     }
-    
 }))
 
 app.use(flash());
@@ -51,6 +57,9 @@ app.use('/js', express.static(path.join(__dirname, 'public/js')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/fonts', express.static(path.join(__dirname, 'public/fonts')));
 app.use('/vendor', express.static(path.join(__dirname, 'public/vendor')));
+
+// Browsers request /favicon.ico automatically; avoid noisy 404 logs if no icon file exists.
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use(async (req, res, next) => {
     try {
@@ -87,3 +96,7 @@ app.listen(process.env.PORT, ()=>{
 })
 
 module.exports = app
+
+
+
+//admin password : qqqqqqqq1

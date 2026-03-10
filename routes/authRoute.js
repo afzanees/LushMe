@@ -14,13 +14,31 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // Successful authentication
+    const user = req.user;
 
-    // ✅ store user id in express-session manually
-    req.session.user = req.user._id;
+    // Regenerate session after authentication to prevent session fixation.
+    req.session.regenerate((regenErr) => {
+      if (regenErr) {
+        console.error("Session regeneration failed:", regenErr);
+        return res.redirect("/login");
+      }
 
-    // redirect to homepage
-    res.redirect("/");
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error("Passport re-login failed:", loginErr);
+          return res.redirect("/login");
+        }
+
+        req.session.user = user._id;
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save failed:", saveErr);
+            return res.redirect("/login");
+          }
+          res.redirect("/");
+        });
+      });
+    });
   }
 );
 

@@ -14,9 +14,29 @@ const loadHomepage = async (req,res) =>{
 
         let user = null;
         if (req.session.user) {                        //normal user exist
-            user = await User.findById(req.session.user);  // get daa from db
+            user = await User.findById(req.session.user);  // get data from db
+            
+            // Check if user is blocked
+            if (user && user.isBlocked) {
+                req.session.destroy((err) => {
+                    if (err) {
+                        console.error("Error destroying session:", err);
+                    }
+                });
+                return res.redirect("/login?error=blocked");
+            }
           } else if (req.user) {                      // by google
             user = req.user; // <-- from Passport Google
+            
+            // Check if Google user is blocked
+            if (user && user.isBlocked) {
+                req.session.destroy((err) => {
+                    if (err) {
+                        console.error("Error destroying session:", err);
+                    }
+                });
+                return res.redirect("/login?error=blocked");
+            }
           }
           console.log("Homepage user:", user);      
           res.render("user/home", { user });
@@ -66,7 +86,7 @@ const register = async (req, res) => {
   try {
     const { username, phone, email, password, cpassword, referralCode} = req.body;
 
-    console.log("📝 Referral code entered by user:", referralCode);
+    console.log("ðŸ“ Referral code entered by user:", referralCode);
 
     if (password !== cpassword) {
       return res.render("user/register", { 
@@ -87,11 +107,10 @@ const register = async (req, res) => {
     let referrerId = null;
 
     if (referralCode && referralCode.trim() !== "") {
-      const referrer = await User.findOne({
-        referralCode: referralCode.trim()
-      });
+      const enteredCode = referralCode.trim();
+      const referrer = await User.findOne({ referralCode: enteredCode });
 
-      console.log("🔍 Referrer found:", referrer);
+      console.log("ðŸ” Referrer found:", referrer);
 
       if (!referrer) {
         return res.render("user/register", {
@@ -110,13 +129,14 @@ const register = async (req, res) => {
       return res.json("email-error");
     }
 
-    console.log("📦 Session userData:", {
+    console.log("ðŸ“¦ Session userData:", {
       username,
       email,
       referrerId
     });
 
     req.session.userOtp = otp;
+    req.session.otpExpiry = Date.now() + 60 * 1000;
     req.session.userData = { username, email, phone, password, referrerId };
 
     res.render("user/confirmotp", { otpAction: "/confirmotp" });
@@ -138,17 +158,11 @@ const securePassword = async (password)=>{                            //hashing 
 }
 const confirmOtp = async (req, res) => {
   try {
-    console.log("📦 Session userData in confirmOtp:", req.session.userData);
+    console.log("ðŸ“¦ Session userData in confirmOtp:", req.session.userData);
 
     const { otp } = req.body;
 
-    if (String(otp) !== String(req.session.userOtp)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP, please try again"
-      });
-    }
-
+    
     const userData = req.session.userData;
     if (!userData) {
       return res.status(400).json({
@@ -157,7 +171,27 @@ const confirmOtp = async (req, res) => {
       });
     }
 
-    console.log("📋 Registration Data:", {
+
+    if (!req.session.otpExpiry || Date.now() > req.session.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired. Please resend OTP"
+      });
+    }
+
+    if (String(otp) !== String(req.session.userOtp)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP, please try again"
+      });
+    }
+
+
+
+    delete req.session.userOtp;
+delete req.session.otpExpiry;
+
+    console.log("ðŸ“‹ Registration Data:", {
       username: userData.username,
       email: userData.email,
       hasReferrerId: !!userData.referrerId
@@ -165,56 +199,49 @@ const confirmOtp = async (req, res) => {
 
     const passwordHash = await securePassword(userData.password);
 
-    let user = await User.findOne({ email: userData.email });
+    // âœ… Create new user
+    const newUser = new User({
+      username: userData.username,
+      email: userData.email,
+      phone: userData.phone,
+      password: passwordHash,
+      referralCode: generateReferralCode(), // user's own referral code
+      wallet: 0,
+      walletTransactions: []
+    });
 
-    if (!user) {
-      // ✅ Create user ONLY ONCE
-      user = new User({
-        username: userData.username,
-        email: userData.email,
-        phone: userData.phone,
-        password: passwordHash,
-        referralCode: generateReferralCode(), // ✅ generated once
-        referredBy: userData.referrerId,
-        wallet: 0,
-        walletTransactions: []
-      });
-    
-      await user.save();
-      console.log("✅ New user created:", user._id);
-    } else {
-      console.log("ℹ️ User already exists, using existing referral code");
-    }
+    await newUser.save();
+    console.log("âœ… New user created:", newUser._id);
 
-    // ✅ Referral reward logic
-    if (userData.referrerId && !user.referralRewardGiven) {
-      console.log("🎯 Processing referral reward for referrerId:", userData.referrerId);
-    
-      const referrer = await User.findById(userData.referrerId);
-    
-      if (referrer) {
-        const referralReward = 100;
-    
-        // Credit wallet
-        referrer.wallet = (referrer.wallet || 0) + referralReward;
-        referrer.walletTransactions = referrer.walletTransactions || [];
-    
-        referrer.walletTransactions.push({
-          date: new Date(),
-          amount: referralReward,
-          status: "credited",
-          method: "reward",
-          description: `Referral reward for ${user.username}'s registration`
-        });
-    
-        await referrer.save();
+    // âœ… Referral reward logic
+    if (userData.referrerId) {
+      console.log("ðŸŽ¯ Processing referral reward for referrerId:", userData.referrerId);
 
-        user.referralRewardGiven = true;
-        await user.save();
+      try {
+        const referrer = await User.findById(userData.referrerId);
 
-          console.log(`✅ ₹${referralReward} credited to referrer's wallet`);
+        console.log("ðŸ”¥ Referrer document:", referrer);
 
-          // ✅ Create referral coupon
+        if (referrer) {
+          const referralReward = 100;
+
+          // Ensure walletTransactions exists
+          referrer.wallet = (referrer.wallet || 0) + referralReward;
+          referrer.walletTransactions = referrer.walletTransactions || [];
+
+          referrer.walletTransactions.push({
+            date: new Date(),
+            amount: referralReward,
+            status: "credited",
+            method: "reward",
+            description: `Referral reward for ${newUser.username}'s registration`
+          });
+
+          await referrer.save();
+
+          console.log(`âœ… â‚¹${referralReward} credited to referrer's wallet`);
+
+          // âœ… Create referral coupon
           const coupon = await Coupon.create({
             name: "Referral Reward",
             code: `REF-${referrer.referralCode}-${Date.now().toString().slice(-4)}`,
@@ -232,20 +259,20 @@ const confirmOtp = async (req, res) => {
             usedUsers: []
           });
 
-          console.log("🎁 Referral coupon created:", coupon.code);
+          console.log("ðŸŽ Referral coupon created:", coupon.code);
         } else {
-          console.log("❌ Referrer not found for ID:", userData.referrerId);
-      //   }
-      // } catch (referralError) {
-      //   console.error("❌ Error during referral processing:", referralError);
-      //   // Do NOT fail user registration
+          console.log("âŒ Referrer not found for ID:", userData.referrerId);
+        }
+      } catch (referralError) {
+        console.error("âŒ Error during referral processing:", referralError);
+        // Do NOT fail user registration
       }
     } else {
-      console.log("ℹ️ No referral used during registration");
+      console.log("â„¹ï¸ No referral used during registration");
     }
 
-    // ✅ Clear session
-    req.session.user = user._id;
+    // âœ… Clear session
+    req.session.user = newUser._id;
     req.session.userOtp = null;
     req.session.userData = null;
 
@@ -275,6 +302,7 @@ const resendOTP = async (req, res) => {
   
       const otp = generateOtp();
       req.session.userOtp = otp;
+      req.session.otpExpiry = Date.now() + 60 * 1000; // ⭐ ADD THIS
   
       req.session.save(async (err) => {
         if (err) {
@@ -301,7 +329,10 @@ const resendOTP = async (req, res) => {
   const loadLogin = async (req,res)=>{
     try {
         if(!req.session.user){
-            return res.render("user/login")
+            const errorMessage = req.query.error === 'blocked' 
+                ? 'Your account has been blocked. Please contact support.' 
+                : null;
+            return res.render("user/login", { message: errorMessage })
         }else{
             res.redirect('/')
         }
@@ -339,7 +370,7 @@ const login = async (req,res)=>{
     } catch (error) {
 
         console.log("login error",error)
-        res.render("login",{message:"Login failed, Plesae try again later"})
+        res.render("user/login",{message:"Login failed, Please try again later"})
         
     }
 }
@@ -350,7 +381,7 @@ const logout = async (req, res, next) => {
   
         req.session.destroy(err => {
           if (err) return res.status(500).send("Error logging out");
-          res.clearCookie('connect.sid');
+          res.clearCookie('connect.sid', { path: '/' });
           res.redirect('/');
         });
       });
@@ -364,11 +395,24 @@ const logout = async (req, res, next) => {
     try {
          const user = req.session.user;
         let wishlistIds = [];
+        let userData = null;
+        
         if(user) {
-            const userDoc = await User.findById(user).select('wishlist').lean();
-            wishlistIds = userDoc?.wishlist?.map(id => id.toString()) || [];
+            userData = await User.findById(user);
+            
+            // Check if user is blocked
+            if (userData && userData.isBlocked) {
+                req.session.destroy((err) => {
+                    if (err) {
+                        console.error("Error destroying session:", err);
+                    }
+                });
+                return res.redirect("/login?error=blocked");
+            }
+            
+            wishlistIds = userData?.wishlist?.map(id => id.toString()) || [];
         }
-        const userData = user ? await User.findOne({ _id: user }) : null;
+        
         const categories = await Category.find({ isListed: true });
         const categoryIds = categories.map(category => category._id.toString());
         const page = parseInt(req.query.page) || 1;
@@ -380,11 +424,7 @@ const logout = async (req, res, next) => {
             category: { $in: categoryIds }
           };
           if (search) {
-           
-            query.$or = [
-              { name: { $regex: search, $options: 'i' } },
-              { description: { $regex: search, $options: 'i' } }
-            ];
+            query.name = { $regex: search, $options: 'i' };
           }
         const products = await Product.find(query).populate('brand').sort({createdAt: -1}).skip(skip).limit(limit);
         
@@ -399,11 +439,11 @@ const logout = async (req, res, next) => {
   const effectiveOffer = Math.max(productOffer, categoryOffer, subcategoryOffer);
   product.effectiveOffer = effectiveOffer;
 
-  // ✅ Total stock across variants
+  // âœ… Total stock across variants
   product.totalQuantity = product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0);
   product.isOutOfStock = product.totalQuantity === 0;
 
-  // ✅ Choose lowest priced variant
+  // âœ… Choose lowest priced variant
   if (product.variants.length > 0) {
     let minVariant = product.variants[0];
 
@@ -411,7 +451,7 @@ const logout = async (req, res, next) => {
       if (v.salePrice < minVariant.salePrice) minVariant = v;
     });
 
-    // ✅ Apply offer discount
+    // âœ… Apply offer discount
     const finalSalePrice = minVariant.salePrice * (1 - effectiveOffer / 100);
 
     product.displayRegularPrice = Math.round(minVariant.regularPrice);
@@ -478,12 +518,10 @@ const logout = async (req, res, next) => {
  
         const brands= await Brand.find({}).lean();
          const query={
-            isBlocked :false,
-            variants: { $elemMatch: { quantity: { $gt: 0 } } }
+            isBlocked :false
          }
          
         if (color) variantQuery.color = color;
-        if (price) variantQuery.price = price;
 
          if (Object.keys(variantQuery).length > 0) {
                 query.variants = { $elemMatch: { ...variantQuery, quantity: { $gt: 0 } } };
@@ -549,7 +587,7 @@ if (req.query.price) {
           ]);
         let findProducts = products;
 
-        // ✅ Set display price based on the lowest priced variant
+        // âœ… Set display price based on the lowest priced variant
 findProducts.forEach(product => {
   if (product.variants && product.variants.length > 0) {
 
@@ -644,3 +682,4 @@ module.exports = {
     filterProduct
   
 } 
+
