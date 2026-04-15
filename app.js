@@ -93,9 +93,11 @@ app.use(notFound);
 // Global error handler - must be last
 app.use(errorHandler);
 
-app.listen(process.env.PORT, ()=>{
-    console.log("server is running")
-})
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+});
 
 module.exports = app
 
