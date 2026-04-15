@@ -7,7 +7,7 @@ const { asyncHandler } = require("./errorhandling");
  * Protects user routes and blocks access for blocked users
  */
 const userAuth = asyncHandler(async (req, res, next) => {
-  if (!req.session.user) {
+  if (!req.session.user && !req.user) {
     if (req.xhr || req.headers.accept?.includes("json")) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -17,7 +17,9 @@ const userAuth = asyncHandler(async (req, res, next) => {
     return res.redirect("/login");
   }
 
-  const user = await User.findById(req.session.user);
+  const sessionUser = req.session.user;
+  const userId = req.user?._id || (sessionUser && (sessionUser._id || sessionUser));
+  const user = userId ? await User.findById(userId) : null;
   if (!user) {
     delete req.session.user;
     if (req.xhr || req.headers.accept?.includes("json")) {
@@ -40,6 +42,7 @@ const userAuth = asyncHandler(async (req, res, next) => {
     return res.redirect("/login?error=blocked");
   }
 
+  req.session.user = user._id.toString();
   req.user = user;
   next();
 });

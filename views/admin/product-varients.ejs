@@ -1,458 +1,842 @@
-
-<%- include('partials/header', { title: 'Product Management' }) %>
+<%- include('partials/header', { title: 'Manage Variants' }) %>
 <%- include('partials/sidebar', { admin }) %>
-<!-- Cropper.js CSS -->
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+
 <style>
-.variant-preview {
-  width: 100%;
-  max-width: 400px;
-  height: 400px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  overflow: hidden;
-  margin: auto;
-  background: #f8f8f8;
-}
+  body {
+    font-family: "DM Sans", sans-serif;
+    background-color: #f1f5f9;
+    color: #1e293b;
+  }
 
-/* Ensure preview image fits inside box */
-.variant-preview img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  max-width: 100%;
-}
+  .vp-page { padding: 28px 24px; }
 
-/* Allow cropper to use full space */
-.cropper-container {
-  max-width: 100%;
-  margin: auto;
-}
+  /* Header */
+  .vp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
 
-.variant-image-thumb {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  margin: 2px;
-}
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-size: 13px;
+    color: #475569;
+    font-family: "DM Sans", sans-serif;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn-back:hover { background: #f8fafc; color: #1e293b; text-decoration: none; }
 
-/* Edit modal current image display */
-.current-image-display {
-  width: 100%;
-  max-width: 400px;
-  height: 400px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  margin: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f8f8;
-  position: relative;
-}
+  .vp-title h2 {
+    font-family: "Syne", sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
 
-.current-image-display img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
+  .vp-title p { font-size: 13px; color: #64748b; margin: 0; }
+
+  .product-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 3px 10px;
+    border-radius: 6px;
+    margin-left: 6px;
+    letter-spacing: 0.2px;
+  }
+
+  /* Variants Table Card */
+  .vp-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+
+  .vp-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .vp-card-header h5 {
+    font-family: "Syne", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: #1e293b;
+  }
+
+  .variant-count {
+    font-size: 12px;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .vp-table-wrap { overflow-x: auto; }
+
+  .vp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 820px;
+  }
+
+  .vp-table thead tr { background: #1e293b; }
+
+  .vp-table thead th {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 12px 18px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .vp-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+
+  .vp-table tbody tr:last-child { border-bottom: none; }
+  .vp-table tbody tr:hover { background: #f8fafc; }
+
+  .vp-table td {
+    padding: 13px 18px;
+    vertical-align: middle;
+    color: #1e293b;
+  }
+
+  /* Color chip */
+  .color-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+
+  /* Price */
+  .price-text { font-weight: 500; }
+  .sale-price { color: #16a34a; }
+  .regular-price { color: #94a3b8; font-size: 12px; text-decoration: line-through; }
+
+  /* Qty chip */
+  .qty-chip {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Thumb images */
+  .thumb-row { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .thumb-img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 7px;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Action buttons */
+  .action-group { display: flex; align-items: center; gap: 6px; }
+
+  .btn-act {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    background: none;
+  }
+  .btn-act:hover { opacity: 0.82; text-decoration: none; }
+  .btn-act.info   { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+  .btn-act.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 40px 24px; color: #94a3b8; }
+  .empty-state p { font-size: 14px; margin: 0; }
+
+  /* Add Variant Form Card */
+  .form-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .form-card-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .form-card-header h5 {
+    font-family: "Syne", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: #1e293b;
+  }
+
+  .form-card-body { padding: 22px 24px; }
+
+  /* Form fields */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+
+  .field-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+  }
+
+  .field-input {
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 9px 13px;
+    font-size: 13px;
+    font-family: "DM Sans", sans-serif;
+    color: #1e293b;
+    background: #fff;
+    outline: none;
+    height: 38px;
+    transition: border-color 0.15s;
+  }
+
+  .field-input:focus { border-color: #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,0.15); }
+  .field-input.is-invalid { border-color: #fca5a5; }
+  .field-input.is-valid   { border-color: #86efac; }
+
+  .field-error { font-size: 11px; color: #dc2626; min-height: 16px; }
+
+  /* Qty stepper */
+  .qty-stepper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    overflow: hidden;
+    height: 38px;
+  }
+
+  .qty-stepper button {
+    width: 36px;
+    height: 38px;
+    border: none;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .qty-stepper button:hover { background: #f1f5f9; }
+
+  .qty-stepper input {
+    flex: 1;
+    border: none;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    color: #1e293b;
+    outline: none;
+    background: #fff;
+  }
+
+  /* Image Upload Grid */
+  .image-section-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 14px;
+  }
+
+  .image-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .image-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .image-slot-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+    text-align: center;
+  }
+
+  .image-preview-box {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .image-preview-box.has-image { border-style: solid; border-color: #e2e8f0; }
+
+  .image-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .image-preview-box img.visible { display: block; }
+
+  .upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: #cbd5e1;
+    font-size: 11px;
+  }
+
+  .upload-placeholder svg { width: 22px; height: 22px; }
+
+  .delete-img-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    z-index: 10;
+  }
+
+  .delete-img-btn.visible { display: flex; }
+
+  .image-slot input[type="file"] { display: none; }
+
+  .btn-choose-file {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 30px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+  }
+
+  .btn-choose-file:hover { background: #f8fafc; }
+
+  .btn-crop {
+    display: none;
+    width: 100%;
+    height: 30px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    border: 1px solid #bbf7d0;
+    background: #dcfce7;
+    color: #15803d;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: opacity 0.15s;
+  }
+
+  .btn-crop.visible { display: flex; }
+  .btn-crop:hover { opacity: 0.82; }
+
+  /* Cropper container */
+  .cropper-wrap {
+    display: none;
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+
+  .cropper-wrap.visible { display: block; }
+  .cropper-wrap img { max-width: 100%; display: block; }
+
+  /* Submit button */
+  .btn-submit {
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 0 22px;
+    height: 40px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: "DM Sans", sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: background 0.15s;
+  }
+  .btn-submit:hover { background: #334155; }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Modal overrides */
+  .modal-content {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid #f1f5f9;
+    padding: 18px 22px;
+  }
+
+  .modal-title {
+    font-family: "Syne", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .modal-body { padding: 22px; }
+
+  .modal-footer {
+    border-top: 1px solid #f1f5f9;
+    padding: 16px 22px;
+    gap: 8px;
+  }
+
+  .btn-modal-cancel {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-size: 13px;
+    color: #475569;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-modal-cancel:hover { background: #f8fafc; }
 </style>
-<section class="container my-4">
-  <h2 class="mb-4">Manage Variants for Product: <%= product.name %></h2>
 
-  <!-- Variant List -->
-  <div class="table-responsive mb-4">
-    <table class="table table-bordered table-hover align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th style="width: 5%;">#</th>
-          <th style="width: 10%;">Color</th>
-          <th style="width: 10%;">Price</th>
-          <th style="width: 10%;">Quantity</th>
-          <th style="width: 30%;">Images</th>
-          <th style="width: 25%;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (!product.variants || product.variants.length === 0) { %>
-          <tr><td colspan="7" class="text-center">No variants found.</td></tr>
-        <% } else { %>
-          <% product.variants.forEach((variant, index) => { %>
+<div class="vp-page">
+
+  <!-- Header -->
+  <div class="vp-header">
+    <a href="/admin/products" class="btn-back">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Products
+    </a>
+    <div class="vp-title">
+      <h2>
+        Manage Variants
+        <span class="product-badge"><%= product.name %></span>
+      </h2>
+      <p>Add, edit or remove product variants</p>
+    </div>
+  </div>
+
+  <!-- Variants Table -->
+  <div class="vp-card">
+    <div class="vp-card-header">
+      <h5>Existing Variants</h5>
+      <span class="variant-count"><%= product.variants ? product.variants.length : 0 %> variant<%= (!product.variants || product.variants.length !== 1) ? 's' : '' %></span>
+    </div>
+    <div class="vp-table-wrap">
+      <table class="vp-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Color</th>
+            <th>Regular Price</th>
+            <th>Sale Price</th>
+            <th>Qty</th>
+            <th>Images</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!product.variants || product.variants.length === 0) { %>
             <tr>
-              <td><%= index + 1 %></td>
-              <td><input type="text" value="<%= variant.color %>" disabled></td>
-              <td>₹<%= variant.price %></td>
-              <td><%= variant.quantity %></td>
-              <td>
-                <div class="d-flex flex-wrap">
-                  <% console.log('Variant:', variant._id, 'productImage:', variant.productImage); %>
-                  <% if (variant.productImage && variant.productImage.length > 0) { %>
-                    <% variant.productImage.forEach((image, imgIndex) => { %>
-                      <% console.log('Image path:', image); %>
-                      <img src="/<%= image %>" alt="Variant Image <%= imgIndex + 1 %>" class="variant-image-thumb" onerror="console.error('Failed to load:', this.src); this.style.border='2px solid red';" />
-                    <% }); %>
-                  <% } else { %>
-                    <small class="text-muted">No images</small>
-                  <% } %>
+              <td colspan="7">
+                <div class="empty-state">
+                  <p>No variants found. Add your first variant below.</p>
                 </div>
               </td>
-
-
-              <td class="actions-cell">
-                <!-- <a href="/admin/product/<%= product._id %>/variants/<%= variant._id %>/edit" class="btn btn-info btn-sm" title="Edit">
-                  <i class="fas fa-edit"></i>
-                </a> -->
-                <button class="btn btn-info btn-sm" 
-                        data-variant-id="<%= variant._id %>"
-                        data-variant-color="<%= variant.color %>"
-                        data-variant-price="<%= variant.price %>"
-                        data-variant-quantity="<%= variant.quantity %>"
-                        data-variant-images='<%- JSON.stringify(variant.productImage || []) %>'
-                        onclick="openEditVariantModalData(this)" 
-                        title="Edit">
-                  <i class="fas fa-edit"></i>
-                </button>
-                
-                <form method="POST" action="/admin/product/<%= product._id %>/variants/<%= variant._id %>/delete" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this variant?');" title="Delete">
-                    <i class="fas fa-trash-alt"></i>
-                  </button>
-                </form>
-              </td>
             </tr>
-          <% }); %>
-        <% } %>
-      </tbody>
-    </table>
+          <% } else { %>
+            <% product.variants.forEach((variant, index) => { %>
+              <tr>
+                <td style="color:#94a3b8;font-size:12px;"><%= index + 1 %></td>
+                <td>
+                  <span class="color-chip">
+                    <span class="color-dot" style="background:<%= variant.color %>;"></span>
+                    <%= variant.color %>
+                  </span>
+                </td>
+                <td><span class="regular-price">₹<%= variant.regularPrice %></span></td>
+                <td><span class="price-text sale-price">₹<%= variant.salePrice %></span></td>
+                <td><span class="qty-chip"><%= variant.quantity %></span></td>
+                <td>
+                  <div class="thumb-row">
+                    <% if (variant.productImage && variant.productImage.length > 0) { %>
+                      <% variant.productImage.forEach((img, imgIdx) => { %>
+                        <img src="/<%= img %>" alt="Image <%= imgIdx+1 %>" class="thumb-img"
+                             onerror="this.style.opacity='0.3';">
+                      <% }) %>
+                    <% } else { %>
+                      <span style="font-size:12px;color:#94a3b8;">No images</span>
+                    <% } %>
+                  </div>
+                </td>
+                <td>
+                  <div class="action-group">
+                    <button class="btn-act info"
+                      data-variant-id="<%= variant._id %>"
+                      data-variant-color="<%= variant.color %>"
+                      data-variant-regularPrice="<%= variant.regularPrice %>"
+                      data-variant-salePrice="<%= variant.salePrice %>"
+                      data-variant-quantity="<%= variant.quantity %>"
+                      data-variant-images='<%- JSON.stringify(variant.productImage || []) %>'
+                      onclick="openEditVariantModalData(this)">
+                      <i class="fas fa-edit" style="font-size:11px;"></i> Edit
+                    </button>
+                    <form method="POST" action="/admin/product/<%= product._id %>/variants/<%= variant._id %>/delete" style="display:inline;">
+                      <button type="submit" class="btn-act danger" onclick="return confirm('Delete this variant?')">
+                        <i class="fas fa-trash-alt" style="font-size:11px;"></i> Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Add Variant Form -->
-  <div class="card p-4">
-    <h3>Add New Variant</h3>
-<form id="addVariantForm" action="/admin/product/<%= product._id %>/variants/add" method="POST" enctype="multipart/form-data" novalidate>   
-     <input type="hidden" name="productId" value="<%= product._id %>" />
+  <div class="form-card">
+    <div class="form-card-header">
+      <h5>Add New Variant</h5>
+    </div>
+    <div class="form-card-body">
+      <form id="addVariantForm" action="/admin/product/<%= product._id %>/variants/add" method="POST" enctype="multipart/form-data" novalidate>
+        <input type="hidden" name="productId" value="<%= product._id %>">
 
-      <div class="mb-3">
-        <label for="color" class="form-label">Color</label>
-        <input
-        type="text"
-        id="color"
-        name="color"
-        class="form-control"
-        placeholder="Enter color name or hex code"
-        required
-      />
-      <div id="color-error" class="text-danger small mt-1"></div>
-      </div>
+        <div class="form-grid">
+          <!-- Color -->
+          <div class="field-group">
+            <label for="color">Color</label>
+            <input type="text" id="color" name="color" class="field-input" placeholder="e.g. Red or #FF0000" required>
+            <span class="field-error" id="color-error"></span>
+          </div>
 
-      <div class="mb-3">
-        <label for="price" class="form-label">Price</label>
-        <input
-          type="text"
-          id="price"
-          name="price"
-          placeholder="Enter the price"
-          class="form-control"
-          required
-        />
-        <div id="price-error" class="text-danger small mt-1"></div>
-      </div>
+          <!-- Regular Price -->
+          <div class="field-group">
+            <label for="regularPrice">Regular Price (₹)</label>
+            <input type="text" id="regularPrice" name="regularPrice" class="field-input" placeholder="e.g. 1499" required>
+            <span class="field-error" id="regularPrice-error"></span>
+          </div>
 
-      <div class="mb-3">
-        <label for="quantity" class="form-label">Quantity</label>
-        <div class="input-group">
-          <button type="button" id="decrement">-</button>
-          <input
-            type="number"
-            id="quantity"
-            name="quantity"
-            min="0"
-            value="0"
-            required
-          />
-          <button type="button" id="increment">+</button>
+          <!-- Sale Price -->
+          <div class="field-group">
+            <label for="salePrice">Sale Price (₹)</label>
+            <input type="text" id="salePrice" name="salePrice" class="field-input" placeholder="e.g. 999" required>
+            <span class="field-error" id="salePrice-error"></span>
+          </div>
+
+          <!-- Quantity -->
+          <div class="field-group">
+            <label>Quantity</label>
+            <div class="qty-stepper">
+              <button type="button" id="decrement">−</button>
+              <input type="number" id="quantity" name="quantity" min="0" value="0" required>
+              <button type="button" id="increment">+</button>
+            </div>
+            <span class="field-error" id="quantity-error"></span>
+          </div>
         </div>
-        <div id="quantity-error" class="text-danger small mt-1"></div>
-      </div>
 
-<!-- 
-      image -->
-    <!-- Variant Images Upload (4 Required) -->
-<div class="mb-4">
-  <label class="form-label fw-bold">Variant Images (4 Required)</label>
+        <!-- Image Upload -->
+        <div class="image-section-label">Variant Images (4 Required)</div>
+        <div class="image-upload-grid">
+          <% for (let i = 1; i <= 4; i++) { %>
+            <div class="image-slot">
+              <div class="image-section-label" style="text-align:center;">Image <%= i %></div>
+              <div class="image-preview-box" id="previewBox<%= i %>">
+                <div class="upload-placeholder" id="placeholder<%= i %>">
+                  <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  Click to upload
+                </div>
+                <div class="cropper-wrap" id="cropperWrap<%= i %>">
+                  <img id="previewImg<%= i %>">
+                </div>
+                <img id="croppedPreview<%= i %>" class="visible" style="display:none;width:100%;height:100%;object-fit:cover;">
+              </div>
+              <input type="file" id="image<%= i %>" name="image<%= i %>" accept="image/jpeg,image/jpg,image/png,image/webp"
+                     onchange="previewVariantImage(event, <%= i %>)">
+              <label for="image<%= i %>" class="btn-choose-file">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Choose File
+              </label>
+              <button type="button" class="btn-crop" id="cropBtn<%= i %>" onclick="cropVariantImage(<%= i %>)">
+                <i class="fas fa-crop-alt" style="font-size:11px;"></i> Crop & Save
+              </button>
+              <input type="hidden" id="croppedImage<%= i %>" name="croppedImage<%= i %>">
+            </div>
+          <% } %>
+        </div>
 
-  <div class="row g-3">
-    <% for (let i = 1; i <= 4; i++) { %>
-      <div class="col-6 text-center">
-
-        <input type="file" id="image<%= i %>" name="image<%= i %>" accept="image/*"
-               class="form-control mb-2" onchange="previewVariantImage(event, <%= i %>)">
-
-                    <div id="previewBox<%= i %>" class="variant-preview d-none">
-                      <img id="previewImg<%= i %>">
-                    </div>
-
-                    <button type="button" id="cropBtn<%= i %>" class="btn btn-sm btn-success mt-2 d-none"
-                            onclick="cropVariantImage(<%= i %>)"><i class="fas fa-check"></i> Crop & Save</button>        <input type="hidden" id="croppedImage<%= i %>" name="croppedImage<%= i %>">
-      </div>
-    <% } %>
+        <button type="submit" class="btn-submit" id="addSubmitBtn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Add Variant
+        </button>
+      </form>
+    </div>
   </div>
+
 </div>
 
-
-      <button type="submit" class="btn btn-primary">Add Variant</button>
-    </form>
-  </div>
-</section>
 <!-- Edit Variant Modal -->
-<div class="modal fade" id="editVariantModal" tabindex="-1" aria-labelledby="editVariantModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+<div class="modal fade" id="editVariantModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <form id="editVariantForm" method="POST" enctype="multipart/form-data" novalidate>
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editVariantModalLabel">Edit Variant</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h5 class="modal-title">Edit Variant</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-            <input type="hidden" id="variantId" name="variantId" />
+          <input type="hidden" id="variantId" name="variantId">
 
-            <div class="mb-3">
-              <label for="editColor" class="form-label">Color</label>
-              <input type="text" class="form-control" id="editColor" name="color" required />
-              <div id="editColor-error" class="text-danger small mt-1"></div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="editColor">Color</label>
+              <input type="text" id="editColor" name="color" class="field-input" required>
+              <span class="field-error" id="editColor-error"></span>
             </div>
-
-            <div class="mb-3">
-              <label for="editPrice" class="form-label">Price</label>
-              <input type="text" class="form-control" id="editPrice" name="price" required />
-              <div id="editPrice-error" class="text-danger small mt-1"></div>
+            <div class="field-group">
+              <label for="editRegularPrice">Regular Price (₹)</label>
+              <input type="text" id="editRegularPrice" name="regularPrice" class="field-input" required>
+              <span class="field-error" id="editRegularPrice-error"></span>
             </div>
-
-            <div class="mb-3">
-              <label for="editQuantity" class="form-label">Quantity</label>
-              <input type="number" class="form-control" id="editQuantity" name="quantity" min="0" required />
-              <div id="editQuantity-error" class="text-danger small mt-1"></div>
+            <div class="field-group">
+              <label for="editSalePrice">Sale Price (₹)</label>
+              <input type="text" id="editSalePrice" name="salePrice" class="field-input" required>
+              <span class="field-error" id="editSalePrice-error"></span>
             </div>
+            <div class="field-group">
+              <label for="editQuantity">Quantity</label>
+              <input type="number" id="editQuantity" name="quantity" class="field-input" min="0" required>
+              <span class="field-error" id="editQuantity-error"></span>
+            </div>
+          </div>
 
-            <!-- Edit Variant Images -->
-            <div class="mb-4">
-              <label class="form-label fw-bold">Update Variant Images (4 Images)</label>
-              <div class="row g-3">
-                <% for (let i = 1; i <= 4; i++) { %>
-                  <div class="col-md-6 text-center">
-                    <label class="form-label">Image <%= i %></label>
-                    
-                    <!-- Combined Image Display Area -->
-                    <div class="current-image-display mb-2" id="imageDisplay<%= i %>">
-                      <!-- Current/Existing Image -->
-                      <img id="currentImg<%= i %>" src="" alt="Current Image <%= i %>" class="d-none">
-                      
-                      <!-- Preview/New Image (will replace current image in same space) -->
-                      <img id="editPreviewImg<%= i %>" class="d-none">
-                      
-                      <!-- No Image Placeholder -->
-                      <div id="noImage<%= i %>" class="text-muted">No image</div>
-                      
-                      <!-- Delete Button for Current Image -->
-                      <button type="button" id="deleteImgBtn<%= i %>" class="btn btn-sm btn-danger position-absolute top-0 end-0 d-none" 
-                              style="padding: 4px 8px; font-size: 12px; z-index: 10;" onclick="deleteCurrentImage(<%= i %>)" title="Delete Image">
-                        <i class="fas fa-times"></i>
-                      </button>
-                      
-                      <input type="hidden" id="deleteImage<%= i %>" name="deleteImage<%= i %>" value="false">
-                    </div>
-
-                    <!-- File Input with Custom Display -->
-                    <div class="mb-2">
-                      <label for="editImage<%= i %>" class="btn btn-sm btn-outline-primary" id="fileLabel<%= i %>" style="cursor: pointer;">
-                        <i class="fas fa-upload"></i> Choose File
-                      </label>
-                      <input type="file" id="editImage<%= i %>" name="image<%= i %>" accept="image/*"
-                             class="d-none" onchange="previewEditVariantImage(event, <%= i %>)">
-                      <div id="fileName<%= i %>" class="text-muted small mt-1"></div>
-                      <button type="button" id="clearFile<%= i %>" class="btn btn-sm btn-danger mt-1 d-none" onclick="clearFileInput(<%= i %>)">
-                        <i class="fas fa-times"></i> Remove
-                      </button>
-                    </div>
-
-                    <!-- Crop Button -->
-                    <button type="button" id="editCropBtn<%= i %>" class="btn btn-sm btn-success mt-2 d-none"
-                            onclick="cropEditVariantImage(<%= i %>)"><i class="fas fa-check"></i> Crop & Save</button>
-
-                    <input type="hidden" id="editCroppedImage<%= i %>" name="croppedImage<%= i %>">
+          <div class="image-section-label" style="margin-top:4px;">Update Images</div>
+          <div class="image-upload-grid">
+            <% for (let i = 1; i <= 4; i++) { %>
+              <div class="image-slot">
+                <div class="image-section-label" style="text-align:center;">Image <%= i %></div>
+                <div class="image-preview-box" id="editPreviewBox<%= i %>">
+                  <img id="currentImg<%= i %>" src="" alt="Current" style="display:none;width:100%;height:100%;object-fit:cover;">
+                  <div class="upload-placeholder" id="editPlaceholder<%= i %>">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" width="22" height="22">
+                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    No image
                   </div>
-                <% } %>
+                  <div class="cropper-wrap" id="editCropperWrap<%= i %>">
+                    <img id="editPreviewImg<%= i %>">
+                  </div>
+                  <img id="editCroppedPreview<%= i %>" style="display:none;width:100%;height:100%;object-fit:cover;">
+                  <button type="button" class="delete-img-btn" id="deleteImgBtn<%= i %>" onclick="deleteCurrentImage(<%= i %>)">
+                    <i class="fas fa-times" style="font-size:9px;"></i>
+                  </button>
+                  <input type="hidden" id="deleteImage<%= i %>" name="deleteImage<%= i %>" value="false">
+                </div>
+                <input type="file" id="editImage<%= i %>" name="image<%= i %>" accept="image/jpeg,image/jpg,image/png,image/webp"
+                       onchange="previewEditVariantImage(event, <%= i %>)">
+                <label for="editImage<%= i %>" class="btn-choose-file">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  Choose File
+                </label>
+                <button type="button" class="btn-crop" id="editCropBtn<%= i %>" onclick="cropEditVariantImage(<%= i %>)">
+                  <i class="fas fa-crop-alt" style="font-size:11px;"></i> Crop & Save
+                </button>
+                <input type="hidden" id="editCroppedImage<%= i %>" name="croppedImage<%= i %>">
               </div>
-            </div>
+            <% } %>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-submit" id="editSubmitBtn">Save Changes</button>
         </div>
       </div>
     </form>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
-<script>
 
-let cropperInstances = {};
+<script>
+/* ── Cropper state ── */
+let cropperInstances     = {};
 let editCropperInstances = {};
 
-function previewVariantImage(event, index) {
+/* ── ADD FORM: image preview + crop ── */
+function previewVariantImage(event, i) {
   const file = event.target.files[0];
   if (!file) return;
 
+//image validation
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    Swal.fire({ 
+      icon: 'error', 
+      title: 'Invalid File', 
+      text: `"${file.type || 'this file type'}" is not allowed. Only JPG, PNG and WEBP images are accepted.` 
+    });
+    event.target.value = ''; // reset input
+    return;
+  }
+
+  const maxSize = 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    Swal.fire({ icon: 'error', title: 'File Too Large', text: 'Maximum allowed size is 5MB.' });
+    event.target.value = '';
+    return;
+  }
+
+
   const reader = new FileReader();
   reader.onload = function(e) {
-    const img = document.getElementById(`previewImg${index}`);
-    const box = document.getElementById(`previewBox${index}`);
-    const cropBtn = document.getElementById(`cropBtn${index}`);
+    const wrap    = document.getElementById(`cropperWrap${i}`);
+    const img     = document.getElementById(`previewImg${i}`);
+    const cropBtn = document.getElementById(`cropBtn${i}`);
+    const ph      = document.getElementById(`placeholder${i}`);
+    const cp      = document.getElementById(`croppedPreview${i}`);
 
+    cp.style.display = 'none';
+    ph.style.display  = 'none';
+    wrap.classList.add('visible');
+    cropBtn.classList.add('visible');
     img.src = e.target.result;
-    box.classList.remove("d-none");
-    cropBtn.classList.remove("d-none");
-
-    // Destroy previous cropper if exists
-    if (cropperInstances[index]) {
-      cropperInstances[index].destroy();
-    }
-
-    // Wait for image to load before initializing cropper
-    img.onload = function() {
-      // Only initialize if not already cropped
-      if (!img.dataset.cropped) {
-        // Start cropper with better settings
-        cropperInstances[index] = new Cropper(img, {
-          aspectRatio: 1,
-          viewMode: 1,
-          dragMode: 'move',
-          autoCropArea: 0.8,
-          responsive: true,
-          restore: false,
-          guides: true,
-          center: true,
-          highlight: false,
-          cropBoxMovable: true,
-          cropBoxResizable: true,
-          toggleDragModeOnDblclick: false,
-          zoomable: true,
-          zoomOnWheel: true,
-          wheelZoomRatio: 0.1,
-          minContainerWidth: 300,
-          minContainerHeight: 300
-        });
-      }
-    };
-  };
-  reader.readAsDataURL(file);
-}
-
-function cropVariantImage(index) {
-  const cropper = cropperInstances[index];
-  if (!cropper) return;
-
-  const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
-  const croppedImage = canvas.toDataURL("image/webp", 0.9);
-
-  document.getElementById(`croppedImage${index}`).value = croppedImage;
-  
-  const img = document.getElementById(`previewImg${index}`);
-  const box = document.getElementById(`previewBox${index}`);
-  const cropBtn = document.getElementById(`cropBtn${index}`);
-  
-  // Destroy cropper completely
-  cropper.destroy();
-  cropperInstances[index] = null;
-  
-  // Remove onload handler to prevent reinitialization
-  img.onload = null;
-  
-  // Mark image as cropped to prevent reinitialization
-  img.dataset.cropped = 'true';
-  
-  // Update image to show cropped result
-  img.src = croppedImage;
-  img.style.objectFit = "cover";
-  
-  // Hide crop button after cropping
-  if (cropBtn) cropBtn.classList.add("d-none");
-
-  Swal.fire("Done", "Image cropped successfully!", "success");
-}
-
-// Edit Variant Image Functions
-function previewEditVariantImage(event, index) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = document.getElementById(`editPreviewImg${index}`);
-    const cropBtn = document.getElementById(`editCropBtn${index}`);
-    const fileName = document.getElementById(`fileName${index}`);
-    const clearFileBtn = document.getElementById(`clearFile${index}`);
-    const currentImg = document.getElementById(`currentImg${index}`);
-    const noImage = document.getElementById(`noImage${index}`);
-    const deleteImgBtn = document.getElementById(`deleteImgBtn${index}`);
-
-    // Show filename
-    if (fileName) {
-      fileName.textContent = `Selected: ${file.name}`;
-      fileName.classList.add('text-success');
-    }
-    
-    // Show clear button
-    if (clearFileBtn) clearFileBtn.classList.remove('d-none');
-
-    // Hide current image and "no image" text
-    if (currentImg) currentImg.classList.add('d-none');
-    if (noImage) noImage.classList.add('d-none');
-    if (deleteImgBtn) deleteImgBtn.classList.add('d-none');
-
-    // Show preview image in the same display area
-    img.classList.remove('d-none');
-    cropBtn.classList.remove('d-none');
-
-    // Reset cropped flag for new upload
     img.dataset.cropped = '';
-    
-    img.src = e.target.result;
 
-    // Destroy previous cropper if exists
-    if (editCropperInstances[index]) {
-      editCropperInstances[index].destroy();
-    }
+    if (cropperInstances[i]) { cropperInstances[i].destroy(); }
 
-    // Wait for image to load before initializing cropper
     img.onload = function() {
-      // Only initialize if not already cropped
       if (!img.dataset.cropped) {
-        // Start cropper with better settings
-        editCropperInstances[index] = new Cropper(img, {
-          aspectRatio: 1,
-          viewMode: 1,
-          dragMode: 'move',
-          autoCropArea: 0.8,
-          responsive: true,
-          restore: false,
-          guides: true,
-          center: true,
-          highlight: false,
-          cropBoxMovable: true,
-          cropBoxResizable: true,
-          toggleDragModeOnDblclick: false,
-          zoomable: true,
-          zoomOnWheel: true,
-          wheelZoomRatio: 0.1,
-          minContainerWidth: 300,
-          minContainerHeight: 300
+        cropperInstances[i] = new Cropper(img, {
+          aspectRatio: 1, viewMode: 1, dragMode: 'move',
+          autoCropArea: 0.8, responsive: true, restore: false,
+          guides: true, center: true, highlight: false,
+          cropBoxMovable: true, cropBoxResizable: true
         });
       }
     };
@@ -460,504 +844,394 @@ function previewEditVariantImage(event, index) {
   reader.readAsDataURL(file);
 }
 
-function cropEditVariantImage(index) {
-  const cropper = editCropperInstances[index];
+function cropVariantImage(i) {
+  const cropper = cropperInstances[i];
   if (!cropper) return;
 
   const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
-  const croppedImage = canvas.toDataURL("image/webp", 0.9);
+  const dataUrl = canvas.toDataURL('image/webp', 0.9);
+  document.getElementById(`croppedImage${i}`).value = dataUrl;
 
-  document.getElementById(`editCroppedImage${index}`).value = croppedImage;
-  
-  const img = document.getElementById(`editPreviewImg${index}`);
-    const box = document.getElementById(`editPreviewBox${index}`);
-    const cropBtn = document.getElementById(`editCropBtn${index}`);
-  
-  // Destroy cropper completely
+  const wrap    = document.getElementById(`cropperWrap${i}`);
+  const img     = document.getElementById(`previewImg${i}`);
+  const cropBtn = document.getElementById(`cropBtn${i}`);
+  const cp      = document.getElementById(`croppedPreview${i}`);
+
   cropper.destroy();
-  editCropperInstances[index] = null;
-  
-  // Remove onload handler to prevent reinitialization
+  cropperInstances[i] = null;
   img.onload = null;
-  
-  // Mark image as cropped to prevent reinitialization
   img.dataset.cropped = 'true';
-  
-  // Update image to show cropped result
-  img.src = croppedImage;
-  img.style.objectFit = "cover";
-  
-  // Hide crop button after cropping
-  if (cropBtn) cropBtn.classList.add("d-none");
+  wrap.classList.remove('visible');
+  cropBtn.classList.remove('visible');
+  cp.src = dataUrl;
+  cp.style.display = 'block';
 
-  Swal.fire("Done", "Image cropped successfully!", "success");
+  Swal.fire({ icon: 'success', title: 'Cropped!', text: 'Image cropped successfully', timer: 1200, showConfirmButton: false });
 }
 
-// Clear file input and reset preview
-function clearFileInput(index) {
-  const editImage = document.getElementById(`editImage${index}`);
-  const editPreviewImg = document.getElementById(`editPreviewImg${index}`);
-  const editCropBtn = document.getElementById(`editCropBtn${index}`);
-  const editCroppedImage = document.getElementById(`editCroppedImage${index}`);
-  const fileName = document.getElementById(`fileName${index}`);
-  const clearFileBtn = document.getElementById(`clearFile${index}`);
-  const currentImg = document.getElementById(`currentImg${index}`);
-  const noImage = document.getElementById(`noImage${index}`);
-  const deleteImgBtn = document.getElementById(`deleteImgBtn${index}`);
-  const deleteImageInput = document.getElementById(`deleteImage${index}`);
+/* ── EDIT MODAL: image preview + crop ── */
+function previewEditVariantImage(event, i) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-  // Destroy cropper if exists
-  if (editCropperInstances[index]) {
-    editCropperInstances[index].destroy();
-    editCropperInstances[index] = null;
+   // image validation
+   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    Swal.fire({ 
+      icon: 'error', 
+      title: 'Invalid File', 
+      text: `"${file.type || 'this file type'}" is not allowed. Only JPG, PNG and WEBP images are accepted.` 
+    });
+    event.target.value = '';
+    return;
   }
 
-  // Clear file input
-  if (editImage) editImage.value = '';
-  
-  // Hide preview image
-  if (editPreviewImg) {
-    editPreviewImg.src = '';
-    editPreviewImg.classList.add('d-none');
-    editPreviewImg.dataset.cropped = '';
+  const maxSize = 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    Swal.fire({ icon: 'error', title: 'File Too Large', text: 'Maximum allowed size is 5MB.' });
+    event.target.value = '';
+    return;
   }
-  if (editCropBtn) editCropBtn.classList.add('d-none');
-  if (editCroppedImage) editCroppedImage.value = '';
-  
-  // Clear filename display
-  if (fileName) {
-    fileName.textContent = '';
-    fileName.classList.remove('text-success');
-  }
-  
-  // Hide clear button
-  if (clearFileBtn) clearFileBtn.classList.add('d-none');
 
-  // Restore current image if it was hidden and not marked for deletion
-  if (currentImg && currentImg.src && deleteImageInput.value !== 'true') {
-    currentImg.classList.remove('d-none');
-    if (deleteImgBtn) deleteImgBtn.classList.remove('d-none');
-    if (noImage) noImage.classList.add('d-none');
-  } else {
-    // Show "no image" if there's no current image
-    if (noImage) noImage.classList.remove('d-none');
-  }
+
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const wrap    = document.getElementById(`editCropperWrap${i}`);
+    const img     = document.getElementById(`editPreviewImg${i}`);
+    const cropBtn = document.getElementById(`editCropBtn${i}`);
+    const ph      = document.getElementById(`editPlaceholder${i}`);
+    const cur     = document.getElementById(`currentImg${i}`);
+    const cp      = document.getElementById(`editCroppedPreview${i}`);
+    const delBtn  = document.getElementById(`deleteImgBtn${i}`);
+
+    cur.style.display  = 'none';
+    cp.style.display   = 'none';
+    ph.style.display   = 'none';
+    delBtn.classList.remove('visible');
+    wrap.classList.add('visible');
+    cropBtn.classList.add('visible');
+    img.src = e.target.result;
+    img.dataset.cropped = '';
+
+    if (editCropperInstances[i]) { editCropperInstances[i].destroy(); }
+
+    img.onload = function() {
+      if (!img.dataset.cropped) {
+        editCropperInstances[i] = new Cropper(img, {
+          aspectRatio: 1, viewMode: 1, dragMode: 'move',
+          autoCropArea: 0.8, responsive: true, restore: false,
+          guides: true, center: true, highlight: false,
+          cropBoxMovable: true, cropBoxResizable: true
+        });
+      }
+    };
+  };
+  reader.readAsDataURL(file);
 }
 
-// Delete current image function
-function deleteCurrentImage(index) {
+function cropEditVariantImage(i) {
+  const cropper = editCropperInstances[i];
+  if (!cropper) return;
+
+  const canvas = cropper.getCroppedCanvas({ width: 800, height: 800 });
+  const dataUrl = canvas.toDataURL('image/webp', 0.9);
+  document.getElementById(`editCroppedImage${i}`).value = dataUrl;
+
+  const wrap    = document.getElementById(`editCropperWrap${i}`);
+  const img     = document.getElementById(`editPreviewImg${i}`);
+  const cropBtn = document.getElementById(`editCropBtn${i}`);
+  const cp      = document.getElementById(`editCroppedPreview${i}`);
+
+  cropper.destroy();
+  editCropperInstances[i] = null;
+  img.onload = null;
+  img.dataset.cropped = 'true';
+  wrap.classList.remove('visible');
+  cropBtn.classList.remove('visible');
+  cp.src = dataUrl;
+  cp.style.display = 'block';
+
+  Swal.fire({ icon: 'success', title: 'Cropped!', text: 'Image cropped successfully', timer: 1200, showConfirmButton: false });
+}
+
+/* ── Delete current image in edit modal ── */
+function deleteCurrentImage(i) {
   Swal.fire({
-    title: 'Are you sure?',
-    text: "Do you want to delete this image?",
+    title: 'Remove this image?',
+    text: 'You can upload a new one in its place.',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, delete it!'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      const currentImg = document.getElementById(`currentImg${index}`);
-      const noImage = document.getElementById(`noImage${index}`);
-      const deleteImgBtn = document.getElementById(`deleteImgBtn${index}`);
-      const deleteImageInput = document.getElementById(`deleteImage${index}`);
-      const editImage = document.getElementById(`editImage${index}`);
-      const fileLabel = document.getElementById(`fileLabel${index}`);
-      
-      // Hide current image and show "no image"
-      currentImg.src = '';
-      currentImg.classList.add('d-none');
-      deleteImgBtn.classList.add('d-none');
-      noImage.classList.remove('d-none');
-      
-      // Mark for deletion
-      deleteImageInput.value = 'true';
-      
-      // Enable file input for this position
-      if (editImage) editImage.disabled = false;
-      if (fileLabel) fileLabel.classList.remove('disabled');
-      
-      Swal.fire('Deleted!', 'Image deleted. You can now upload a new image in this position.', 'success');
-    }
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: 'Yes, remove'
+  }).then(result => {
+    if (!result.isConfirmed) return;
+    const cur    = document.getElementById(`currentImg${i}`);
+    const ph     = document.getElementById(`editPlaceholder${i}`);
+    const delBtn = document.getElementById(`deleteImgBtn${i}`);
+    const flag   = document.getElementById(`deleteImage${i}`);
+
+    cur.src = '';
+    cur.style.display = 'none';
+    delBtn.classList.remove('visible');
+    ph.style.display = 'flex';
+    flag.value = 'true';
   });
 }
-</script>
-<script>
-  // Quantity increment/decrement
-  const quantityInput = document.getElementById('quantity');
-  document.getElementById('increment').addEventListener('click', () => {
-    quantityInput.value = parseInt(quantityInput.value || '0') + 1;
-    validateQuantity(quantityInput.value, 'quantity');
-  });
-  document.getElementById('decrement').addEventListener('click', () => {
-    if (parseInt(quantityInput.value) > 0) {
-      quantityInput.value = parseInt(quantityInput.value) - 1;
-      validateQuantity(quantityInput.value, 'quantity');
-    }
-  });
 
-  // Validation Functions
-  function validateColor(value, fieldPrefix = '') {
-    const fieldId = fieldPrefix ? `${fieldPrefix}Color` : 'color';
-    if (!value || value.trim() === '') {
-      return 'Color is required.';
-    }
-    const trimmed = value.trim();
-    if (trimmed.length < 2) {
-      return 'Color must be at least 2 characters long.';
-    }
-    if (trimmed.length > 50) {
-      return 'Color must not exceed 50 characters.';
-    }
-    
-    // Allow hex codes (#RRGGBB or #RGB)
-    const hexPattern = /^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/;
-    if (hexPattern.test(trimmed)) {
-      return null; // Valid hex code
-    }
-    
-    // Allow color names (letters, spaces, hyphens, parentheses for rgb/rgba)
-    const colorNamePattern = /^[A-Za-z0-9\s\-(),]+$/;
-    if (!colorNamePattern.test(trimmed)) {
-      return 'Color must be a valid name (e.g., Red, Sky Blue) or hex code (e.g., #FF5733).';
-    }
-    
-    // Color names should start with a letter
-    if (!/^[A-Za-z]/.test(trimmed)) {
-      return 'Color name must start with a letter.';
-    }
-    
-    return null;
-  }
+/* ── Open edit modal ── */
+function openEditVariantModalData(button) {
+  const id           = button.getAttribute('data-variant-id');
+  const color        = button.getAttribute('data-variant-color');
+  const regularPrice = button.getAttribute('data-variant-regularPrice');
+  const salePrice    = button.getAttribute('data-variant-salePrice');
+  const quantity     = button.getAttribute('data-variant-quantity');
+  const images       = JSON.parse(button.getAttribute('data-variant-images') || '[]');
 
-  function validatePrice(value, fieldPrefix = '') {
-    if (!value || value.trim() === '') {
-      return 'Price is required.';
-    }
-    const price = parseFloat(value);
-    if (isNaN(price)) {
-      return 'Price must be a valid number.';
-    }
-    if (price <= 0) {
-      return 'Price must be greater than zero.';
-    }
-    if (price > 1000000) {
-      return 'Price cannot exceed 1,000,000.';
-    }
-    if (!/^\d+(\.\d{1,2})?$/.test(value.trim())) {
-      return 'Price can have at most 2 decimal places.';
-    }
-    return null;
-  }
+  /* Clean up previous state */
+  for (let i = 1; i <= 4; i++) {
+    if (editCropperInstances[i]) { editCropperInstances[i].destroy(); editCropperInstances[i] = null; }
 
-  function validateQuantity(value, fieldPrefix = '') {
-    if (value === '' || value === null || value === undefined) {
-      return 'Quantity is required.';
-    }
-    const qty = parseInt(value);
-    if (isNaN(qty)) {
-      return 'Quantity must be a valid number.';
-    }
-    if (qty < 0) {
-      return 'Quantity cannot be negative.';
-    }
-    if (qty > 100000) {
-      return 'Quantity cannot exceed 100,000.';
-    }
-    return null;
-  }
+    const editImg  = document.getElementById(`editImage${i}`);
+    const prevImg  = document.getElementById(`editPreviewImg${i}`);
+    const cropBtn  = document.getElementById(`editCropBtn${i}`);
+    const croppedH = document.getElementById(`editCroppedImage${i}`);
+    const flag     = document.getElementById(`deleteImage${i}`);
+    const wrap     = document.getElementById(`editCropperWrap${i}`);
+    const cp       = document.getElementById(`editCroppedPreview${i}`);
+    const cur      = document.getElementById(`currentImg${i}`);
+    const ph       = document.getElementById(`editPlaceholder${i}`);
+    const delBtn   = document.getElementById(`deleteImgBtn${i}`);
 
-  function showError(fieldId, errorMessage) {
-    const field = document.getElementById(fieldId);
-    const errorDiv = document.getElementById(`${fieldId}-error`);
-    
-    if (field) {
-      field.classList.remove('is-valid');
-      field.classList.add('is-invalid');
-    }
-    if (errorDiv) {
-      errorDiv.textContent = errorMessage;
-    }
-  }
+    if (editImg)  editImg.value = '';
+    if (prevImg)  { prevImg.src = ''; prevImg.dataset.cropped = ''; }
+    if (croppedH) croppedH.value = '';
+    if (flag)     flag.value = 'false';
+    if (wrap)     wrap.classList.remove('visible');
+    if (cropBtn)  cropBtn.classList.remove('visible');
+    if (cp)       { cp.src = ''; cp.style.display = 'none'; }
 
-  function clearError(fieldId) {
-    const field = document.getElementById(fieldId);
-    const errorDiv = document.getElementById(`${fieldId}-error`);
-    
-    if (field) {
-      field.classList.remove('is-invalid');
-      field.classList.add('is-valid');
-    }
-    if (errorDiv) {
-      errorDiv.textContent = '';
-    }
-  }
-
-  function clearFieldError(fieldId) {
-    const field = document.getElementById(fieldId);
-    const errorDiv = document.getElementById(`${fieldId}-error`);
-    
-    if (field) {
-      field.classList.remove('is-invalid', 'is-valid');
-    }
-    if (errorDiv) {
-      errorDiv.textContent = '';
-    }
-  }
-
-  // Real-time validation for Add Variant form
-  document.getElementById('color').addEventListener('input', function() {
-    const error = validateColor(this.value);
-    if (error) {
-      showError('color', error);
-    } else if (this.value.trim()) {
-      clearError('color');
+    if (images[i - 1]) {
+      cur.src = '/' + images[i - 1];
+      cur.style.display = 'block';
+      ph.style.display = 'none';
+      delBtn.classList.add('visible');
     } else {
-      clearFieldError('color');
+      cur.src = '';
+      cur.style.display = 'none';
+      ph.style.display = 'flex';
+      delBtn.classList.remove('visible');
     }
-  });
-
-  document.getElementById('price').addEventListener('input', function() {
-    const error = validatePrice(this.value);
-    if (error) {
-      showError('price', error);
-    } else if (this.value.trim()) {
-      clearError('price');
-    } else {
-      clearFieldError('price');
-    }
-  });
-
-  document.getElementById('quantity').addEventListener('input', function() {
-    const error = validateQuantity(this.value);
-    if (error) {
-      showError('quantity', error);
-    } else if (this.value !== '') {
-      clearError('quantity');
-    } else {
-      clearFieldError('quantity');
-    }
-  });
-
-  // Real-time validation for Edit Variant form
-  document.getElementById('editColor').addEventListener('input', function() {
-    const error = validateColor(this.value, 'edit');
-    if (error) {
-      showError('editColor', error);
-    } else if (this.value.trim()) {
-      clearError('editColor');
-    } else {
-      clearFieldError('editColor');
-    }
-  });
-
-  document.getElementById('editPrice').addEventListener('input', function() {
-    const error = validatePrice(this.value, 'edit');
-    if (error) {
-      showError('editPrice', error);
-    } else if (this.value.trim()) {
-      clearError('editPrice');
-    } else {
-      clearFieldError('editPrice');
-    }
-  });
-
-  document.getElementById('editQuantity').addEventListener('input', function() {
-    const error = validateQuantity(this.value, 'edit');
-    if (error) {
-      showError('editQuantity', error);
-    } else if (this.value !== '') {
-      clearError('editQuantity');
-    } else {
-      clearFieldError('editQuantity');
-    }
-  });
-
-  // Add Variant Form Submission
-  let isSubmittingAdd = false;
-  document.getElementById('addVariantForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (isSubmittingAdd) {
-      return false;
-    }
-    
-    let isValid = true;
-    
-    // Clear all previous validations
-    ['color', 'price', 'quantity'].forEach(clearFieldError);
-    
-    // Get values
-    const colorValue = document.getElementById('color').value;
-    const priceValue = document.getElementById('price').value;
-    const quantityValue = document.getElementById('quantity').value;
-    
-    // Validate all fields
-    const colorError = validateColor(colorValue);
-    if (colorError) {
-      showError('color', colorError);
-      isValid = false;
-    }
-    
-    const priceError = validatePrice(priceValue);
-    if (priceError) {
-      showError('price', priceError);
-      isValid = false;
-    }
-    
-    const quantityError = validateQuantity(quantityValue);
-    if (quantityError) {
-      showError('quantity', quantityError);
-      isValid = false;
-    }
-    
-    if (!isValid) {
-      Swal.fire('Validation Error', 'Please fix all errors before submitting.', 'warning');
-      return false;
-    }
-    
-    // Prevent double submission
-    isSubmittingAdd = true;
-    const submitBtn = this.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
-    }
-    
-    // Submit the form
-    this.submit();
-  });
-
-  // Edit Variant Form Submission
-  let isSubmittingEdit = false;
-  document.getElementById('editVariantForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (isSubmittingEdit) {
-      return false;
-    }
-    
-    let isValid = true;
-    
-    // Clear all previous validations
-    ['editColor', 'editPrice', 'editQuantity'].forEach(clearFieldError);
-    
-    // Get values
-    const colorValue = document.getElementById('editColor').value;
-    const priceValue = document.getElementById('editPrice').value;
-    const quantityValue = document.getElementById('editQuantity').value;
-    
-    // Validate all fields
-    const colorError = validateColor(colorValue, 'edit');
-    if (colorError) {
-      showError('editColor', colorError);
-      isValid = false;
-    }
-    
-    const priceError = validatePrice(priceValue, 'edit');
-    if (priceError) {
-      showError('editPrice', priceError);
-      isValid = false;
-    }
-    
-    const quantityError = validateQuantity(quantityValue, 'edit');
-    if (quantityError) {
-      showError('editQuantity', quantityError);
-      isValid = false;
-    }
-    
-    if (!isValid) {
-      Swal.fire('Validation Error', 'Please fix all errors before submitting.', 'warning');
-      return false;
-    }
-    
-    // Prevent double submission
-    isSubmittingEdit = true;
-    const submitBtn = this.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-    }
-    
-    // Submit the form
-    this.submit();
-  });
-</script>
-<script>
-  // Helper function to read data attributes from button
-  function openEditVariantModalData(button) {
-    const id = button.getAttribute('data-variant-id');
-    const color = button.getAttribute('data-variant-color');
-    const price = button.getAttribute('data-variant-price');
-    const quantity = button.getAttribute('data-variant-quantity');
-    const images = JSON.parse(button.getAttribute('data-variant-images') || '[]');
-    
-    openEditVariantModal(id, color, price, quantity, images);
   }
 
-  function openEditVariantModal(id, color, price, quantity, images) {
-    console.log('Opening modal with images:', images);
-    
-    // Clean up any existing croppers
-    for (let i = 1; i <= 4; i++) {
-      if (editCropperInstances[i]) {
-        editCropperInstances[i].destroy();
-        editCropperInstances[i] = null;
-      }
-      // Reset image fields
-      const editImage = document.getElementById(`editImage${i}`);
-      const editPreviewBox = document.getElementById(`editPreviewBox${i}`);
-      const editPreviewImg = document.getElementById(`editPreviewImg${i}`);
-      const editCropBtn = document.getElementById(`editCropBtn${i}`);
-      const editCroppedImage = document.getElementById(`editCroppedImage${i}`);
-      const deleteImageInput = document.getElementById(`deleteImage${i}`);
-      const fileName = document.getElementById(`fileName${i}`);
-      const clearFileBtn = document.getElementById(`clearFile${i}`);
-      
-      if (editImage) editImage.value = '';
-      if (editPreviewBox) editPreviewBox.classList.add('d-none');
-      if (editPreviewImg) editPreviewImg.dataset.cropped = ''; // Reset cropped flag
-      if (editCropBtn) editCropBtn.classList.add('d-none');
-      if (editCroppedImage) editCroppedImage.value = '';
-      if (deleteImageInput) deleteImageInput.value = 'false';
-      if (fileName) {
-        fileName.textContent = '';
-        fileName.classList.remove('text-success');
-      }
-      if (clearFileBtn) clearFileBtn.classList.add('d-none');
+  document.getElementById('variantId').value        = id;
+  document.getElementById('editColor').value         = color;
+  document.getElementById('editRegularPrice').value  = regularPrice;
+  document.getElementById('editSalePrice').value     = salePrice;
+  document.getElementById('editQuantity').value      = quantity;
+  document.getElementById('editVariantForm').action  = `/admin/product/<%= product._id %>/variants/${id}/edit`;
 
-      // Display current images
-      const currentImg = document.getElementById(`currentImg${i}`);
-      const noImage = document.getElementById(`noImage${i}`);
-      const deleteImgBtn = document.getElementById(`deleteImgBtn${i}`);
-      
-      console.log(`Image ${i}:`, images && images[i - 1] ? images[i - 1] : 'No image');
-      
-      if (images && images[i - 1]) {
-        const imagePath = '/' + images[i - 1];
-        console.log(`Setting image ${i} src to:`, imagePath);
-        currentImg.src = imagePath;
-        currentImg.classList.remove('d-none');
-        deleteImgBtn.classList.remove('d-none');
-        noImage.classList.add('d-none');
+  /* Clear validation state */
+  ['editColor','editRegularPrice','editSalePrice','editQuantity'].forEach(clearFieldError);
+
+  new bootstrap.Modal(document.getElementById('editVariantModal')).show();
+}
+
+/* ── Qty stepper ── */
+const qtyInput = document.getElementById('quantity');
+document.getElementById('increment').addEventListener('click', () => {
+  qtyInput.value = parseInt(qtyInput.value || '0') + 1;
+});
+document.getElementById('decrement').addEventListener('click', () => {
+  if (parseInt(qtyInput.value) > 0) qtyInput.value = parseInt(qtyInput.value) - 1;
+});
+
+/* ── Validation helpers ── */
+function validateColor(value) {
+  if (!value || !value.trim()) return 'Color is required.';
+  const t = value.trim();
+  if (t.length < 2) return 'Color must be at least 2 characters.';
+  if (t.length > 50) return 'Color must not exceed 50 characters.';
+  if (/^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(t)) return null;
+  if (!/^[A-Za-z][A-Za-z0-9\s\-(),]*$/.test(t)) return 'Enter a valid color name or hex code (e.g. #FF5733).';
+  return null;
+}
+
+function validatePrice(value, fieldLabel) {
+  if (!value || !value.trim()) return `${fieldLabel} is required.`;
+  const p = parseFloat(value);
+  if (isNaN(p)) return `${fieldLabel} must be a valid number.`;
+  if (p <= 0) return `${fieldLabel} must be greater than zero.`;
+  if (p > 1000000) return `${fieldLabel} cannot exceed ₹10,00,000.`;
+  if (!/^\d+(\.\d{1,2})?$/.test(value.trim())) return `${fieldLabel} can have at most 2 decimal places.`;
+  return null;
+}
+
+function validateSaleVsRegular(saleVal, regularVal) {
+  const s = parseFloat(saleVal);
+  const r = parseFloat(regularVal);
+  if (!isNaN(s) && !isNaN(r) && s >= r) return 'Sale price must be less than regular price.';
+  return null;
+}
+
+function validateQuantity(value) {
+  if (value === '' || value === null || value === undefined) return 'Quantity is required.';
+  const q = parseInt(value);
+  if (isNaN(q)) return 'Quantity must be a valid number.';
+  if (q < 0) return 'Quantity cannot be negative.';
+  if (q > 100000) return 'Quantity cannot exceed 1,00,000.';
+  return null;
+}
+
+function showError(id, msg) {
+  const field = document.getElementById(id);
+  const err   = document.getElementById(`${id}-error`);
+  if (field) { field.classList.remove('is-valid'); field.classList.add('is-invalid'); }
+  if (err)   err.textContent = msg;
+}
+
+function clearError(id) {
+  const field = document.getElementById(id);
+  const err   = document.getElementById(`${id}-error`);
+  if (field) { field.classList.remove('is-invalid'); field.classList.add('is-valid'); }
+  if (err)   err.textContent = '';
+}
+
+function clearFieldError(id) {
+  const field = document.getElementById(id);
+  const err   = document.getElementById(`${id}-error`);
+  if (field) field.classList.remove('is-invalid','is-valid');
+  if (err)   err.textContent = '';
+}
+
+/* ── Real-time validation: Add form ── */
+document.getElementById('color').addEventListener('input', function() {
+  const e = validateColor(this.value);
+  e ? showError('color', e) : (this.value.trim() ? clearError('color') : clearFieldError('color'));
+});
+
+document.getElementById('regularPrice').addEventListener('input', function() {
+  const e = validatePrice(this.value, 'Regular price');
+  if (e) { showError('regularPrice', e); return; }
+  const saleErr = validateSaleVsRegular(document.getElementById('salePrice').value, this.value);
+  if (saleErr) { showError('salePrice', saleErr); } else { clearError('regularPrice'); clearFieldError('salePrice'); if (document.getElementById('salePrice').value) clearError('salePrice'); }
+});
+
+document.getElementById('salePrice').addEventListener('input', function() {
+  const e = validatePrice(this.value, 'Sale price');
+  if (e) { showError('salePrice', e); return; }
+  const cmpErr = validateSaleVsRegular(this.value, document.getElementById('regularPrice').value);
+  cmpErr ? showError('salePrice', cmpErr) : clearError('salePrice');
+});
+
+document.getElementById('quantity').addEventListener('input', function() {
+  const e = validateQuantity(this.value);
+  e ? showError('quantity', e) : (this.value !== '' ? clearError('quantity') : clearFieldError('quantity'));
+});
+
+/* ── Real-time validation: Edit form ── */
+document.getElementById('editColor').addEventListener('input', function() {
+  const e = validateColor(this.value);
+  e ? showError('editColor', e) : (this.value.trim() ? clearError('editColor') : clearFieldError('editColor'));
+});
+
+document.getElementById('editRegularPrice').addEventListener('input', function() {
+  const e = validatePrice(this.value, 'Regular price');
+  if (e) { showError('editRegularPrice', e); return; }
+  const cmpErr = validateSaleVsRegular(document.getElementById('editSalePrice').value, this.value);
+  if (cmpErr) showError('editSalePrice', cmpErr); else { clearError('editRegularPrice'); if (document.getElementById('editSalePrice').value) clearError('editSalePrice'); }
+});
+
+document.getElementById('editSalePrice').addEventListener('input', function() {
+  const e = validatePrice(this.value, 'Sale price');
+  if (e) { showError('editSalePrice', e); return; }
+  const cmpErr = validateSaleVsRegular(this.value, document.getElementById('editRegularPrice').value);
+  cmpErr ? showError('editSalePrice', cmpErr) : clearError('editSalePrice');
+});
+
+document.getElementById('editQuantity').addEventListener('input', function() {
+  const e = validateQuantity(this.value);
+  e ? showError('editQuantity', e) : (this.value !== '' ? clearError('editQuantity') : clearFieldError('editQuantity'));
+});
+
+/* ── Form submit helpers ── */
+function validateAndSubmit(fields, form, submitBtn) {
+  let valid = true;
+  fields.forEach(f => { clearFieldError(f.id); });
+
+  fields.forEach(f => {
+    const err = f.validate();
+    if (err) { showError(f.id, err); valid = false; }
+    else if (f.getValue() !== '') clearError(f.id);
+  });
+
+  if (!valid) {
+    Swal.fire({ icon: 'warning', title: 'Validation Error', text: 'Please fix the highlighted fields.' });
+    return false;
+  }
+
+  submitBtn.disabled = true;
+  const orig = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<span style="font-size:12px;">Saving…</span>';
+
+  const formData = new FormData(form);
+  fetch(form.action, { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        Swal.fire({ icon: 'success', title: 'Success!', text: data.message || 'Done', timer: 1500, showConfirmButton: false })
+          .then(() => { window.location.href = data.redirectUrl || window.location.href; });
       } else {
-        currentImg.src = '';
-        currentImg.classList.add('d-none');
-        deleteImgBtn.classList.add('d-none');
-        noImage.classList.remove('d-none');
+        Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Something went wrong' });
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = orig;
       }
-    }
-    
-    const modal = new bootstrap.Modal(document.getElementById('editVariantModal'));
-    document.getElementById('variantId').value = id;
-    document.getElementById('editColor').value = color;
-    document.getElementById('editPrice').value = price;
-    document.getElementById('editQuantity').value = quantity;
-    modal.show();
-  
-    // Update the form action dynamically to include the variant ID
-    document.getElementById('editVariantForm').action = `/admin/product/<%= product._id %>/variants/${id}/edit`;
-  }
-  
+    })
+    .catch(() => {
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Unexpected error. Please try again.' });
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = orig;
+    });
+
+  return true;
+}
+
+/* ── Add Variant submit ── */
+let isSubmittingAdd = false;
+document.getElementById('addVariantForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (isSubmittingAdd) return;
+  isSubmittingAdd = true;
+
+  const fields = [
+    { id: 'color',        validate: () => validateColor(document.getElementById('color').value),                       getValue: () => document.getElementById('color').value.trim() },
+    { id: 'regularPrice', validate: () => validatePrice(document.getElementById('regularPrice').value, 'Regular price'), getValue: () => document.getElementById('regularPrice').value.trim() },
+    { id: 'salePrice',    validate: () => validatePrice(document.getElementById('salePrice').value, 'Sale price') || validateSaleVsRegular(document.getElementById('salePrice').value, document.getElementById('regularPrice').value), getValue: () => document.getElementById('salePrice').value.trim() },
+    { id: 'quantity',     validate: () => validateQuantity(document.getElementById('quantity').value),                  getValue: () => document.getElementById('quantity').value },
+  ];
+
+  const ok = validateAndSubmit(fields, this, document.getElementById('addSubmitBtn'));
+  if (!ok) isSubmittingAdd = false;
+});
+
+/* ── Edit Variant submit ── */
+let isSubmittingEdit = false;
+document.getElementById('editVariantForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (isSubmittingEdit) return;
+  isSubmittingEdit = true;
+
+  const fields = [
+    { id: 'editColor',        validate: () => validateColor(document.getElementById('editColor').value),                              getValue: () => document.getElementById('editColor').value.trim() },
+    { id: 'editRegularPrice', validate: () => validatePrice(document.getElementById('editRegularPrice').value, 'Regular price'),       getValue: () => document.getElementById('editRegularPrice').value.trim() },
+    { id: 'editSalePrice',    validate: () => validatePrice(document.getElementById('editSalePrice').value, 'Sale price') || validateSaleVsRegular(document.getElementById('editSalePrice').value, document.getElementById('editRegularPrice').value), getValue: () => document.getElementById('editSalePrice').value.trim() },
+    { id: 'editQuantity',     validate: () => validateQuantity(document.getElementById('editQuantity').value),                         getValue: () => document.getElementById('editQuantity').value },
+  ];
+
+  const ok = validateAndSubmit(fields, this, document.getElementById('editSubmitBtn'));
+  if (!ok) isSubmittingEdit = false;
+});
 </script>
 
 <%- include('partials/footer') %>

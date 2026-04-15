@@ -261,15 +261,19 @@ Sort: <%= selectedSort %> &times;
                   const isOutOfStock = totalQty <= 0 || product.status === "Out Of Stock";
                 %>
                 
-                <% if (isOutOfStock) { %>
-                  <span class="badge bg-danger mb-2">OUT OF STOCK</span>
+                <% if (product.effectiveOffer > 0) { %>
+                  <span class="badge bg-danger mb-1"><%= product.effectiveOffer %>% OFF</span>
                 <% } %>
                 
                 <% if (product.displaySalePrice && product.displaySalePrice < product.displayRegularPrice) { %>
-                  <p class="fw-bold text-danger">&#8377; <%= product.displaySalePrice %></p>
-                  <p class="text-muted"><strike>&#8377; <%= product.displayRegularPrice %></strike></p>
+                  <p class="text-muted mb-0" style="font-size:13px;">
+                    <del>&#8377; <%= product.displayRegularPrice.toLocaleString('en-IN') %></del>
+                  </p>
+                  <p class="fw-bold text-success mb-0" style="font-size:16px;">
+                    &#8377; <%= product.displaySalePrice.toLocaleString('en-IN') %>
+                  </p>
                 <% } else if (product.displayRegularPrice) { %>
-                  <p class="fw-bold">&#8377; <%= product.displayRegularPrice %></p>
+                  <p class="fw-bold mb-0">&#8377; <%= product.displayRegularPrice.toLocaleString('en-IN') %></p>
                 <% } else { %>
                   <p class="text-muted">Price not available</p>
                 <% } %>

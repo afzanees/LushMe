@@ -13,6 +13,8 @@ const env = require('dotenv').config()
 const bcrypt = require('bcrypt')
 const crypto = require("crypto");
 const Razorpay = require('razorpay');
+const fs = require('fs');
+const path = require('path');
 
 // Hash password function
 const securePassword = async (password) => {
@@ -140,7 +142,11 @@ const updatePassword = async (req, res) => {
 
 const userProfile = async (req,res)=>{
     try{ 
-        const userId =req.session.user
+        const sessionUser = req.session.user;
+        const userId = req.user?._id || (sessionUser && (sessionUser._id || sessionUser));
+        if (!userId) {
+          return res.redirect('/login');
+        }
         const allowedTabs = new Set(['profile', 'orders', 'wallet', 'Wallet-History', 'Referral', 'address']);
         let activeTab = req.query.tab;
         if (!allowedTabs.has(activeTab)) {
@@ -149,11 +155,15 @@ const userProfile = async (req,res)=>{
           else activeTab = 'profile';
         }
         const userData = await User.findById(userId)
+        if (!userData) {
+          delete req.session.user;
+          return res.redirect('/login');
+        }
         const userAddress = await Address.findOne({ userId: userId });
         const addresses = userAddress ? userAddress.address : [];
         console.log("View Loaded")
         console.log("✅ USER FROM DB:", userData);
-        console.log("✅ REFERRAL CODE FROM DB:", userData.referralCode);
+        console.log("✅ REFERRAL CODE FROM DB:", userData?.referralCode);
         //for order
         const requestedPage = Math.max(parseInt(req.query.page) || 1, 1);
         const limit = 5;
@@ -418,7 +428,11 @@ const changePassword = async (req, res) => {
 //profilepic change
 const changeProfilePic = async (req, res) => {
     try {
-      const userId = typeof req.session.user === 'string' ? req.session.user : req.session.user._id;
+      const sessionUser = req.session.user;
+      const userId = req.user?._id || (sessionUser && (sessionUser._id || sessionUser));
+      if (!userId) {
+        return res.status(401).json({ error: 'Please login again' });
+      }
   
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
@@ -435,7 +449,7 @@ const changeProfilePic = async (req, res) => {
       );
       
       // Update session with new profile image
-      if (req.session.user) {
+      if (req.session.user && typeof req.session.user === 'object' && req.session.user !== null) {
         req.session.user.profileImage = filename;
       }
   
@@ -445,6 +459,47 @@ const changeProfilePic = async (req, res) => {
       res.status(500).json({ error: 'Upload failed' });
     }
   };
+
+const removeProfilePic = async (req, res) => {
+  try {
+    const sessionUser = req.session.user;
+    const userId = req.user?._id || (sessionUser && (sessionUser._id || sessionUser));
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Please login again' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const currentImage = user.profileImage;
+    user.profileImage = '/images/profile.png';
+    await user.save();
+
+    // Remove only local uploaded profile images (not URLs/default path)
+    if (
+      currentImage &&
+      !currentImage.startsWith('http') &&
+      !currentImage.startsWith('/images/')
+    ) {
+      const imagePath = path.join(__dirname, '../../public/uploads/profile', currentImage);
+      fs.promises.unlink(imagePath).catch(() => {});
+    }
+
+    if (req.session.user && typeof req.session.user === 'object' && req.session.user !== null) {
+      req.session.user.profileImage = '/images/profile.png';
+    }
+
+    return res.json({
+      success: true,
+      profileImage: '/images/profile.png'
+    });
+  } catch (error) {
+    console.error('Remove profile pic error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to remove profile image' });
+  }
+};
 
   //Load Address page
   const getAddAddress = async (req,res) => {
@@ -675,6 +730,7 @@ module.exports = {
     getChangePassword,
     changePassword,
     changeProfilePic,
+    removeProfilePic,
     getAddAddress,
     addAddress,
     getEditAddress,

@@ -111,19 +111,30 @@
               minVar = product.variants.reduce((a,b)=> (a.salePrice < b.salePrice ? a : b));
             }
           %>
+
           <div class="mb-3" id="priceDisplay">
             <% if (minVar) { %>
+          
+              <% if (effectiveOffer > 0) { %>
+                <span class="badge bg-danger mb-2"><%= effectiveOffer %>% OFF</span>
+              <% } %>
+          
               <% if (minVar.salePrice < minVar.regularPrice) { %>
-                <div class="fs-4 fw-bold text-danger" id="salePrice">₹ <%= Math.round(minVar.salePrice) %></div>
-                <div class="text-muted" id="regularPrice">
-                  <del>₹ <%= Math.round(minVar.regularPrice) %></del>
+                <div class="text-muted mb-1">
+                  <del style="font-size:15px;">₹ <%= Math.round(minVar.regularPrice).toLocaleString('en-IN') %></del>
+                </div>
+                <div class="fs-4 fw-bold text-success" id="salePrice">
+                  ₹ <%= Math.round(minVar.salePrice).toLocaleString('en-IN') %>
                 </div>
               <% } else { %>
-                <div class="fs-4 fw-bold" id="salePrice">₹ <%= Math.round(minVar.regularPrice) %></div>
+                <div class="fs-4 fw-bold" id="salePrice">
+                  ₹ <%= Math.round(minVar.regularPrice).toLocaleString('en-IN') %>
+                </div>
               <% } %>
+          
             <% } else { %>
               <div class="fs-6 text-muted">No price available</div>
-            <% } %> 
+            <% } %>
           </div>
 
           <p class="mb-2">Brand: <span class="fw-semibold text-danger"><%= product.brand?.name || 'N/A' %></span></p>
@@ -285,7 +296,7 @@ document.getElementById('colorSelect').addEventListener('change', function () {
       
       if (salePrice < regularPrice) {
         priceDisplay.innerHTML = `
-          <div class="fs-4 fw-bold text-danger" id="salePrice">₹ ${salePrice}</div>
+          <div class="fs-4 fw-bold text-success" id="salePrice">₹ ${salePrice}</div>
           <div class="text-muted" id="regularPrice">
             <del>₹ ${regularPrice}</del>
           </div>

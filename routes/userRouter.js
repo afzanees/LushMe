@@ -41,6 +41,7 @@ router.post('/updateProfile', userAuth,profileController.updateProfile);
 router.get("/change-password", userAuth, profileController.getChangePassword);
 router.post("/change-password", userAuth, profileController.changePassword);
 router.post("/upload-profile-pic",userAuth,uploads.single("profileImage"), profileController.changeProfilePic)
+router.post('/remove-profile-pic', userAuth, profileController.removeProfilePic)
 
 //Address Management
 // router.get("/addAddress", userAuth, profileController.getAddAddress);

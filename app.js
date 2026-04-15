@@ -64,7 +64,9 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.use(async (req, res, next) => {
     try {
       if (req.session.user) {
-        const userFromDB = await User.findById(req.session.user);
+        const sessionUser = req.session.user;
+        const userId = sessionUser && (sessionUser._id || sessionUser);
+        const userFromDB = userId ? await User.findById(userId) : null;
         res.locals.user = userFromDB;
       } else if (req.user) {
         res.locals.user = req.user;

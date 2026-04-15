@@ -60,24 +60,24 @@
       <!-- Email/Password Form -->
       <form id="signform" method="post" action="/register">
         <div class="mb-3">
-          <input type="text" id="username" class="form-control" name="username" placeholder="Username" value="<%= typeof formData !== 'undefined' ? formData.username || '' : '' %>" required />
+          <input type="text" id="username" class="form-control" name="username" placeholder="Username" value="<%= typeof formData !== 'undefined' ? formData.username || '' : '' %>"  />
         <div id="error1" class="error-message"></div>
         </div>
         <div class="mb-3">
-          <input type="email" id="email" class="form-control" name="email" placeholder="Email" value="<%= typeof formData !== 'undefined' ? formData.email || '' : '' %>" required />
+          <input type="email" id="email" class="form-control" name="email" placeholder="Email" value="<%= typeof formData !== 'undefined' ? formData.email || '' : '' %>"  />
           <div id="error2" class="error-message"></div>
         </div>
         <div class="mb-3">
-          <input type="text" id="phone" class="form-control" name="phone" placeholder="Phone Number" value="<%= typeof formData !== 'undefined' ? formData.phone || '' : '' %>" required />
+          <input type="text" id="phone" class="form-control" name="phone" placeholder="Phone Number" value="<%= typeof formData !== 'undefined' ? formData.phone || '' : '' %>"  />
           <div id="error3" class="error-message"></div>
         </div>
         <div class="mb-3 password-box">
-          <input type="password" id="password" class="form-control" name="password" placeholder="Password" required />
+          <input type="password" id="password" class="form-control" name="password" placeholder="Password" />
           <i class="fa fa-eye-slash eye" onclick="togglePassword('password', this)"></i>
           <div id="error4" class="error-message"></div>
         </div>
         <div class="mb-3 password-box" >
-          <input type="password" id="cpassword" class="form-control" name="cpassword" placeholder="Confirm Password" required />
+          <input type="password" id="cpassword" class="form-control" name="cpassword" placeholder="Confirm Password"/>
           <i class="fa fa-eye-slash eye" onclick="togglePassword('cpassword', this)"></i>
           <div id="error5" class="error-message"></div>
         </div>
@@ -166,16 +166,26 @@
 
   }
 
-  function phoneValidateChecking(e) {
-  const phoneval = phoneid.value.trim();
+function phoneValidateChecking(e) {
+  let phoneval = phoneid.value.trim();
 
-  if (phoneval === "") {
-    error3.style.display = "block";
-    error3.innerHTML = "Enter valid phone number";
+  // remove spaces, dashes etc
+  phoneval = phoneval.replace(/\D/g, '');
 
-  } else if (!/^(?!0{10})\d{10}$/.test(phoneval)) {
+  // convert to standard format
+  if (phoneval.length === 10) {
+    phoneval = '91' + phoneval;
+  }
+
+  const isValid = /^91[6-9]\d{9}$/.test(phoneval);
+
+  if (!phoneval) {
     error3.style.display = "block";
-    error3.innerHTML = "Enter a valid 10-digit phone number";
+    error3.innerHTML = "Enter phone number";
+
+  } else if (!isValid) {
+    error3.style.display = "block";
+    error3.innerHTML = "Enter a valid Indian phone number";
 
   } else {
     error3.style.display = "none";

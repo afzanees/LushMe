@@ -16,6 +16,9 @@ router.get(
   (req, res) => {
     const user = req.user;
 
+    // Preserve admin session data before regeneration
+    const adminSessionData = req.session.admin;
+    
     // Regenerate session after authentication to prevent session fixation.
     req.session.regenerate((regenErr) => {
       if (regenErr) {
@@ -30,6 +33,12 @@ router.get(
         }
 
         req.session.user = user._id;
+        
+        // Restore admin session data after regeneration
+        if (adminSessionData) {
+          req.session.admin = adminSessionData;
+        }
+        
         req.session.save((saveErr) => {
           if (saveErr) {
             console.error("Session save failed:", saveErr);

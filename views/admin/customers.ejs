@@ -1,80 +1,220 @@
 <%- include('partials/header', { title: 'Dashboard' }) %>
 <%- include('partials/sidebar', { admin }) %>
 
-<!-- Main content area -->
-<div class="container-fluid">
-    <div class="row">
-      <!-- Sidebar already included, so main content goes here -->
-      <div class="col-md-9 col-lg-10 mx-auto py-4">
-        <div class="content-header row mb-4">
-          <div class="d-flex justify-content-between align-items-center">
-            <h2 class="content-title card-title">Customers</h2>
-          </div>
-        </div>
-  
-        <!-- Search Bar -->
-        <header class="card-header text-center mb-4">
-          <form action="/admin/users" method="get" class="d-inline">
-            <div class="input-group input-group-sm border border-1 border-grey rounded-pill mx-auto" style="max-width: 500px;">
-              <input
-                type="text"
-                class="form-control border-0 rounded-pill"
-                placeholder="Search customers..."
-                name="search"
-              />
-              <button class="btn border-0" type="submit">Search</button>
-            </div>
-          </form>
-        </header>
-  
-        <!-- Table -->
-        <div class="card p-3 shadow-sm">
-          <table class="table table-striped text-center align-middle">
-            <thead>
-              <tr>
-                <th scope="col"><b>Name</b></th>
-                <th scope="col"><b>Email</b></th>
-                <th scope="col"><b>Phone No</b></th>
-                <th scope="col"><b>Action</b></th>
-              </tr>
-            </thead>
-            <tbody>
-              <%for(let i=0;i<data.length;i++){%>
-              <tr>
-                <td><%=data[i].username%></td>
-                <td><%=data[i].email%></td>
-                <td><%= data[i].phone ? data[i].phone : 'Not provided' %></td>
+<style>
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0 14px; height: 42px; max-width: 360px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-box:focus-within {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148,163,184,0.15);
+  }
+  .search-box svg { color: #94a3b8; flex-shrink: 0; }
+  .search-box input {
+    border: none; outline: none; background: transparent;
+    font-size: 14px; color: #1e293b;
+    font-family: "DM Sans", sans-serif; flex: 1;
+  }
+  .search-box input::placeholder { color: #cbd5e1; }
+  .count-label { font-size: 13px; color: #64748b; margin-top: 6px; }
+  mark { background: #fef9c3; color: #713f12; border-radius: 2px; padding: 0 1px; }
+</style>
 
-                <td>
-                  <% if(data[i].isBlocked===false){%>
-                  <button class="btn btn-danger btn-sm">
-                    <a href="/admin/blockCustomer?id=<%=data[i]._id%>" class="text-white text-decoration-none">Block</a>
-                  </button>
-                  <%}else{%>
-                  <button class="btn btn-success btn-sm">
-                    <a href="/admin/unblockCustomer?id=<%=data[i]._id%>" class="text-white text-decoration-none">Unblock</a>
-                  </button>
-                  <%}%>
-                </td>
-              </tr>
-              <%}%>
-            </tbody>
-          </table>
-        </div>
-  
-        <!-- Pagination -->
-        <div class="mt-4">
-          <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-              <%for(let i=1;i<=totalPages;i++){%>
-                <li class="page-item <%=(i===currentPage) ? 'active' : '' %>">
-                  <a class="page-link" href = "?page=<%= i %>"><%= i %></a>
-                </li>
-                <%}%>
-              </ul>
-          </nav>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-9 col-lg-10 mx-auto py-4">
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="content-title card-title">Customers</h2>
+      </div>
+
+      <!-- Search Bar -->
+      <header class="card-header text-center mb-2">
+        <form id="searchForm" method="GET" action="/admin/users">
+          <div class="search-box mx-auto">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              name="search"
+              id="searchInput"
+              placeholder="Search customers..."
+              value="<%= searchQuery || '' %>"
+              autocomplete="off"
+            />
+          </div>
+        </form>
+      </header>
+      <div class="count-label text-center mb-3" id="countLabel">
+        Showing <%= data.length %> customers
+      </div>
+
+      <!-- Table -->
+      <div class="card p-3 shadow-sm">
+        <table class="table table-striped text-center align-middle" id="customerTable">
+          <thead>
+            <tr>
+              <th><b>Name</b></th>
+              <th><b>Email</b></th>
+              <th><b>Phone No</b></th>
+              <th><b>Action</b></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for(let i = 0; i < data.length; i++) { %>
+            <tr>
+              <td><%= data[i].username %></td>
+              <td><%= data[i].email %></td>
+              <td><%= data[i].phone ? data[i].phone : 'Not provided' %></td>
+              <td>
+                <% if(data[i].isBlocked === false) { %>
+                  <a href="/admin/blockCustomer?id=<%= data[i]._id %>" class="btn btn-danger btn-sm">Block</a>
+                <% } else { %>
+                  <a href="/admin/unblockCustomer?id=<%= data[i]._id %>" class="btn btn-success btn-sm">Unblock</a>
+                <% } %>
+              </td>
+            </tr>
+            <% } %>
+          </tbody>
+        </table>
+        <div id="noResults" style="display:none; text-align:center; padding:2rem; color:#64748b;">
+          No customers match your search.
         </div>
       </div>
+
+      <!-- Pagination -->
+      <div class="mt-4">
+        <nav>
+          <ul class="pagination justify-content-center">
+
+            <%
+              const delta = 2;
+              let pages = [];
+              let lastRenderedPage = null;
+
+              for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+                  pages.push(i);
+                }
+              }
+            %>
+
+            <!-- Previous -->
+            <% if (currentPage > 1) { %>
+              <li class="page-item">
+                <a class="page-link" href="?page=<%= currentPage - 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>">&#8249;</a>
+              </li>
+            <% } else { %>
+              <li class="page-item disabled"><span class="page-link">&#8249;</span></li>
+            <% } %>
+
+            <!-- Page Numbers -->
+            <% pages.forEach(function(i) { %>
+              <% if (lastRenderedPage !== null && i - lastRenderedPage > 1) { %>
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+              <% } %>
+              <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= i %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>"><%= i %></a>
+              </li>
+              <% lastRenderedPage = i; %>
+            <% }); %>
+
+            <!-- Next -->
+            <% if (currentPage < totalPages) { %>
+              <li class="page-item">
+                <a class="page-link" href="?page=<%= currentPage + 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>">&#8250;</a>
+              </li>
+            <% } else { %>
+              <li class="page-item disabled"><span class="page-link">&#8250;</span></li>
+            <% } %>
+
+          </ul>
+        </nav>
+      </div>
+
     </div>
   </div>
-        <%- include('partials/footer') %>
+</div>
+
+<!-- <script>
+  const input      = document.getElementById('searchInput');
+  const tbody      = document.querySelector('#customerTable tbody');
+  const noResults  = document.getElementById('noResults');
+  const countLabel = document.getElementById('countLabel');
+  const totalRows  = tbody.querySelectorAll('tr').length;
+
+  // Save original cell HTML so highlight resets cleanly
+  const originalHTML = Array.from(tbody.querySelectorAll('tr')).map(row =>
+    Array.from(row.querySelectorAll('td')).map(td => td.innerHTML)
+  );
+
+  function highlight(text, q) {
+    if (!q) return text;
+    const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp(`(${safe})`, 'gi'), '<mark>$1</mark>');
+  }
+
+  input.addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    let visible = 0;
+
+    tbody.querySelectorAll('tr').forEach((row, i) => {
+      const cells   = row.querySelectorAll('td');
+      const matches = !q || [0, 1, 2].some(ci =>
+        cells[ci].textContent.toLowerCase().includes(q)
+      );
+
+      if (matches) {
+        row.style.display = '';
+        visible++;
+        [0, 1, 2].forEach(ci => {
+          cells[ci].innerHTML = highlight(originalHTML[i][ci], q);
+        });
+      } else {
+        row.style.display = 'none';
+        [0, 1, 2].forEach(ci => {
+          cells[ci].innerHTML = originalHTML[i][ci];
+        });
+      }
+    });
+
+    noResults.style.display  = visible === 0 ? 'block' : 'none';
+    countLabel.textContent   = q
+      ? `Showing ${visible} of ${totalRows} customers`
+      : `Showing ${totalRows} customers`;
+  });
+</script> -->
+
+
+<script>
+  const input = document.getElementById('searchInput');
+  const rows = document.querySelectorAll('#customerTable tbody tr');
+  const noResults = document.getElementById('noResults');
+
+  input.addEventListener('input', function () {
+    const search = this.value.toLowerCase();
+    let found = false;
+
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+
+      if (text.includes(search)) {
+        row.style.display = '';
+        found = true;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Show "no results" message
+    noResults.style.display = found ? 'none' : 'block';
+  });
+</script>
+
+<%- include('partials/footer') %>

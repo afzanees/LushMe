@@ -1,248 +1,577 @@
-<%- include('partials/header', { title: 'Product Management' }) %>
+<%- include('partials/header', { title: 'Sales Report' }) %>
 <%- include('partials/sidebar', { admin }) %>
 
-<style>
-    :root {
-     --primary-color: #1e90ff;
-     --secondary-color: #2d3436;
-     --success-color: #00b894;
-     --danger-color: #d63031;
-     --info-color: #0984e3;
-     --light-gray: #dfe6e9;
-     --background-color: #f5f6fa;
-     --white: #ffffff;
-     --shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-     --transition: all 0.3s ease;
-   }
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
 
+<style>
+  body {
+    font-family: "DM Sans", sans-serif;
+    background-color: #f1f5f9;
+    color: #1e293b;
+  }
+
+  .sr-page { padding: 28px 24px; }
+
+  /* Header */
+  .sr-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .sr-title-icon {
+    width: 42px;
+    height: 42px;
+    background: #1e293b;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .sr-header h2 {
+    font-family: "Syne", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  .sr-header p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Filter Card */
+  .filter-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 22px;
+  }
+
+  .filter-card-header {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+
+  .filter-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+  }
+
+  .filter-select,
+  .filter-input {
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: "DM Sans", sans-serif;
+    color: #1e293b;
+    background: #fff;
+    outline: none;
+    height: 38px;
+    transition: border-color 0.15s;
+  }
+
+  .filter-select { min-width: 160px; cursor: pointer; }
+  .filter-input  { min-width: 150px; }
+
+  .filter-select:focus,
+  .filter-input:focus { border-color: #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,0.15); }
+
+  .custom-dates {
+    display: none;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .btn-generate {
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 0 18px;
+    height: 38px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: "DM Sans", sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+  }
+  .btn-generate:hover { background: #334155; }
+
+  .btn-dl {
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: opacity 0.15s;
+    cursor: pointer;
+  }
+  .btn-dl:hover { opacity: 0.82; text-decoration: none; }
+  .btn-dl.pdf   { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+  .btn-dl.excel { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+
+  /* Stats */
+  .sr-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.green  { background: #f0fdf4; }
+  .stat-icon.blue   { background: #eff6ff; }
+  .stat-icon.red    { background: #fef2f2; }
+  .stat-icon.purple { background: #f5f3ff; }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+
+  .stat-val {
+    font-family: "Syne", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-val.green  { color: #16a34a; }
+  .stat-val.blue   { color: #2563eb; }
+  .stat-val.red    { color: #dc2626; }
+  .stat-val.purple { color: #7c3aed; }
+
+  /* Table Card */
+  .sr-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .sr-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .sr-card-header h5 {
+    font-family: "Syne", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: #1e293b;
+  }
+
+  .row-count {
+    font-size: 12px;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .sr-table-wrap { overflow-x: auto; }
+
+  .sr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 780px;
+  }
+
+  .sr-table thead tr { background: #1e293b; }
+
+  .sr-table thead th {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 12px 18px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .sr-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+
+  .sr-table tbody tr:last-child { border-bottom: none; }
+  .sr-table tbody tr:hover { background: #f8fafc; }
+
+  .sr-table td {
+    padding: 12px 18px;
+    vertical-align: middle;
+    color: #1e293b;
+  }
+
+  .order-id-chip {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .customer-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #1d4ed8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .date-text { font-size: 12px; color: #475569; }
+
+  .payment-chip {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .amount-text { font-weight: 600; color: #1e293b; }
+  .discount-text { color: #dc2626; font-weight: 500; }
+  .offer-text { color: #7c3aed; font-weight: 500; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 52px 24px;
+    color: #94a3b8;
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; margin: 0; }
+
+  /* Pagination */
+  .pm-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+
+  .pm-pagination .page-item .page-link {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0;
+    transition: all 0.15s;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .pm-pagination .page-item .page-link:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+  .pm-pagination .page-item.active .page-link { background: #1e293b; border-color: #1e293b; color: #fff; }
 </style>
 
+<div class="sr-page">
 
+  <!-- Header -->
+  <div class="sr-header">
+    <div class="sr-title-icon">📊</div>
+    <div>
+      <h2>Sales Report</h2>
+      <p>Analyse revenue, discounts and offer trends</p>
+    </div>
+  </div>
 
-<head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Sales Report</title>
-   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-gray-100">
-   <div class="container mx-auto px-4 py-8">
-       <!-- Report Header -->
-       <div class="mb-8">
-           <h1 class="text-3xl font-bold text-gray-800 mb-4">Sales Report</h1> 
-           
-           <!-- Date Range Filter -->
-           <form id="reportForm" method="GET" action="/admin/report/generate" class="bg-white p-6 rounded-lg shadow-md">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <!-- Report Type -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
-                  <select
-                    class="form-select w-full border border-gray-300 rounded-md p-2"
-                    id="rangeType"
-                    name="rangeType"
-                    required
-                    onchange="toggleDateInputs(this.value)"
-                  >
-                    <option value="day">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="custom">Custom Range</option>
-                  </select>
-                </div>
-              
-                <!-- Start and End Dates side-by-side -->
-                <div class="col-span-2 flex space-x-4 custom-range mb-5" style="display:none;">
-                  <div class="flex-1">
-                    <label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                    <input
-                      type="date"
-                      id="startDate"
-                      name="startDate"
-                      class="form-control w-full border border-gray-300 rounded-md p-2"
-                      max="<%= new Date().toISOString().split('T')[0] %>"
-                    />
-                  </div>
-                  <div class="flex-1">
-                    <label for="endDate" class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                    <input
-                      type="date"
-                      id="endDate"
-                      name="endDate"
-                      class="form-control w-full border border-gray-300 rounded-md p-2"
-                      max="<%= new Date().toISOString().split('T')[0] %>"
-                    />
-                  </div>
-                </div>
+  <!-- Filter Card -->
+  <div class="filter-card">
+    <div class="filter-card-header">Generate Report</div>
+    <form id="reportForm" method="GET" action="/admin/report/generate">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Report Type</label>
+          <select class="filter-select" id="rangeType" name="rangeType" required onchange="toggleDateInputs(this.value)">
+            <option value="day"    <%= rangeType === 'day'    ? 'selected' : '' %>>Today</option>
+            <option value="week"   <%= rangeType === 'week'   ? 'selected' : '' %>>This Week</option>
+            <option value="month"  <%= rangeType === 'month'  ? 'selected' : '' %>>This Month</option>
+            <option value="custom" <%= rangeType === 'custom' ? 'selected' : '' %>>Custom Range</option>
+          </select>
+        </div>
+
+        <div class="custom-dates" id="customDates">
+          <div class="filter-group">
+            <label for="startDate">Start Date</label>
+            <input type="date" id="startDate" name="startDate" class="filter-input"
+              value="<%= startDate || '' %>"
+              max="<%= new Date().toISOString().split('T')[0] %>">
+          </div>
+          <div class="filter-group">
+            <label for="endDate">End Date</label>
+            <input type="date" id="endDate" name="endDate" class="filter-input"
+              value="<%= endDate || '' %>"
+              max="<%= new Date().toISOString().split('T')[0] %>">
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn-generate">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          Generate Report
+        </button>
+        <a href="/admin/report/generate?rangeType=<%= rangeType %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=pdf" class="btn-dl pdf">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>
+          </svg>
+          Download PDF
+        </a>
+        <a href="/admin/report/generate?rangeType=<%= rangeType %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=excel" class="btn-dl excel">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>
+          </svg>
+          Download Excel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <% if (salesData && salesData.length > 0) { %>
+
+  <!-- Stats -->
+  <div class="sr-stats">
+    <div class="stat-card">
+      <div class="stat-icon green">💰</div>
+      <div>
+        <div class="stat-label">Total Sales</div>
+        <div class="stat-val green">₹<%= totalAmount %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">📦</div>
+      <div>
+        <div class="stat-label">Orders</div>
+        <div class="stat-val blue"><%= totalSale %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">🏷️</div>
+      <div>
+        <div class="stat-label">Discounts</div>
+        <div class="stat-val red">₹<%= totalDiscount %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">🎁</div>
+      <div>
+        <div class="stat-label">Offers</div>
+        <div class="stat-val purple">₹<%= totalOffer %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="sr-card">
+    <div class="sr-card-header">
+      <h5>Detailed Sales</h5>
+      <span class="row-count"><%= salesData.length %> record<%= salesData.length !== 1 ? 's' : '' %></span>
+    </div>
+    <div class="sr-table-wrap">
+      <table class="sr-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Payment</th>
+            <th>Amount</th>
+            <th>Discount</th>
+            <th>Offer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% salesData.forEach(sale => {
+            const initials = (sale.user || 'U').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+          %>
+          <tr>
+            <td><span class="order-id-chip">#<%= sale.orderId %></span></td>
+            <td>
+              <div class="customer-cell">
+                <div class="customer-avatar"><%= initials %></div>
+                <span style="font-weight:500;"><%= sale.user %></span>
               </div>
-              
-               <div class="mt-4 flex justify-end space-x-3">
-                   <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                       Generate Report
-                   </button>
-                   <a href="/admin/report/generate?rangeType=<%= rangeType %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=pdf"  class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Download PDF</a>
-                   <a href="/admin/report/generate?rangeType=<%= rangeType %>&startDate=<%= startDate %>&endDate=<%= endDate %>&format=excel" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">Download Excel</a>
-                   
-               </div>
-           </form>
-       </div>
-       <% if (salesData && salesData.length > 0) { %>
-       <!-- Summary Cards -->
-       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-           <div class="bg-white p-6 rounded-lg shadow-md">
-               <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Sales Amount</h3>
-               <p class="text-2xl font-bold text-green-600">₹<%= totalAmount %></p>
-           </div>
-           <div class="bg-white p-6 rounded-lg shadow-md">
-               <h3 class="text-lg font-semibold text-gray-700 mb-2">Orders</h3>
-               <p class="text-2xl font-bold text-blue-600"><%= totalSale %></p>
-           </div>
-           <div class="bg-white p-6 rounded-lg shadow-md">
-               <h3 class="text-lg font-semibold text-gray-700 mb-2">Discounts</h3>
-               <p class="text-2xl font-bold text-red-600">₹<%= totalDiscount %></p>
-           </div>
-           <div class="bg-white p-6 rounded-lg shadow-md">
-               <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Offers</h3>
-               <p class="text-2xl font-bold text-purple-600">₹<%= totalOffer %></p>
-           </div>
-       </div>
+            </td>
+            <td><span class="date-text"><%= sale.date %></span></td>
+            <td><span class="payment-chip"><%= sale.payment %></span></td>
+            <td><span class="amount-text">₹<%= sale.totalAmount.toLocaleString() %></span></td>
+            <td><span class="discount-text">₹<%= sale.discount.toLocaleString() %></span></td>
+            <td><span class="offer-text">₹<%= sale.offer.toLocaleString() %></span></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-       <!-- Detailed Sales Table -->
-       <div class="bg-white rounded-lg shadow-md overflow-hidden">
-           <h2 class="text-xl font-semibold text-gray-800 p-6 border-b">Detailed Sales</h2>
-           <div class="overflow-x-auto">
-               <table class="w-full">
-                   <thead class="bg-gray-50">
-                       <tr>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cutomer</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">payment</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offer</th>
-                       </tr>
-                   </thead>
-                   <tbody class="bg-white divide-y divide-gray-200">
-                    <% salesData.forEach((sale) => { %>
-                       <tr>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <%= sale.orderId %>
-                           </td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                               <%= sale.user%>
-                           </td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <%= sale.date %>
-                           </td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <%= sale.payment %>
-                           </td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                               ₹<%= sale.totalAmount.toLocaleString() %>
-                           </td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                               ₹<%= sale.discount.toLocaleString() %>
-                           </td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-purple-600">
-                               ₹<%= sale.offer.toLocaleString() %>
-                           </td>
-                       </tr>
-                       <% }); %>
-                   </tbody>
-               </table>
-           </div>
-       </div>
-       <% } else { %>
-        <div class="alert alert-warning">No sales data found for the selected range.</div>
-        <% } %>
-        <nav>
-            <ul class="pagination justify-content-center">
-              <% for(let i = 1; i <= totalPages; i++) { %>
-                <li class="page-item <%= i == currentPage ? 'active' : '' %>">
-                  <a class="page-link" href="/admin/report/generate?page=<%= i %>&rangeType=<%=rangeType %>&startDate=<%= startDate %>&endDate=<%= endDate %>"><%= i %></a>
-                </li>
-              <% } %>
-            </ul>
-          </nav>
-   </div>
-   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Pagination -->
+  <nav class="mt-3">
+    <ul class="pagination pm-pagination justify-content-center">
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <li class="page-item <%= i == currentPage ? 'active' : '' %>">
+          <a class="page-link" href="/admin/report/generate?page=<%= i %>&rangeType=<%= rangeType %>&startDate=<%= startDate %>&endDate=<%= endDate %>">
+            <%= i %>
+          </a>
+        </li>
+      <% } %>
+    </ul>
+  </nav>
 
-  
+  <% } else { %>
+  <div class="sr-card">
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <p>No sales data found for the selected range. Try a different period.</p>
+    </div>
+  </div>
+  <% } %>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function toggleDateInputs(value) {
-        const customRangeElements = document.querySelectorAll(".custom-range");
-        customRangeElements.forEach(el => {
-          el.style.display = value === 'custom' ? 'flex' : 'none';
-        });
-      }
-      
-      document.addEventListener('DOMContentLoaded', function() {
-        const rangeType = document.getElementById('rangeType').value;
-        toggleDateInputs(rangeType);
-      
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function(e) {
-          const selectedRange = document.getElementById('rangeType').value;
-      
-          if (selectedRange === 'custom') {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-      
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-      
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-      
-            if (!start || !end) {
-              e.preventDefault();
-              Swal.fire({
-                icon: 'warning',
-                title: 'Invalid date',
-                text: 'Please select start date and end date'
-              });
-              return;
-            }
-      
-            if (startDate > endDate) {
-              e.preventDefault();
-              Swal.fire({
-                icon: 'warning',
-                title: 'Invalid date',
-                text: 'Start date cannot be greater than end date'
-              });
-              return;
-            }
-      
-            // Allow current date but prevent future dates
-            if (startDate > today) {
-              e.preventDefault();
-              Swal.fire({
-                icon: 'warning',
-                title: 'Invalid date',
-                text: 'Start date cannot be in the future'
-              });
-              return;
-            }
-            
-            if (endDate > today) {
-              e.preventDefault();
-              Swal.fire({
-                icon: 'warning',
-                title: 'Invalid date',
-                text: 'End date cannot be in the future'
-              });
-              return;
-            }
-          }
-        });
-      });
-      
-</script>
+  function toggleDateInputs(value) {
+    const el = document.getElementById('customDates');
+    el.style.display = value === 'custom' ? 'flex' : 'none';
+  }
 
+  document.addEventListener('DOMContentLoaded', function () {
+    toggleDateInputs(document.getElementById('rangeType').value);
+
+    document.getElementById('reportForm').addEventListener('submit', function (e) {
+      const selectedRange = document.getElementById('rangeType').value;
+      if (selectedRange !== 'custom') return;
+
+      const start = document.getElementById('startDate').value;
+      const end   = document.getElementById('endDate').value;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const startDate = new Date(start); startDate.setHours(0,0,0,0);
+      const endDate   = new Date(end);   endDate.setHours(0,0,0,0);
+
+      if (!start || !end) {
+        e.preventDefault();
+        Swal.fire({ icon: 'warning', title: 'Missing dates', text: 'Please select both start and end dates.' });
+        return;
+      }
+      if (startDate > endDate) {
+        e.preventDefault();
+        Swal.fire({ icon: 'warning', title: 'Invalid range', text: 'Start date cannot be after end date.' });
+        return;
+      }
+      if (startDate > today || endDate > today) {
+        e.preventDefault();
+        Swal.fire({ icon: 'warning', title: 'Future date', text: 'Dates cannot be in the future.' });
+        return;
+      }
+    });
+  });
+</script>
 
 <%- include('partials/footer') %>

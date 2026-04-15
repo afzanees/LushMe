@@ -16,7 +16,6 @@ const calculateEffectivePrice = async (product) => {
 
   const categoryOffer = category?.categoryOffer || 0;
 
-
   const subcat = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory.toString());
   const subcategoryOffer = subcat?.offer || 0;
 
@@ -711,16 +710,40 @@ const addProductVariants=async(req,res)=>{
 
     console.log("📦 Received data:", { color, regularPrice, salePrice, quantity, productId });
 
-    if (!color || !regularPrice || !salePrice || quantity == null) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'All fields are required',
-        received: { color, regularPrice, salePrice, quantity }
-      });
+    if (!color || typeof color !== 'string' || color.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Color is required and cannot be empty' });
     }
     
-    if (quantity < 0) {
-      return res.status(400).json({ success: false, message: 'Quantity cannot be negative' });
+    if (!regularPrice || typeof regularPrice !== 'string' || regularPrice.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Regular price is required' });
+    }
+    
+    if (!salePrice || typeof salePrice !== 'string' || salePrice.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Sale price is required' });
+    }
+    
+    if (quantity == null || quantity === '') {
+      return res.status(400).json({ success: false, message: 'Quantity is required' });
+    }
+    
+    const salePriceNum = parseFloat(salePrice);
+    const regularPriceNum = parseFloat(regularPrice);
+    const qtyNum = parseInt(quantity);
+    
+    if (isNaN(salePriceNum) || salePriceNum <= 0) {
+      return res.status(400).json({ success: false, message: 'Sale price must be a valid number greater than 0' });
+    }
+    
+    if (isNaN(regularPriceNum) || regularPriceNum <= 0) {
+      return res.status(400).json({ success: false, message: 'Regular price must be a valid number greater than 0' });
+    }
+    
+    if (salePriceNum > regularPriceNum) {
+      return res.status(400).json({ success: false, message: 'Sale price cannot be greater than regular price' });
+    }
+    
+    if (isNaN(qtyNum) || qtyNum < 0) {
+      return res.status(400).json({ success: false, message: 'Quantity must be a non-negative integer' });
     }
     
     if (!mongoose.Types.ObjectId.isValid(productId)) {
@@ -729,15 +752,15 @@ const addProductVariants=async(req,res)=>{
     
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ success: false, message: 'product not found' });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
     
     const existingVariant = product.variants.find(v =>
-      v.color.toLowerCase() === color.toLowerCase()
+      v.color.toLowerCase() === color.trim().toLowerCase()
     );
     
     if (existingVariant) {
-      return res.status(400).json({ success: false, message: 'Variant with same color already exists' });
+      return res.status(400).json({ success: false, message: `Variant with color "${color}" already exists` });
     }
 
     // ✅ Ensure upload directory exists
@@ -746,11 +769,34 @@ const addProductVariants=async(req,res)=>{
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
+    const supportedMimes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+
     const imageFilenames = [];
     for (let i = 1; i <= 4; i++) {
       const croppedImageData = req.body[`croppedImage${i}`];
+
+
+  // ADD THIS — see exactly what's coming from frontend
+  console.log(`image${i} received:`, croppedImageData ? croppedImageData.substring(0, 60) : 'EMPTY');
+
+
+  
       if (croppedImageData && croppedImageData.startsWith("data:image")) {
         const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, "");
+
+        
+
+              // Extract mime from base64 string e.g. "data:image/jpeg;base64,..."
+      const mimeMatch = croppedImageData.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9+.-]+);base64,/);
+      const mime = mimeMatch ? mimeMatch[1] : null;
+
+        // ADD THIS — see what mime is being detected
+    console.log(`image${i} mime:`, mime);
+
+      if (!mime || !supportedMimes.includes(mime)) {
+        return res.status(400).json({ success: false, message: "Unsupported image format" });
+      }
+
         const imageBuffer = Buffer.from(base64Data, "base64");
         const filename = `${Date.now()}-image${i}.webp`;
         const filepath = path.join(uploadDir, filename);
@@ -763,21 +809,20 @@ const addProductVariants=async(req,res)=>{
     }
 
     product.variants.push({
-      color,
-      regularPrice: parseFloat(regularPrice),
-      salePrice: parseFloat(salePrice),
-      quantity: parseInt(quantity),
+      color: color.trim(),
+      regularPrice: regularPriceNum,
+      salePrice: salePriceNum,
+      quantity: qtyNum,
       productImage: imageFilenames // ✅ Add images to variant
     });
 
     await product.save();
-    return res.redirect(`/admin/product/${productId}/variants`);
+    return res.status(200).json({ success: true, message: 'Variant added successfully', redirectUrl: `/admin/product/${productId}/variants` });
   } catch (err) {
     console.error("🔥 REAL ERROR →", err);
     return res.status(500).json({ 
       success: false, 
-      message: err.message,
-      error: err.toString()
+      message: err.message || 'Internal server error while adding variant'
     });
   }
 }
@@ -810,32 +855,47 @@ const updateVariant = async (req, res) => {
     const { color, regularPrice, salePrice, quantity } = req.body;
 
     if (!color || typeof color !== 'string' || color.trim().length === 0) {
-      return res.status(400).send('Invalid color');
+      return res.status(400).json({ success: false, message: 'Color is required and cannot be empty' });
     }
 
     if (!salePrice || typeof salePrice !== 'string' || salePrice.trim().length === 0) {
-      return res.status(400).send('Invalid price (max 4 chars)');
+      return res.status(400).json({ success: false, message: 'Sale price is required' });
     }
 
     if (!regularPrice || typeof regularPrice !== 'string' || regularPrice.trim().length === 0) {
-      return res.status(400).send('Invalid price (max 4 chars)');
+      return res.status(400).json({ success: false, message: 'Regular price is required' });
+    }
+
+    const salePriceNum = parseFloat(salePrice);
+    const regularPriceNum = parseFloat(regularPrice);
+    
+    if (isNaN(salePriceNum) || salePriceNum <= 0) {
+      return res.status(400).json({ success: false, message: 'Sale price must be a valid number greater than 0' });
+    }
+    
+    if (isNaN(regularPriceNum) || regularPriceNum <= 0) {
+      return res.status(400).json({ success: false, message: 'Regular price must be a valid number greater than 0' });
+    }
+    
+    if (salePriceNum > regularPriceNum) {
+      return res.status(400).json({ success: false, message: 'Sale price cannot be greater than regular price' });
     }
 
     const qtyNum = Number(quantity);
     if (!Number.isInteger(qtyNum) || qtyNum < 0) {
-      return res.status(400).send('Quantity must be a non-negative integer');
+      return res.status(400).json({ success: false, message: 'Quantity must be a non-negative integer' });
     }
 
   
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).send('Product not found');
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
     // Find variant index
     const variantIndex = product.variants.findIndex(v => v._id.toString() === variantId);
     if (variantIndex === -1) {
-      return res.status(404).send('Variant not found');
+      return res.status(404).json({ success: false, message: 'Variant not found' });
     }
     
     // Update basic fields
@@ -880,10 +940,10 @@ const updateVariant = async (req, res) => {
 
     
     await product.save();
-    res.redirect(`/admin/product/${productId}/variants`);
+    return res.status(200).json({ success: true, message: 'Variant updated successfully', redirectUrl: `/admin/product/${productId}/variants` });
   } catch (error) {
     console.error('Error updating variant:', error);
-    res.status(500).send('Internal server error');
+    return res.status(500).json({ success: false, message: error.message || 'Internal server error while updating variant' });
   }
 };
 

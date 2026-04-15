@@ -57,7 +57,7 @@ passport.use(
           if (user) {
             // Link Google account to existing user
             user.googleId = googleId;
-            if (!user.profileImage && profile.photos[0]?.value) {
+            if ((!user.profileImage || user.profileImage === '/images/profile.png') && profile.photos[0]?.value) {
               user.profileImage = profile.photos[0].value;
             }
             await user.save();

@@ -121,6 +121,27 @@
   .edit-icon:hover {
     background-color: #e9ecef;
   }
+  .remove-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+  }
+  .remove-icon:hover {
+    background: rgba(220, 53, 69, 0.95);
+  }
   .profile-main form {
     max-width: 600px;
   }
@@ -427,6 +448,14 @@ tbody tr:hover {
           <img id="profileImagePreview"
           src="<%= !user?.profileImage ? '/images/profile.png' : (user.profileImage.startsWith('http') || user.profileImage.startsWith('/') ? user.profileImage : '/uploads/profile/' + user.profileImage) %>"
           alt="Profile Image">
+          <% const isDefaultProfileImage = !user?.profileImage || user.profileImage === '/images/profile.png'; %>
+          <button
+            type="button"
+            id="removeProfileImageBtn"
+            class="remove-icon"
+            title="Remove profile picture"
+            <% if (isDefaultProfileImage) { %>style="display:none;"<% } %>
+          >&times;</button>
           <label for="profileImageInput" class="edit-icon" title="Change Profile Picture">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                  class="bi bi-pencil-fill text-primary" viewBox="0 0 16 16">
@@ -1021,6 +1050,7 @@ tbody tr:hover {
     const profileImageInput = document.getElementById("profileImageInput");
     const uploadStatus = document.getElementById("uploadStatus");
     const profileImagePreview = document.getElementById("profileImagePreview");
+    const removeProfileImageBtn = document.getElementById("removeProfileImageBtn");
 
     if (profileImageInput && uploadStatus && profileImagePreview) {
       profileImageInput.addEventListener("change", async function () {
@@ -1043,6 +1073,7 @@ tbody tr:hover {
           if (res.ok) {
             uploadStatus.innerHTML = `<span class="text-success">Uploaded successfully!</span>`;
             profileImagePreview.src = `/uploads/profile/${data.filename}?t=${new Date().getTime()}`;
+            if (removeProfileImageBtn) removeProfileImageBtn.style.display = 'flex';
           } else {
             uploadStatus.innerHTML = `<span class="text-danger">${data.error || "Upload failed"}</span>`;
           }
@@ -1054,6 +1085,40 @@ tbody tr:hover {
           uploadStatus.innerHTML = '';
         }, 3000);
       });
+
+      if (removeProfileImageBtn) {
+        removeProfileImageBtn.addEventListener('click', async function () {
+          const result = await Swal.fire({
+            title: 'Remove profile picture?',
+            text: 'Your profile picture will be reset to default.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, remove it',
+            cancelButtonText: 'Cancel'
+          });
+
+          if (!result.isConfirmed) return;
+
+          try {
+            const res = await fetch('/remove-profile-pic', { method: 'POST' });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+              profileImagePreview.src = `${data.profileImage}?t=${new Date().getTime()}`;
+              removeProfileImageBtn.style.display = 'none';
+              uploadStatus.innerHTML = `<span class="text-success">Profile picture removed</span>`;
+            } else {
+              uploadStatus.innerHTML = `<span class="text-danger">${data.message || 'Failed to remove image'}</span>`;
+            }
+          } catch (err) {
+            uploadStatus.innerHTML = `<span class="text-danger">Something went wrong</span>`;
+          }
+
+          setTimeout(() => {
+            uploadStatus.innerHTML = '';
+          }, 3000);
+        });
+      }
     }
   });
 

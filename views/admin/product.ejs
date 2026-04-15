@@ -1,248 +1,696 @@
 <%- include('partials/header', { title: 'Product Management' }) %>
 <%- include('partials/sidebar', { admin }) %>
 
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+
 <style>
   body {
-    font-family: "Poppins", sans-serif;
-    background-color: #f5f6fa;
-    color: #333;
-  }
-
-  h3 {
-    font-weight: 600;
-    color: #2c3e50;
-  }
-
-  .card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  }
-
-  .table {
-    vertical-align: middle;
-    text-align: center;
-  }
-
-  .table th {
-    background-color: #1e293b !important;
-    color: #fff !important;
-    font-weight: 500;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .table td {
-    background-color: #fff;
-    font-size: 14px;
-  }
-
-  .table img {
-    border-radius: 8px;
-    cursor: pointer;
-    object-fit: cover;
-    transition: transform 0.2s ease-in-out;
-  }
-
-  .table img:hover {
-    transform: scale(1.1);
-  }
-
-  .btn-sm {
-    font-size: 13px;
-    padding: 4px 10px;
-    border-radius: 6px;
-  }
-
-  .badge {
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 12px;
-  }
-
-  .badge-available {
-    background-color: #16a34a;
-  }
-
-  .badge-outofstock {
-    background-color: #facc15;
-    color: #000;
-  }
-
-  .badge-discontinued {
-    background-color: #dc2626;
-  }
-
-  .search-bar {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin: 0;
-  }
-
-  .search-bar input {
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    padding: 8px 12px;
-  }
-  
-  .gap-3 {
-    gap: 1rem;
-  }
-
-  .pagination .page-link {
-    border-radius: 6px;
+    font-family: "DM Sans", sans-serif;
+    background-color: #f1f5f9;
     color: #1e293b;
   }
 
-  .pagination .active .page-link {
-    background-color: #1e293b;
+  .pm-page {
+    padding: 28px 24px;
+  }
+
+  /* Header */
+  .pm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .pm-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pm-title-icon {
+    width: 42px;
+    height: 42px;
+    background: #1e293b;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .pm-title h3 {
+    font-family: "Syne", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  .pm-title p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .pm-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* Search */
+  .pm-search-wrap {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0 14px;
+    gap: 8px;
+    height: 40px;
+    min-width: 240px;
+    transition: border-color 0.2s;
+  }
+
+  .pm-search-wrap:focus-within {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148,163,184,0.15);
+  }
+
+  .pm-search-wrap svg {
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  .pm-search-wrap input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    color: #1e293b;
+    font-family: "DM Sans", sans-serif;
+    flex: 1;
+    width: 100%;
+  }
+
+  .pm-search-wrap input::placeholder { color: #cbd5e1; }
+
+  /* Buttons */
+  .btn-add-product {
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 18px;
+    height: 40px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: "DM Sans", sans-serif;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .btn-add-product:hover {
+    background: #334155;
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .btn-clear {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-size: 13px;
+    color: #64748b;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.15s;
+  }
+
+  .btn-clear:hover { background: #f8fafc; color: #1e293b; text-decoration: none; }
+
+  /* Stat Cards */
+  .pm-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.blue   { background: #eff6ff; }
+  .stat-icon.green  { background: #f0fdf4; }
+  .stat-icon.amber  { background: #fffbeb; }
+  .stat-icon.red    { background: #fef2f2; }
+
+  .stat-info .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+
+  .stat-info .stat-val {
+    font-family: "Syne", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-val.blue  { color: #2563eb; }
+  .stat-val.green { color: #16a34a; }
+  .stat-val.amber { color: #d97706; }
+  .stat-val.red   { color: #dc2626; }
+
+  /* Filter Row */
+  .pm-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #cbd5e1;
+    margin-right: 4px;
+  }
+
+  .filter-chip {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: transparent;
+    color: #64748b;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .filter-chip:hover { background: #f8fafc; }
+  .filter-chip.active { background: #1e293b; color: #fff; border-color: #1e293b; }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Table Card */
+  .pm-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .pm-table-wrap { overflow-x: auto; }
+
+  .pm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 960px;
+  }
+
+  .pm-table thead tr { background: #1e293b; }
+
+  .pm-table thead th {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 13px 18px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .pm-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+
+  .pm-table tbody tr:last-child { border-bottom: none; }
+  .pm-table tbody tr:hover { background: #f8fafc; }
+
+  .pm-table td {
+    padding: 13px 18px;
+    vertical-align: middle;
+    color: #1e293b;
+  }
+
+  /* Product Cell */
+  .product-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: #1e293b;
+  }
+
+  .product-meta {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  /* Category chip */
+  .cat-chip {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .subcat-text {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+  }
+
+  /* Status Badges */
+  .badge-pm {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-available     { background: #dcfce7; color: #15803d; }
+  .badge-outofstock    { background: #fef9c3; color: #92400e; }
+  .badge-discontinued  { background: #fee2e2; color: #b91c1c; }
+  .badge-blocked       { background: #f1f5f9; color: #475569; }
+
+  /* Offer pill */
+  .offer-pill {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 20px;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .no-data { color: #cbd5e1; font-size: 12px; }
+
+  /* Action Buttons */
+  .action-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: nowrap;
+  }
+
+  .btn-act {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn-act:active { transform: scale(0.97); }
+  .btn-act:hover { text-decoration: none; opacity: 0.85; }
+
+  .btn-act.danger      { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+  .btn-act.success     { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+  .btn-act.primary     { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+  .btn-act.info        { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+  .btn-act.dark        { background: #1e293b; color: #fff; border-color: #1e293b; }
+
+  /* Footer */
+  .pm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pm-footer-text {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  /* Pagination */
+  .pm-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+
+  .pm-pagination .page-item .page-link {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0;
+    transition: all 0.15s;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .pm-pagination .page-item .page-link:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+
+  .pm-pagination .page-item.active .page-link {
+    background: #1e293b;
     border-color: #1e293b;
     color: #fff;
   }
 
-  .modal-content {
-    border-radius: 10px;
+  .pm-pagination .page-item.disabled .page-link {
+    background: #f8fafc;
+    color: #cbd5e1;
+    border-color: #f1f5f9;
+    cursor: default;
   }
 
-  .table-responsive {
-    border-radius: 12px;
-    overflow: hidden;
+  /* Empty state */
+  .empty-row td {
+    text-align: center;
+    padding: 48px 20px;
+    color: #94a3b8;
+    font-size: 14px;
   }
 
+  /* Search form fix */
+  #searchForm { margin: 0; }
 </style>
 
-<div class="container-fluid mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3>🛍️ Products Management</h3>
-    <div class="d-flex align-items-center gap-3">
-    <a href="/admin/addProducts" class="btn btn-success">
-      <i class="fas fa-plus"></i> Add Product
-    </a>
-    <form id="searchForm" method="GET" action="/admin/products" class="search-bar mb-0">
-      <input
-        type="text"
-        name="search"
-        id="searchInput"
-        placeholder="Search products or brands..."
-        value="<%= searchQuery || '' %>"
-        autocomplete="off"
-      />
-      <button type="submit" class="btn btn-dark">
-        <i class="fas fa-search"></i>
-      </button>
-      <% if (searchQuery) { %>
-        <a href="/admin/products" class="btn btn-outline-secondary">Clear</a>
-      <% } %>
-    </form>
+<div class="pm-page">
+
+  <!-- Header -->
+  <div class="pm-header">
+    <div class="pm-title">
+      <div class="pm-title-icon">🛍️</div>
+      <div>
+        <h3>Products</h3>
+        <p>Manage your product catalogue</p>
+      </div>
+    </div>
+    <div class="pm-controls">
+      <form id="searchForm" method="GET" action="/admin/products" style="display:flex;align-items:center;gap:8px;margin:0;">
+        <div class="pm-search-wrap">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" name="search" id="searchInput"
+            placeholder="Search products or brands..."
+            value="<%= searchQuery || '' %>"
+            autocomplete="off" />
+        </div>
+        <% if (searchQuery) { %>
+          <a href="/admin/products" class="btn-clear">Clear</a>
+        <% } %>
+      </form>
+      <a href="/admin/addProducts" class="btn-add-product">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Add Product
+      </a>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table">
-            <thead>
-              <tr>
-                
-                <th>Name</th>
-                <th>Brand</th>
-                <th>Category</th>
-                <th>Subcategory</th>
-                <th>Status</th>
-                <th></th>
-                <th>Offer</th>
-                <th>Valid Until</th>
-                <th>Actions</th>
-                <th>Add Offer</th>
-                <th>Edit</th>
-                <th>Varient</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (products && products.length > 0) { %>
-                <% products.forEach(product => { %>
-                  <tr>
-                    
-                    <td><%= product.name %></td>
-                    <td><%= product.brand?.name || product.brand %></td>
-                    <td><%= product.category?.name || 'N/A' %></td>
-                    <td><%= product.subCategoryDetails ? product.subCategoryDetails.name : '—' %></td>
-                    <td><%= product.status %></td>
-                    <td>
-                        <% if (product.isBlocked) { %>
-                          <span class="badge bg-dark">Not Available</span>
-                        <% } else if (product.status && product.status.toLowerCase() === 'available') { %>
-                          <span class="badge badge-available">Available</span>
-                        <% } else if (product.status && product.status.toLowerCase() === 'out of stock') { %>
-                          <span class="badge badge-outofstock">Out of Stock</span>
-                        <% } else { %>
-                          <span class="badge badge-discontinued">Discontinued</span>
-                        <% } %>
-                      </td>
-                       <td><%= product.productOffer ? product.productOffer + "%" : "-" %></td>
-                      <% let formattedDate = product.offerValidUntil
-                          ? new Date(product.offerValidUntil).toLocaleDateString('en-GB')
-                          : "-"; %>
-                      <td><%= formattedDate %></td>
-                      <td>
-                        <% if (!product.isBlocked) { %>
-                          <button class="btn btn-danger btn-sm" onclick="confirmBlockProduct('<%= product._id %>')">Block</button>
-                        <% } else { %>
-                          <button class="btn btn-success btn-sm" onclick="confirmUnblockProduct('<%= product._id %>')">Unblock</button>
-                        <% } %>
-                        <button class="btn btn-danger btn-sm ms-1" onclick="confirmDeleteProduct('<%= product._id %>')">
-                          <i class="fas fa-trash-alt"></i>
-                        </button>
-                        
-                       
-                      </td>
-                      <td>
-                        
-                     
-                        <% if (!product.productOffer || product.productOffer === 0) { %>
-                     
-                          <button class="btn btn-sm btn-primary me-1" title="Add Offer" onclick="addOffer('<%= product._id %>')" >Add Offer</button>
-                        <% } else { %>
-                           
-                            <button class="btn btn-sm btn-primary me-1" title="Remove offer" onclick="deleteOffer('<%= product._id %>')" >Remove Offer</button>
-            
-                        <% } %>
-                      </td>
-                      <td>
-                        <a href="/admin/editProduct?id=<%= product._id %>" class="btn btn-info btn-sm text-white">
-                          <i class="fas fa-edit"></i> Edit
-                        </a>
-                       
-                      </td>
-                     
-                      <td>
-                        <a href="/admin/product/<%= product._id %>/variants" class="btn btn-primary mt-3">
-                          <i class="fas fa-plus"></i> Add/View Variants
-                        </a>
-                      </td>
-                  </tr>
-                <% }) %>
-              <% } else { %>
-                <tr><td colspan="7">No products found</td></tr>
-              <% } %>
-            </tbody>
-          </table>
-          
+  <!-- Stats -->
+  <div class="pm-stats">
+    <div class="stat-card">
+      <div class="stat-icon blue">📦</div>
+      <div class="stat-info">
+        <div class="stat-label">Total Products</div>
+        <div class="stat-val blue"><%= products ? products.length : 0 %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">✅</div>
+      <div class="stat-info">
+        <div class="stat-label">Available</div>
+        <div class="stat-val green"><%= products ? products.filter(p => !p.isBlocked && p.status && p.status.toLowerCase() === 'available').length : 0 %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber">⏳</div>
+      <div class="stat-info">
+        <div class="stat-label">Out of Stock</div>
+        <div class="stat-val amber"><%= products ? products.filter(p => p.status && p.status.toLowerCase() === 'out of stock').length : 0 %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">🚫</div>
+      <div class="stat-info">
+        <div class="stat-label">Discontinued</div>
+        <div class="stat-val red"><%= products ? products.filter(p => p.status && p.status.toLowerCase() === 'discontinued').length : 0 %></div>
       </div>
     </div>
   </div>
 
+  <!-- Table Card -->
+  <div class="pm-card">
+
+    <!-- Filter Row -->
+    <div class="pm-filter-row">
+      <span class="filter-label">Filter</span>
+      <button class="filter-chip active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-chip" onclick="setFilter('available', this)">
+        <span class="dot" style="background:#16a34a;"></span> Available
+      </button>
+      <button class="filter-chip" onclick="setFilter('out of stock', this)">
+        <span class="dot" style="background:#ca8a04;"></span> Out of Stock
+      </button>
+      <button class="filter-chip" onclick="setFilter('discontinued', this)">
+        <span class="dot" style="background:#dc2626;"></span> Discontinued
+      </button>
+    </div>
+
+    <div class="pm-table-wrap">
+      <table class="pm-table" id="productTable">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Offer</th>
+            <th>Valid Until</th>
+            <th>Block / Delete</th>
+            <th>Offer Mgmt</th>
+            <th>Edit</th>
+            <th>Variants</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (products && products.length > 0) { %>
+            <% products.forEach(product => { %>
+              <% let statusLower = product.status ? product.status.toLowerCase() : ''; %>
+              <tr data-status="<%= statusLower %>">
+
+                <!-- Product -->
+                <td>
+                  <div class="product-name"><%= product.name %></div>
+                  <div class="product-meta"><%= product.brand?.name || product.brand %></div>
+                </td>
+
+                <!-- Category -->
+                <td>
+                  <span class="cat-chip"><%= product.category?.name || 'N/A' %></span>
+                  <div class="subcat-text"><%= product.subCategoryDetails ? product.subCategoryDetails.name : '—' %></div>
+                </td>
+
+                <!-- Status Badge -->
+                <td>
+                  <% if (product.isBlocked) { %>
+                    <span class="badge-pm badge-blocked">
+                      <span class="dot" style="background:#94a3b8;"></span> Not Available
+                    </span>
+                  <% } else if (statusLower === 'available') { %>
+                    <span class="badge-pm badge-available">
+                      <span class="dot" style="background:#16a34a;"></span> Available
+                    </span>
+                  <% } else if (statusLower === 'out of stock') { %>
+                    <span class="badge-pm badge-outofstock">
+                      <span class="dot" style="background:#ca8a04;"></span> Out of Stock
+                    </span>
+                  <% } else { %>
+                    <span class="badge-pm badge-discontinued">
+                      <span class="dot" style="background:#dc2626;"></span> Discontinued
+                    </span>
+                  <% } %>
+                </td>
+
+                <!-- Offer -->
+                <td>
+                  <% if (product.productOffer && product.productOffer > 0) { %>
+                    <span class="offer-pill"><%= product.productOffer %>% off</span>
+                  <% } else { %>
+                    <span class="no-data">—</span>
+                  <% } %>
+                </td>
+
+                <!-- Valid Until -->
+                <td>
+                  <% let formattedDate = product.offerValidUntil
+                      ? new Date(product.offerValidUntil).toLocaleDateString('en-GB')
+                      : null; %>
+                  <% if (formattedDate) { %>
+                    <span style="font-size:12px;color:#475569;"><%= formattedDate %></span>
+                  <% } else { %>
+                    <span class="no-data">—</span>
+                  <% } %>
+                </td>
+
+                <!-- Block / Delete -->
+                <td>
+                  <div class="action-group">
+                    <% if (!product.isBlocked) { %>
+                      <button class="btn-act danger" onclick="confirmBlockProduct('<%= product._id %>')">Block</button>
+                    <% } else { %>
+                      <button class="btn-act success" onclick="confirmUnblockProduct('<%= product._id %>')">Unblock</button>
+                    <% } %>
+                    <button class="btn-act danger" onclick="confirmDeleteProduct('<%= product._id %>')" title="Delete">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+
+                <!-- Offer Mgmt -->
+                <td>
+                  <% if (!product.productOffer || product.productOffer === 0) { %>
+                    <button class="btn-act primary" onclick="addOffer('<%= product._id %>')">Add Offer</button>
+                  <% } else { %>
+                    <button class="btn-act danger" onclick="deleteOffer('<%= product._id %>')">Remove</button>
+                  <% } %>
+                </td>
+
+                <!-- Edit -->
+                <td>
+                  <a href="/admin/editProduct?id=<%= product._id %>" class="btn-act info">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Edit
+                  </a>
+                </td>
+
+                <!-- Variants -->
+                <td>
+                  <a href="/admin/product/<%= product._id %>/variants" class="btn-act dark">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    Variants
+                  </a>
+                </td>
+
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr class="empty-row">
+              <td colspan="9">No products found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="pm-footer">
+      <span class="pm-footer-text">
+        Page <%= currentPage %> of <%= totalPages %> &middot; <%= products ? products.length : 0 %> results
+      </span>
+      <div style="font-size:12px;color:#94a3b8;">Use pagination below to navigate</div>
+    </div>
+  </div>
+
   <!-- Pagination -->
-  <nav aria-label="Page navigation" class="mt-4">
-    <ul class="pagination justify-content-center">
+  <nav aria-label="Page navigation" class="mt-3">
+    <ul class="pagination pm-pagination justify-content-center">
       <% if (currentPage > 1) { %>
         <li class="page-item">
-          <a class="page-link" href="?page=<%= currentPage - 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">Previous</a>
+          <a class="page-link" href="?page=<%= currentPage - 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">&#8249;</a>
         </li>
       <% } else { %>
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        <li class="page-item disabled"><span class="page-link">&#8249;</span></li>
       <% } %>
 
       <% for (let i = 1; i <= totalPages; i++) { %>
@@ -253,16 +701,17 @@
 
       <% if (currentPage < totalPages) { %>
         <li class="page-item">
-          <a class="page-link" href="?page=<%= currentPage + 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">Next</a>
+          <a class="page-link" href="?page=<%= currentPage + 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">&#8250;</a>
         </li>
       <% } else { %>
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <li class="page-item disabled"><span class="page-link">&#8250;</span></li>
       <% } %>
     </ul>
   </nav>
+
 </div>
 
-<!-- Image Modal -->
+<!-- Image Modal (unchanged) -->
 <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content p-3 text-center">
@@ -274,173 +723,160 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+  /* ── Client-side status filter ── */
+  function setFilter(status, el) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('#productTable tbody tr').forEach(row => {
+      if (status === 'all') {
+        row.style.display = '';
+      } else {
+        const s = row.getAttribute('data-status') || '';
+        row.style.display = s === status ? '' : 'none';
+      }
+    });
+  }
+
+  /* ── Live search filter ── */
+  document.getElementById('searchInput').addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    const activeChip = document.querySelector('.filter-chip.active');
+    const activeFilter = activeChip ? activeChip.getAttribute('onclick').match(/'([^']+)'/)?.[1] || 'all' : 'all';
+    document.querySelectorAll('#productTable tbody tr[data-status]').forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const statusOk = activeFilter === 'all' || row.getAttribute('data-status') === activeFilter;
+      row.style.display = text.includes(q) && statusOk ? '' : 'none';
+    });
+  });
+
+  /* ── Image modal ── */
   function openImageModal(src) {
     document.getElementById('modalImage').src = src;
     new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
   }
+
+  /* ── Block / Unblock / Delete ── */
   function confirmBlockProduct(productId) {
     Swal.fire({
-      title: 'Are you sure?',
-      text: "You are about to block this product!",
+      title: 'Block this product?',
+      text: "It will be hidden from customers.",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
       confirmButtonText: 'Yes, block it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = `/admin/blockProduct?id=${productId}`;
-      }
+    }).then(result => {
+      if (result.isConfirmed) window.location.href = `/admin/blockProduct?id=${productId}`;
     });
   }
 
   function confirmUnblockProduct(productId) {
     Swal.fire({
-      title: 'Are you sure?',
-      text: "You are about to unblock this product!",
+      title: 'Unblock this product?',
+      text: "It will be visible to customers again.",
       icon: 'info',
       showCancelButton: true,
-      confirmButtonColor: '#28a745',
-      cancelButtonColor: '#3085d6',
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#64748b',
       confirmButtonText: 'Yes, unblock it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = `/admin/unblockProduct?id=${productId}`;
-      }
+    }).then(result => {
+      if (result.isConfirmed) window.location.href = `/admin/unblockProduct?id=${productId}`;
     });
   }
 
   function confirmDeleteProduct(productId) {
     Swal.fire({
-      title: 'Are you sure?',
-      text: "This will permanently delete the product!",
+      title: 'Delete this product?',
+      text: "This action cannot be undone!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
       confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = `/admin/deleteProduct?id=${productId}`;
-      }
+    }).then(result => {
+      if (result.isConfirmed) window.location.href = `/admin/deleteProduct?id=${productId}`;
     });
   }
 
-    
-  //Add offer
-
+  /* ── Add Offer ── */
   function addOffer(productId) {
     const today = new Date().toISOString().split('T')[0];
     Swal.fire({
-      title: 'Add product Offer',
-      html:
-        //`<input type="number" id="percentage" class="swal2-input" placeholder="Offer % (1–99)" min="1" max="99">
-         //<input type="date" id="validUntil" class="swal2-input" placeholder="Valid Until">`,
-         `
-         <div style="text-align:left">
-           <label for="percentage"><b>Offer in Percentage</b></label>
-           <input type="number" id="percentage" class="swal2-input" placeholder="Offer % (1–99)" min="1" max="99">
-   
-           <label for="validUntil"><b>Valid Until</b></label>
-           <input type="date" id="validUntil" class="swal2-input" min="${today}">
-         </div>
-       `,
+      title: 'Add Product Offer',
+      html: `
+        <div style="text-align:left;font-family:'DM Sans',sans-serif;">
+          <label style="font-size:13px;font-weight:500;color:#475569;display:block;margin-bottom:6px;">Offer Percentage</label>
+          <input type="number" id="percentage" class="swal2-input" placeholder="e.g. 15" min="1" max="99" style="font-family:'DM Sans',sans-serif;">
+          <label style="font-size:13px;font-weight:500;color:#475569;display:block;margin-bottom:6px;margin-top:12px;">Valid Until</label>
+          <input type="date" id="validUntil" class="swal2-input" min="${today}" style="font-family:'DM Sans',sans-serif;">
+        </div>
+      `,
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: 'Add',
+      confirmButtonColor: '#1e293b',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Add Offer',
       preConfirm: () => {
         const percentage = parseInt(document.getElementById('percentage').value);
         const validUntil = document.getElementById('validUntil').value;
-  
         if (!percentage || percentage < 1 || percentage > 99) {
-          Swal.showValidationMessage('Please enter a valid percentage (1–99)');
+          Swal.showValidationMessage('Enter a valid percentage (1–99)');
           return false;
         }
-  
         if (!validUntil) {
-          Swal.showValidationMessage('Please select an offer valid date');
+          Swal.showValidationMessage('Please select a valid date');
           return false;
         }
-  
         return fetch('/admin/addProductOffer', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ productId, percentage, validUntil })
         })
           .then(res => res.json())
           .then(data => {
-            if (!data.status) {
-              throw new Error(data.message);
-            }
+            if (!data.status) throw new Error(data.message);
             return data;
           })
-          .catch(err => {
-            Swal.showValidationMessage(`Request failed: ${err.message}`);
-          });
+          .catch(err => Swal.showValidationMessage(`Request failed: ${err.message}`));
       }
-    }).then((result) => {
+    }).then(result => {
       if (result.isConfirmed) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Success!',
-          text: result.value.message,
-          timer: 1500,
-          showConfirmButton: false
-        }).then(() => location.reload());
+        Swal.fire({ icon: 'success', title: 'Offer Added!', text: result.value.message, timer: 1500, showConfirmButton: false })
+          .then(() => location.reload());
       }
     });
   }
-  // Deleting offer
+
+  /* ── Remove Offer ── */
   function deleteOffer(productId) {
     Swal.fire({
-      title: 'Are you sure?',
-      text: "This will remove the offer from this product!",
+      title: 'Remove this offer?',
+      text: "The discount will be removed from this product.",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, remove it!'
+    }).then(result => {
       if (result.isConfirmed) {
         fetch('/admin/removeProductOffer', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ productId })
         })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status) {
-            Swal.fire(
-              'Deleted!',
-              'The offer has been successfully removed.',
-              'success'
-            ).then(() => {
-              location.reload();
-            });
-          } else {
-            Swal.fire(
-              'Error!',
-              data.message || 'Failed to delete the offer.',
-              'error'
-            );
-          }
-        })
-        .catch(error => {
-          Swal.fire(
-            'Error!',
-            'Something went wrong while deleting the offer.',
-            'error'
-          );
-        });
+          .then(res => res.json())
+          .then(data => {
+            if (data.status) {
+              Swal.fire({ icon: 'success', title: 'Removed!', text: 'Offer removed successfully.', timer: 1500, showConfirmButton: false })
+                .then(() => location.reload());
+            } else {
+              Swal.fire('Error!', data.message || 'Failed to remove offer.', 'error');
+            }
+          })
+          .catch(() => Swal.fire('Error!', 'Something went wrong.', 'error'));
       }
     });
   }
-
-
 </script>
 
 <%- include('partials/footer') %>

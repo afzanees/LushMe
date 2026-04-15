@@ -143,8 +143,9 @@ const getCheckoutPage = async (req, res) => {
             if (coupon.type === "percentage") {
               discount = Math.floor(totalPrice * coupon.offerPrice / 100);
             } else {
-              discount = Math.min(coupon.offerPrice, totalPrice);
+              discount = coupon.offerPrice;
             }
+            // Ensure discount doesn't exceed order total
             discount = Math.min(discount, totalPrice);
             req.session.discount = discount;
             appliedCoupon.discount = discount;
@@ -315,7 +316,7 @@ const placeOrder = async (req, res) => {
         if (coupon.type === "percentage") {
           couponDiscount = Math.floor(subTotal * coupon.offerPrice / 100);
         } else {
-          couponDiscount = Math.min(coupon.offerPrice, subTotal);
+          couponDiscount = coupon.offerPrice;
         }
         
         // Ensure discount doesn't exceed subtotal
@@ -980,19 +981,43 @@ const getAvailableCoupons = async (req, res) => {
   try {
     const userId = req.session.user;
     const now = new Date();
-    const orderTotal = Number(req.session.cartTotal) || 0;
+    let orderTotal = Number(req.session.cartTotal) || 0;
 
     if (!userId) {
       return res.json({ success: true, coupons: [] });
     }
 
-    // Fetch only admin coupons (exclude referral coupons)
-    const coupons = await Coupon.find({
+    // Always use latest cart total to avoid stale/empty session values
+    const cart = await Cart.findOne({ userId }).populate({
+      path: 'items.productId',
+      populate: 'category'
+    });
+
+    if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
+      return res.json({ success: true, coupons: [] });
+    }
+
+    await syncCartOfferPrices(cart);
+    orderTotal = cart.items.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
+    req.session.cartTotal = orderTotal;
+
+    // Build query for coupons
+    // - All admin coupons are available to all users
+    // - Referral coupons are only available to the user they were created for
+    const couponQuery = {
       status: 'Active',
       startingDate: { $lte: now },
       expiryDate: { $gte: now },
-      source: 'admin'  // Only show admin coupons, not referral coupons
-    }).lean();
+      $or: [
+        { source: 'admin' },
+        { source: { $exists: false } },
+        { source: null },
+        { source: 'referral', createdFor: userId }
+      ]
+    };
+
+    // Fetch coupons
+    const coupons = await Coupon.find(couponQuery).lean();
 
     const usableCoupons = coupons.filter(coupon => {
       const usedUsers = Array.isArray(coupon.usedUsers) ? coupon.usedUsers : [];
@@ -1060,14 +1085,6 @@ const applyCoupon= async (req, res) => {
       return res.status(400).json({ success: false, message: 'Coupon not found or expired' });
     }
 
-
-// if (coupon.assignedUser && coupon.assignedUser.toString() !== userId.toString()) {
-//   return res.status(403).json({
-//     success: false,
-//     message: 'This coupon is not assigned to you'
-//   });
-// }
-
     const usageEntry = coupon.usedUsers.find(u => u.userId.toString() === userId);
     const userCount = usageEntry ? usageEntry.count : 0;
 
@@ -1103,10 +1120,16 @@ const applyCoupon= async (req, res) => {
     }
 
     let discount = 0;
+
     if (coupon.type === 'percentage') {
       discount = Math.floor(orderTotal * coupon.offerPrice / 100);
-    } else {
-      discount = Math.min(coupon.offerPrice, orderTotal);
+    
+      if (coupon.maxDiscount) {
+        discount = Math.min(discount, coupon.maxDiscount);
+      }
+    
+    } else if (coupon.type === 'fixed') {
+      discount = coupon.offerPrice;
     }
     
     // Ensure discount doesn't exceed order total

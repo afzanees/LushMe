@@ -79,6 +79,11 @@
   </style>
 </head>
 <body>
+  <% const navProfileImage = !user?.profileImage
+    ? '/images/profile.png'
+    : (user.profileImage.startsWith('http') || user.profileImage.startsWith('/')
+      ? user.profileImage
+      : '/uploads/profile/' + user.profileImage); %>
   <header class="lush-header border-bottom mb-3">
     <div class="container py-2">
       <div class="d-none d-lg-flex flex-wrap align-items-center justify-content-between">
@@ -101,7 +106,7 @@
           <% if (user){ %>
             <div class="dropdown">
               <img
-                src="<%= user.profileImage || '/images/profile.png' %>"
+                src="<%= navProfileImage %>"
                 alt="Profile"
                 class="profile-pic dropdown-toggle"
                 id="profileDropdownDesktop"
@@ -167,7 +172,7 @@
             <% if (user){ %>
               <div class="dropdown">
                 <img
-                  src="<%= user.profileImage || '/images/profile.png' %>"
+                  src="<%= navProfileImage %>"
                   alt="Profile"
                   class="profile-pic dropdown-toggle"
                   id="profileDropdownMobile"

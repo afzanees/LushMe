@@ -36,6 +36,10 @@ const login = async (req, res) => {
     const match = await bcrypt.compare(password, admin.password);
     if (!match) return res.render("admin/login", { message: "Incorrect password" });
 
+    // Preserve user session data before regeneration
+    const userSessionData = req.session.user;
+    const passportSessionData = req.session.passport;
+    
     // Regenerate session after authentication to prevent fixation and ensure clean state.
     req.session.regenerate((regenErr) => {
       if (regenErr) {
@@ -43,6 +47,14 @@ const login = async (req, res) => {
         return res.render("admin/login", { message: "Server error" });
       }
 
+      // Restore user session data after regeneration
+      if (userSessionData) {
+        req.session.user = userSessionData;
+      }
+      if (passportSessionData) {
+        req.session.passport = passportSessionData;
+      }
+      
       req.session.admin = admin._id.toString();
       req.session.save((saveErr) => {
         if (saveErr) {
@@ -88,12 +100,14 @@ const loadDashboard = async (req, res) => {
 
   const logout = async (req, res) => {
     try {
-        req.session.destroy((err) => {
+        // Only clear admin session, preserve user session
+        delete req.session.admin;
+        
+        req.session.save((err) => {
           if (err) {
-            console.error("Admin logout session destroy failed:", err);
+            console.error("Admin logout session save failed:", err);
             return res.redirect('/admin/pageerror');
           }
-          res.clearCookie('connect.sid');
           return res.redirect('/admin/login');
         });
     } catch (error) {

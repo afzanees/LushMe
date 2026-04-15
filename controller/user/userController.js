@@ -9,6 +9,9 @@ const generateReferralCode = require('../../utils/referralCode');
 const nodemailer = require('nodemailer')
 const env = require('dotenv').config()
 const bcrypt = require('bcrypt')
+const { getEffectiveOffer, applyOffer } = require('../../utils/offerHelper');
+
+
 const loadHomepage = async (req,res) =>{
     try {
 
@@ -241,7 +244,7 @@ delete req.session.otpExpiry;
 
           console.log(`âœ… â‚¹${referralReward} credited to referrer's wallet`);
 
-          // âœ… Create referral coupon
+          // ✅ Create referral coupon
           const coupon = await Coupon.create({
             name: "Referral Reward",
             code: `REF-${referrer.referralCode}-${Date.now().toString().slice(-4)}`,
@@ -252,7 +255,7 @@ delete req.session.otpExpiry;
             expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             status: "Active",
             source: "referral",
-            assignedUser: referrer._id,
+            createdFor: referrer._id,
             usageLimit: 1,
             usagePerUser: 1,
             usedCount: 0,
@@ -364,7 +367,17 @@ const login = async (req,res)=>{
             console.log('incorrect password')
             return res.render('user/login',{message: "Incorrect password"})
         }
+        
+        // Preserve admin session data if exists
+        const adminSessionData = req.session.admin;
+        
         req.session.user = findUser._id;
+        
+        // Restore admin session data after setting user
+        if (adminSessionData) {
+            req.session.admin = adminSessionData;
+        }
+        
         res.redirect('/')
 
     } catch (error) {
@@ -379,9 +392,12 @@ const logout = async (req, res, next) => {
       req.logout(err => {
         if (err) return next(err);
   
-        req.session.destroy(err => {
+        // Only clear user session, preserve admin session
+        delete req.session.user;
+        delete req.session.passport;
+        
+        req.session.save(err => {
           if (err) return res.status(500).send("Error logging out");
-          res.clearCookie('connect.sid', { path: '/' });
           res.redirect('/');
         });
       });
@@ -391,7 +407,7 @@ const logout = async (req, res, next) => {
     }
   };
 
-  const loadShoppingPage = async (req, res) => {
+const loadShoppingPage = async (req, res) => {
     try {
          const user = req.session.user;
         let wishlistIds = [];
@@ -432,33 +448,37 @@ const logout = async (req, res, next) => {
   const category = categories.find(cat => cat._id.toString() === product.category?.toString());
   const subcategory = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory?.toString());
 
-  const productOffer = product.offer || 0;
-  const categoryOffer = category?.categoryOffer || 0;
-  const subcategoryOffer = subcategory?.offer || 0;
 
-  const effectiveOffer = Math.max(productOffer, categoryOffer, subcategoryOffer);
-  product.effectiveOffer = effectiveOffer;
+  const effectiveOffer = getEffectiveOffer(product, category, subcategory);
+
+
+  // const productOffer = product.productOffer || 0;
+  // const categoryOffer = category?.categoryOffer || 0;
+  // const subcategoryOffer = subcategory?.offer || 0;
+
+  // const effectiveOffer = Math.max(productOffer, categoryOffer, subcategoryOffer);
+  // product.effectiveOffer = effectiveOffer;
 
   // âœ… Total stock across variants
   product.totalQuantity = product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0);
   product.isOutOfStock = product.totalQuantity === 0;
+  product.effectiveOffer = effectiveOffer;   //for badge
 
-  // âœ… Choose lowest priced variant
+
   if (product.variants.length > 0) {
-    let minVariant = product.variants[0];
-
-    product.variants.forEach(v => {
-      if (v.salePrice < minVariant.salePrice) minVariant = v;
-    });
+    const minVariant = product.variants.reduce((min, v) =>
+      v.salePrice < min.salePrice ? v : min, product.variants[0]
+    );
 
     // âœ… Apply offer discount
-    const finalSalePrice = minVariant.salePrice * (1 - effectiveOffer / 100);
+  //   const finalSalePrice = minVariant.salePrice * (1 - effectiveOffer / 100);
 
-    product.displayRegularPrice = Math.round(minVariant.regularPrice);
-    product.displaySalePrice = Math.round(finalSalePrice);
-  } else {
-    product.displayRegularPrice = product.displaySalePrice = null;
-  }
+  product.displayRegularPrice = Math.round(minVariant.regularPrice);
+  product.displaySalePrice    = applyOffer(minVariant.salePrice, effectiveOffer);
+} else {
+  product.displayRegularPrice = null;
+  product.displaySalePrice    = null;
+}
 });
 
 

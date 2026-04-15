@@ -1,211 +1,662 @@
-<%- include('partials/header', { title: 'Product Management' }) %>
+<%- include('partials/header', { title: 'Order Management' }) %>
 <%- include('partials/sidebar', { admin }) %>
 
-  <style>
-    body {
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
 
-    .orders-container {
-      padding: 40px 20px;
-    }
+<style>
+  body {
+    font-family: "DM Sans", sans-serif;
+    background-color: #f1f5f9;
+    color: #1e293b;
+  }
 
-    h2 {
-      color: #343a40;
-      font-weight: 600;
-    }
+  .orders-page {
+    padding: 28px 24px;
+  }
 
-    .table {
-      background-color: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-    }
+  /* Header */
+  .orders-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
 
-    .table th,
-    .table td {
-      vertical-align: middle;
-    }
+  .orders-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
-    /* Table header background & text color */
-    .table thead th {
-      background-color: #007bff; /* Bootstrap primary blue */
-      color: white;
-      font-weight: 600;
-    }
+  .orders-title-icon {
+    width: 42px;
+    height: 42px;
+    background: #1e293b;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
 
-    /* Button colors */
-    .btn-primary {
-      background-color: #007bff;
-      border: none;
-      color: white;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-    }
+  .orders-title h2 {
+    font-family: "Syne", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
 
-    .btn-primary:hover {
-      background-color: #0056b3;
-      color: white;
-    }
+  .orders-title p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
 
-    .badge {
-      text-transform: capitalize;
-      font-size: 0.9rem;
-      padding: 0.5em 0.75em;
-    }
+  /* Search */
+  .orders-search-wrap {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0 14px;
+    gap: 8px;
+    height: 40px;
+    min-width: 280px;
+    transition: border-color 0.2s;
+  }
 
-    .no-orders {
-      background-color: #fff3cd;
-      border: 1px solid #ffeeba;
-      padding: 20px;
-      border-radius: 6px;
-      color: #856404;
-    }
+  .orders-search-wrap:focus-within {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148,163,184,0.15);
+  }
 
-    form[role='search'] {
-      max-width: 480px;
-      margin-bottom: 1rem;
-    }
+  .orders-search-wrap svg { color: #94a3b8; flex-shrink: 0; }
 
-    form[role='search'] input.form-control {
-      height: 38px;
-      font-size: 1rem;
-    }
+  .orders-search-wrap input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    color: #1e293b;
+    font-family: "DM Sans", sans-serif;
+    flex: 1;
+    width: 100%;
+  }
 
-    form[role='search'] button {
-      min-width: 90px;
-      font-weight: 600;
-    }
-  </style>
-</head>
-<body>
-  <div class="container orders-container">
-    <h2 class="mb-4">Customer Orders</h2>
+  .orders-search-wrap input::placeholder { color: #cbd5e1; }
 
-   
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <!-- <h4><strong>Orders</strong></h4> -->
-        <form class="d-flex gap-2 mb-4" method="GET" role="search" action="/admin/orderList">
-          <input
-            type="text"
-            name="search"
-            class="form-control form-control-sm"
-            placeholder="Search orders by ID, status or name"
-            value="<%= search || '' %>"
-            class="form-control"
-          />
-          <button class="btn btn-primary btn-sm">Search</button>
-          <% if (search) { %>
-            <a href="/admin/orderList" class="btn btn-outline-secondary btn-sm">Clear</a>
-          <% } %>
-        </form>
+  .btn-search {
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 18px;
+    height: 40px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: "DM Sans", sans-serif;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-search:hover { background: #334155; }
+
+  .btn-clear {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-size: 13px;
+    color: #64748b;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-clear:hover { background: #f8fafc; color: #1e293b; text-decoration: none; }
+
+  /* Stats */
+  .orders-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.blue   { background: #eff6ff; }
+  .stat-icon.green  { background: #f0fdf4; }
+  .stat-icon.amber  { background: #fffbeb; }
+  .stat-icon.red    { background: #fef2f2; }
+  .stat-icon.slate  { background: #f8fafc; }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 3px;
+  }
+
+  .stat-val {
+    font-family: "Syne", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-val.blue  { color: #2563eb; }
+  .stat-val.green { color: #16a34a; }
+  .stat-val.amber { color: #d97706; }
+  .stat-val.red   { color: #dc2626; }
+  .stat-val.slate { color: #475569; }
+
+  /* Table Card */
+  .orders-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .orders-table-wrap { overflow-x: auto; }
+
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 760px;
+  }
+
+  .orders-table thead tr { background: #1e293b; }
+
+  .orders-table thead th {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 13px 18px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .orders-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+
+  .orders-table tbody tr:last-child { border-bottom: none; }
+  .orders-table tbody tr:hover { background: #f8fafc; }
+
+  .orders-table td {
+    padding: 13px 18px;
+    vertical-align: middle;
+    color: #1e293b;
+  }
+
+  /* Order ID */
+  .order-id {
+    font-family: "DM Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    letter-spacing: 0.3px;
+  }
+
+  /* Customer cell */
+  .customer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #1d4ed8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  /* Date */
+  .date-text {
+    font-size: 12px;
+    color: #475569;
+  }
+
+  /* Amount */
+  .amount-text {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1e293b;
+  }
+
+  /* Status Badges */
+  .badge-pm {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-transform: capitalize;
+  }
+
+  .badge-pending        { background: #fef9c3; color: #92400e; }
+  .badge-processing     { background: #e0f2fe; color: #0369a1; }
+  .badge-confirmed      { background: #dcfce7; color: #15803d; }
+  .badge-shipped        { background: #dbeafe; color: #1d4ed8; }
+  .badge-delivered      { background: #dcfce7; color: #15803d; }
+  .badge-cancelled      { background: #fee2e2; color: #b91c1c; }
+  .badge-failed         { background: #fee2e2; color: #b91c1c; }
+  .badge-return-request { background: #fef9c3; color: #92400e; }
+  .badge-returned       { background: #f1f5f9; color: #475569; }
+  .badge-default        { background: #f1f5f9; color: #475569; }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  /* View button */
+  .btn-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-view:hover { opacity: 0.8; color: #fff; text-decoration: none; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 56px 24px;
+    color: #94a3b8;
+  }
+
+  .empty-state-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+    margin: 0;
+  }
+
+  /* Footer */
+  .orders-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid #f1f5f9;
+    font-size: 12px;
+    color: #94a3b8;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Pagination */
+  .pm-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+
+  .pm-pagination .page-item .page-link {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0;
+    transition: all 0.15s;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .pm-pagination .page-item .page-link:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+
+  .pm-pagination .page-item.active .page-link {
+    background: #1e293b;
+    border-color: #1e293b;
+    color: #fff;
+  }
+
+  .pm-pagination .page-item.disabled .page-link {
+    background: #f8fafc;
+    color: #cbd5e1;
+    border-color: #f1f5f9;
+    cursor: default;
+  }
+</style>
+
+<div class="orders-page">
+
+  <!-- Header -->
+  <div class="orders-header">
+    <div class="orders-title">
+      <div class="orders-title-icon">📋</div>
+      <div>
+        <h2>Orders</h2>
+        <p>Manage and track all customer orders</p>
       </div>
-      
+    </div>
+    <form class="d-flex align-items-center gap-2" method="GET" role="search" action="/admin/orderList" style="margin:0;">
+      <div class="orders-search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+        id="searchInput"
+          type="text"
+          name="search"
+          placeholder="Search by ID, name or status..."
+          value="<%= search || '' %>"
+          autocomplete="off"
+        />
+      </div>
+      <button type="submit" class="btn-search">Search</button>
+      <% if (search) { %>
+        <a href="/admin/orderList" class="btn-clear">Clear</a>
+      <% } %>
+    </form>
+  </div>
 
+  <!-- Stats -->
+  <% if (orders && orders.length > 0) { %>
+  <div class="orders-stats">
+    <div class="stat-card">
+      <div class="stat-icon blue">📦</div>
+      <div>
+        <div class="stat-label">Total</div>
+        <div class="stat-val blue"><%= orders.length %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">✅</div>
+      <div>
+        <div class="stat-label">Delivered</div>
+        <div class="stat-val green"><%= orders.filter(o => (o.status||'').toLowerCase() === 'delivered').length %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber">⏳</div>
+      <div>
+        <div class="stat-label">Pending</div>
+        <div class="stat-val amber"><%= orders.filter(o => ['pending','processing','confirmed','shipped'].includes((o.status||'').toLowerCase())).length %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">❌</div>
+      <div>
+        <div class="stat-label">Cancelled</div>
+        <div class="stat-val red"><%= orders.filter(o => (o.status||'').toLowerCase() === 'cancelled').length %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon slate">↩️</div>
+      <div>
+        <div class="stat-label">Returns</div>
+        <div class="stat-val slate"><%= orders.filter(o => ['return request','returned'].includes((o.status||'').toLowerCase())).length %></div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Table -->
+  <div class="orders-card">
     <% if (!orders || orders.length === 0) { %>
-      <div class="no-orders">You have no orders yet.</div>
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <p>No orders found<%= search ? ` for "${search}"` : '' %>.</p>
+      </div>
     <% } else { %>
-      <div class="table-responsive">
-        <table class="table table-bordered table-hover shadow-sm">
-          <thead class="table-light">
+      <div class="orders-table-wrap">
+        <table class="orders-table" id="customerTable">
             <tr>
               <th>Order ID</th>
-              <th>User Name</th>
+              <th>Customer</th>
               <th>Placed On</th>
               <th>Status</th>
-              <th>Total Price (₹)</th>
+              <th>Amount</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             <% orders.forEach(order => { %>
+              <%
+                const isPaymentFailed = (order.paymentStatus || '').toLowerCase() === 'failed';
+                const displayStatus = isPaymentFailed ? 'Payment Failed' : order.status;
+                const statusKey = (displayStatus || '').toLowerCase();
+
+                const badgeClass =
+                  statusKey === 'payment failed' ? 'badge-failed' :
+                  statusKey === 'pending'         ? 'badge-pending' :
+                  statusKey === 'processing'      ? 'badge-processing' :
+                  statusKey === 'confirmed'        ? 'badge-confirmed' :
+                  statusKey === 'shipped'          ? 'badge-shipped' :
+                  statusKey === 'delivered'        ? 'badge-delivered' :
+                  statusKey === 'cancelled'        ? 'badge-cancelled' :
+                  statusKey === 'return request'   ? 'badge-return-request' :
+                  statusKey === 'returned'         ? 'badge-returned' :
+                  'badge-default';
+
+                const dotColor =
+                  statusKey === 'payment failed' ? '#dc2626' :
+                  statusKey === 'pending'         ? '#ca8a04' :
+                  statusKey === 'processing'      ? '#0369a1' :
+                  statusKey === 'confirmed'        ? '#16a34a' :
+                  statusKey === 'shipped'          ? '#2563eb' :
+                  statusKey === 'delivered'        ? '#16a34a' :
+                  statusKey === 'cancelled'        ? '#dc2626' :
+                  statusKey === 'return request'   ? '#ca8a04' :
+                  statusKey === 'returned'         ? '#94a3b8' :
+                  '#94a3b8';
+
+                const customerName = order.address?.name || 'N/A';
+                const initials = customerName !== 'N/A'
+                  ? customerName.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()
+                  : '?';
+              %>
               <tr>
-                <td><%= order.orderId %></td>
-                <td><%= order.userId?.name || 'N/A' %></td>
-                <td><%= new Date(order.createdOn).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) %></td>
+                <td><span class="order-id">#<%= order.orderId %></span></td>
                 <td>
-                  <%
-                    const isPaymentFailed = (order.paymentStatus || '').toLowerCase() === 'failed';
-                    const displayStatus = isPaymentFailed ? 'Payment Failed' : order.status;
-                    const statusKey = (displayStatus || '').toLowerCase();
-                  %>
-                  <span class="badge bg-<%= 
-                    statusKey === 'payment failed' ? 'danger' :
-                    statusKey === 'pending' ? 'warning' :
-                    statusKey === 'processing' ? 'info' :
-                    statusKey === 'shipped' ? 'primary' :
-                    statusKey === 'delivered' ? 'success' :
-                    statusKey === 'cancelled' ? 'danger' :
-                    statusKey === 'return request' ? 'warning' :
-                    statusKey === 'returned' ? 'secondary' :
-                    statusKey === 'confirmed' ? 'success' :
-                    'secondary'
-                  %>">
+                  <div class="customer-cell">
+                    <div class="customer-avatar"><%= initials %></div>
+                    <span style="font-weight:500;font-size:13px;"><%= customerName %></span>
+                  </div>
+                </td>
+                <td>
+                  <span class="date-text">
+                    <%= new Date(order.createdOn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge-pm <%= badgeClass %>">
+                    <span class="dot" style="background:<%= dotColor %>;"></span>
                     <%= displayStatus %>
                   </span>
                 </td>
-                <td>₹<%= order.finalAmount.toFixed(2) %></td>
                 <td>
-                  <a href="/admin/order/<%= order.orderId %>" class="btn btn-sm btn-primary">
-                    View Order
+                  <span class="amount-text">₹<%= order.finalAmount.toFixed(2) %></span>
+                </td>
+                <td>
+                  <a href="/admin/order/<%= order.orderId %>" class="btn-view">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    View
                   </a>
                 </td>
               </tr>
             <% }); %>
           </tbody>
         </table>
-
-        <!-- Pagination -->
-        <nav aria-label="Page navigation example" class="mt-3">
-          <ul class="pagination justify-content-center">
-            <% if (currentPage > 1) { %>
-              <li class="page-item">
-                <a
-                  class="page-link"
-                  href="?page=<%= currentPage - 1 %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
-                  aria-label="Previous"
-                >
-                  <span aria-hidden="true">&laquo;</span>
-                </a>
-              </li>
-            <% } else { %>
-              <li class="page-item disabled">
-                <span class="page-link">&laquo;</span>
-              </li>
-            <% } %>
-
-            <% for (let i = 1; i <= totalPages; i++) { %>
-              <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                <a
-                  class="page-link"
-                  href="?page=<%= i %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
-                >
-                  <%= i %>
-                </a>
-              </li>
-            <% } %>
-
-            <% if (currentPage < totalPages) { %>
-              <li class="page-item">
-                <a
-                  class="page-link"
-                  href="?page=<%= currentPage + 1 %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
-                  aria-label="Next"
-                >
-                  <span aria-hidden="true">&raquo;</span>
-                </a>
-              </li>
-            <% } else { %>
-              <li class="page-item disabled">
-                <span class="page-link">&raquo;</span>
-              </li>
-            <% } %>
-          </ul>
-        </nav>
+        <div id="noResults" style="display:none; text-align:center; padding:2rem; color:#64748b;">
+          No customers match your search.
+        </div>
       </div>
-    <% } %>
+
+      <!-- Footer -->
+      <!-- <div class="orders-footer">
+        <span>Page <%= currentPage %> of <%= totalPages %></span>
+        <span><%= orders.length %> orders on this page</span>
+      </div>
+    <% } %> -->
   </div>
-</body>
-</html>
+
+  <!-- Pagination -->
+  <% if (orders && orders.length > 0) { %>
+    <nav aria-label="Page navigation" class="mt-3">
+      <ul class="pagination pm-pagination justify-content-center">
+    
+        <%
+          const delta = 2;
+          const left = currentPage - delta;
+          const right = currentPage + delta;
+          let pages = [];
+          let lastPage = null;
+    
+          for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= left && i <= right)) {
+              pages.push(i);
+            }
+          }
+        %>
+    
+        <!-- Previous Button -->
+        <% if (currentPage > 1) { %>
+          <li class="page-item">
+            <a class="page-link" href="?page=<%= currentPage - 1 %><%= search ? '&search=' + encodeURIComponent(search) : '' %>" aria-label="Previous">&#8249;</a>
+          </li>
+        <% } else { %>
+          <li class="page-item disabled"><span class="page-link">&#8249;</span></li>
+        <% } %>
+    
+        <!-- Page Numbers with Ellipsis -->
+        <% pages.forEach(function(i) { %>
+          <% if (lastPage !== null && i - lastPage > 1) { %>
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          <% } %>
+    
+          <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+            <a class="page-link" href="?page=<%= i %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"><%= i %></a>
+          </li>
+    
+          <% lastPage = i; %>
+        <% }); %>
+    
+        <!-- Next Button -->
+        <% if (currentPage < totalPages) { %>
+          <li class="page-item">
+            <a class="page-link" href="?page=<%= currentPage + 1 %><%= search ? '&search=' + encodeURIComponent(search) : '' %>" aria-label="Next">&#8250;</a>
+          </li>
+        <% } else { %>
+          <li class="page-item disabled"><span class="page-link">&#8250;</span></li>
+        <% } %>
+    
+      </ul>
+    </nav>
+    <% } %>
+
+</div>
+
+<script>
+  const input = document.getElementById('searchInput');
+  const rows = document.querySelectorAll('#customerTable tbody tr');
+  const noResults = document.getElementById('noResults');
+
+  input.addEventListener('input', function () {
+    const search = this.value.toLowerCase();
+    let found = false;
+
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+
+      if (text.includes(search)) {
+        row.style.display = '';
+        found = true;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Show "no results" message
+    noResults.style.display = found ? 'none' : 'block';
+  });
+</script>
 
 <%- include('partials/footer') %>

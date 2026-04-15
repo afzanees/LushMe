@@ -6,7 +6,7 @@ const Product = require('../../models/productSchema');
 const getOrderList = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const limit = 5;
         const skip = (page - 1) * limit;
         const search = req.query.search || '';
 
@@ -25,16 +25,22 @@ const getOrderList = async (req, res) => {
                     { orderId: { $regex: search, $options: 'i' } },
                     { status: { $regex: search, $options: 'i' } },
                     { paymentStatus: { $regex: search, $options: 'i' } },
-                    { userId: { $in: userIds } }
+                    { userId: { $in: userIds } },
+                    
                 ]
             };
         }
 
         const orders = await Order.find(query)
-            .populate('userId', 'name email phone')
+            .populate({
+                path: 'userId',
+                select: 'name email phone',
+                strictPopulate: false
+            })
             .sort({ createdOn: -1 })
             .skip(skip)
-            .limit(limit);
+            .limit(limit)
+            .lean();
 
         const totalOrders = await Order.countDocuments(query);
         const totalPages = Math.ceil(totalOrders / limit);
@@ -43,8 +49,7 @@ const getOrderList = async (req, res) => {
             orders,
             currentPage: page,
             totalPages,
-            search,
-            user: orders.map(order => order.userId)
+            search
         });
     } catch (error) {
         console.error('Error fetching orders:', error);

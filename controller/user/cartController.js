@@ -446,6 +446,9 @@ if (req.session.appliedCoupon) {
     } else {
       discount = coupon.offerPrice;
     }
+    
+    // Ensure discount doesn't exceed cart total
+    discount = Math.min(discount, grandTotal);
 
     req.session.discount = discount;
     req.session.appliedCoupon.discount = discount;

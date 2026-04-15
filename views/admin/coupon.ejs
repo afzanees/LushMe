@@ -1,167 +1,487 @@
 <%- include('partials/header', { title: 'Coupon Management' }) %>
 <%- include('partials/sidebar', { admin }) %>
-  <style>
-    body {
-      background-color: #f0f8ff;
-      padding: 30px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    h1 {
-      color: #343a40;
-      margin-bottom: 30px;
-      font-weight: 700;
-    }
-    .coupon-code {
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-    }
-    .pagination-select {
-      max-width: 80px;
-    }
-    .table thead {
-      background-color: #212529;
-      color: white;
-    }
-    .btn-edit {
-      color: #0d6efd;
-      font-size: 1.2rem;
-    }
-    .btn-delete {
-      color: #dc3545;
-      font-size: 1.2rem;
-    }
-    .btn-edit:hover {
-      color: #0a58ca;
-    }
-    .btn-delete:hover {
-      color: #a71d2a;
-    }
-    .table-danger {
-      background-color: #f8d7da !important;
-    }
-    
-  </style>
 
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
 
-<div class="container">
-  <h1>Coupon Management</h1>
+<style>
+  body {
+    font-family: "DM Sans", sans-serif;
+    background-color: #f1f5f9;
+    color: #1e293b;
+  }
 
-  <div class="d-flex mb-3 align-items-center gap-2 flex-wrap">
-    <!-- <input type="search" class="form-control flex-grow-1" placeholder="Search here" style="max-width: 300px;" /> -->
-    <a href="/admin/coupons/add" class="btn btn-success "> Add New Coupon</a>
-    
+  .cp-page { padding: 28px 24px; }
+
+  /* Header */
+  .cp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .cp-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .cp-title-icon {
+    width: 42px;
+    height: 42px;
+    background: #1e293b;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .cp-title h2 {
+    font-family: "Syne", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  .cp-title p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .btn-add-coupon {
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 18px;
+    height: 40px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: "DM Sans", sans-serif;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .btn-add-coupon:hover { background: #334155; color: #fff; text-decoration: none; }
+
+  /* Stats */
+  .cp-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.blue  { background: #eff6ff; }
+  .stat-icon.green { background: #f0fdf4; }
+  .stat-icon.amber { background: #fffbeb; }
+  .stat-icon.red   { background: #fef2f2; }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 3px;
+  }
+
+  .stat-val {
+    font-family: "Syne", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-val.blue  { color: #2563eb; }
+  .stat-val.green { color: #16a34a; }
+  .stat-val.amber { color: #d97706; }
+  .stat-val.red   { color: #dc2626; }
+
+  /* Card */
+  .cp-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .cp-table-wrap { overflow-x: auto; }
+
+  .cp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 860px;
+  }
+
+  .cp-table thead tr { background: #1e293b; }
+
+  .cp-table thead th {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 13px 18px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .cp-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+  }
+
+  .cp-table tbody tr:last-child { border-bottom: none; }
+  .cp-table tbody tr:hover { background: #f8fafc; }
+  .cp-table tbody tr.expired-row { background: #fff5f5; }
+  .cp-table tbody tr.expired-row:hover { background: #fee2e2; }
+
+  .cp-table td {
+    padding: 13px 18px;
+    vertical-align: middle;
+    color: #1e293b;
+  }
+
+  /* Coupon name */
+  .coupon-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: #1e293b;
+  }
+
+  /* Code chip */
+  .code-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  /* Discount pill */
+  .discount-pill {
+    display: inline-flex;
+    align-items: center;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* Date text */
+  .date-text { font-size: 12px; color: #475569; }
+  .date-expired { font-size: 12px; color: #dc2626; }
+
+  /* Usage bar */
+  .usage-wrap { min-width: 100px; }
+  .usage-bar-bg {
+    height: 5px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    margin-top: 5px;
+    overflow: hidden;
+  }
+  .usage-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #1e293b;
+    transition: width 0.3s;
+  }
+  .usage-bar-fill.full { background: #dc2626; }
+  .usage-text { font-size: 12px; color: #475569; }
+
+  /* Status badge */
+  .badge-pm {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-pm .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .badge-active   { background: #dcfce7; color: #15803d; }
+  .badge-inactive { background: #f1f5f9; color: #64748b; }
+  .badge-expired  { background: #fee2e2; color: #b91c1c; }
+
+  /* Action buttons */
+  .action-group { display: flex; align-items: center; gap: 6px; }
+
+  .btn-act {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    background: none;
+  }
+
+  .btn-act:hover { opacity: 0.82; text-decoration: none; }
+  .btn-act.edit   { background: #fef9c3; color: #92400e; border-color: #fde68a; }
+  .btn-act.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 52px 24px;
+    color: #94a3b8;
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; margin: 0; }
+</style>
+
+<div class="cp-page">
+
+  <!-- Header -->
+  <div class="cp-header">
+    <div class="cp-title">
+      <div class="cp-title-icon">🎟️</div>
+      <div>
+        <h2>Coupons</h2>
+        <p>Create and manage discount coupons</p>
+      </div>
+    </div>
+    <a href="/admin/coupons/add" class="btn-add-coupon">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      Add New Coupon
+    </a>
   </div>
 
-  <div class="table-responsive shadow rounded">
-    <table class="table table-hover align-middle mb-0 bg-white">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Coupon Code</th>
-          <th>Discount</th>
-          <th>Active From</th>
-          <th>Active To</th>
-          <th>Limit</th>
-          <th>Used</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (coupons.length === 0) { %>
-            <tr><td colspan="9" class="text-center">No coupons available</td></tr>
-        <% } else { %>
-            <% coupons.forEach(coupon => {   
-              const isExpired = new Date(coupon.expiryDate) < now;
-              %>
-        <tr class="<%= isExpired ? 'table-danger' : '' %>">
-          <td><%= coupon.name %></td>
-          <td><span class="badge bg-success coupon-code"><%= coupon.code %></span></td>
-          <td>  <%= coupon.type === 'percentage' ? coupon.offerPrice + '%' : '₹' + coupon.offerPrice %></td>
-<td><%= coupon.startingDateFormatted %></td>
-<td><%= coupon.expiryDateFormatted %></td>
-          <td><%= coupon.usageLimit %></td>
-          <td><%= coupon.usedCount  %></td>
-          <td>
-            <!-- <%= coupon.status ? 'Active' : 'Inactive' %> -->
-            <% if (isExpired) { %>
-  <span class="badge bg-danger">Expired</span>
-<% } else if (coupon.status === 'Active') { %>
-  <span class="badge bg-success">Active</span>
-<% } else { %>
-  <span class="badge bg-secondary">Inactive</span>
-<% } %>
-          </td>
+  <!-- Stats -->
+  <div class="cp-stats">
+    <div class="stat-card">
+      <div class="stat-icon blue">🎟️</div>
+      <div>
+        <div class="stat-label">Total</div>
+        <div class="stat-val blue"><%= coupons.length %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">✅</div>
+      <div>
+        <div class="stat-label">Active</div>
+        <div class="stat-val green"><%= coupons.filter(c => new Date(c.expiryDate) >= now && c.status === 'Active').length %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber">⏸️</div>
+      <div>
+        <div class="stat-label">Inactive</div>
+        <div class="stat-val amber"><%= coupons.filter(c => new Date(c.expiryDate) >= now && c.status !== 'Active').length %></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">⏰</div>
+      <div>
+        <div class="stat-label">Expired</div>
+        <div class="stat-val red"><%= coupons.filter(c => new Date(c.expiryDate) < now).length %></div>
+      </div>
+    </div>
+  </div>
 
-          <td>
-            <a href="/admin/coupons/edit/<%= coupon._id %>" class="btn btn-sm btn-warning">&#9998;</a>
-            <!-- <button class="btn btn-link btn-edit" title="Edit"></button> -->
-            <button class="btn btn-link btn-delete" onclick="return deleteCoupon('<%= coupon._id %>')" title="Delete">&#128465;</button>
-          </td>
-  
-        </tr>
-        <% }) %>
-      <% } %>
-       
-       
-       
-      </tbody>
-    </table>
+  <!-- Table -->
+  <div class="cp-card">
+    <div class="cp-table-wrap">
+      <table class="cp-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Discount</th>
+            <th>Active From</th>
+            <th>Expires On</th>
+            <th>Usage</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (coupons.length === 0) { %>
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <div class="empty-state-icon">🎟️</div>
+                  <p>No coupons yet. Add your first coupon to get started.</p>
+                </div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% coupons.forEach(coupon => {
+              const isExpired = new Date(coupon.expiryDate) < now;
+              const pct = coupon.usageLimit > 0 ? Math.min(100, Math.round((coupon.usedCount / coupon.usageLimit) * 100)) : 0;
+              const isFull = coupon.usedCount >= coupon.usageLimit;
+            %>
+            <tr class="<%= isExpired ? 'expired-row' : '' %>">
+
+              <!-- Name -->
+              <td><span class="coupon-name"><%= coupon.name %></span></td>
+
+              <!-- Code -->
+              <td>
+                <span class="code-chip">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  <%= coupon.code %>
+                </span>
+              </td>
+
+              <!-- Discount -->
+              <td>
+                <span class="discount-pill">
+                  <%= coupon.type === 'percentage' ? coupon.offerPrice + '%' : '₹' + coupon.offerPrice %>
+                </span>
+              </td>
+
+              <!-- Active From -->
+              <td><span class="date-text"><%= coupon.startingDateFormatted %></span></td>
+
+              <!-- Expires On -->
+              <td>
+                <span class="<%= isExpired ? 'date-expired' : 'date-text' %>">
+                  <%= coupon.expiryDateFormatted %>
+                  <% if (isExpired) { %> <span style="font-size:10px;">(expired)</span><% } %>
+                </span>
+              </td>
+
+              <!-- Usage -->
+              <td>
+                <div class="usage-wrap">
+                  <div class="usage-text"><%= coupon.usedCount %> / <%= coupon.usageLimit %></div>
+                  <div class="usage-bar-bg">
+                    <div class="usage-bar-fill <%= isFull ? 'full' : '' %>" style="width:<%= pct %>%;"></div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Status -->
+              <td>
+                <% if (isExpired) { %>
+                  <span class="badge-pm badge-expired"><span class="dot" style="background:#dc2626;"></span>Expired</span>
+                <% } else if (coupon.status === 'Active') { %>
+                  <span class="badge-pm badge-active"><span class="dot" style="background:#16a34a;"></span>Active</span>
+                <% } else { %>
+                  <span class="badge-pm badge-inactive"><span class="dot" style="background:#94a3b8;"></span>Inactive</span>
+                <% } %>
+              </td>
+
+              <!-- Actions -->
+              <td>
+                <div class="action-group">
+                  <a href="/admin/coupons/edit/<%= coupon._id %>" class="btn-act edit">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Edit
+                  </a>
+                  <button class="btn-act danger" onclick="deleteCoupon('<%= coupon._id %>')">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                      <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>
 
-<!-- Bootstrap 5 JS Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   async function deleteCoupon(couponId) {
     Swal.fire({
-      title: 'Are you sure?',
+      title: 'Delete this coupon?',
       text: "This action cannot be undone!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
       confirmButtonText: 'Yes, delete it!'
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-
-    try {
-      const response = await fetch(`/admin/coupons/delete/${couponId}`,{
-        method: "DELETE",
-      })
-
-      const result = await response.json()
-      if(response.ok){
-        Swal.fire({
-          icon: 'success',
-          title: 'Coupon Deleted',
-          text: 'Coupon deleted successfully'
-        })
-        .then(()=>{
-          location.reload()
-        })
-      }else{
-        Swal.fire({
-          icon: 'warning',
-          title: 'Oops',
-          text: result.message || 'Something went wron'
-        })
+    }).then(async result => {
+      if (!result.isConfirmed) return;
+      try {
+        const response = await fetch(`/admin/coupons/delete/${couponId}`, { method: 'DELETE' });
+        const data = await response.json();
+        if (response.ok) {
+          Swal.fire({ icon: 'success', title: 'Deleted', text: 'Coupon deleted successfully', timer: 1500, showConfirmButton: false })
+            .then(() => location.reload());
+        } else {
+          Swal.fire({ icon: 'warning', title: 'Oops', text: data.message || 'Something went wrong' });
+        }
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'Internal server error' });
       }
-    } catch (error) {
-      console.error('Error while deleting coupon', error)
-      Swal.fire({
-        icon:'error',
-        title: 'Error',
-        text: error.message || 'Internal server error'
-      })
-    }
-  }
-  });
+    });
   }
 </script>
 
-  <%- include('partials/footer') %>
-
+<%- include('partials/footer') %>
