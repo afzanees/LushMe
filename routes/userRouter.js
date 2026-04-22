@@ -2,7 +2,6 @@ const express = require('express')
 const router = express.Router();
 const userController = require('../controller/user/userController')
 const productController = require('../controller/user/productController')
-<<<<<<< HEAD
 const bcrypt = require('bcrypt');
 const profileController = require('../controller/user/profileController');
 const cartController = require('../controller/user/cartController'); 
@@ -11,22 +10,17 @@ const addressController = require('../controller/user/addressController');
 const wishlistController = require('../controller/user/wishlistController');
 const uploads = require('../middlewares/multer')
 const {userAuth} = require('../middlewares/auth')
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 router.get("/",userController.loadHomepage)
 router.get('/pagenotfound',userController.pageNotFound)
 router.get('/register',userController.loadRegister);
 router.post('/register',userController.register);
-<<<<<<< HEAD
 
 router.get('/forgot-password',profileController.loadForgotPassword);
 router.post('/forgot-password/send-otp',profileController.forgotPasswordSendOTP)
 router.post('/forgot-password/verify-otp',profileController.verifyForgotPasswordOTP)
 router.get('/update-password',profileController.loadResetPassword);
 router.post('/update-password',profileController.updatePassword);
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 // router.get('/confirmotp',userController.loadOtp)
 router.post('/confirmotp',userController.confirmOtp);
 router.post('/resend-otp',userController.resendOTP);
@@ -35,7 +29,6 @@ router.post('/login',userController.login);
 router.get('/logout',userController.logout);
 router.get("/shop",userController.loadShoppingPage);
 router.get("/filter",userController.filterProduct);
-<<<<<<< HEAD
 router.get("/productDetails/:slug",productController.productDetails);
 
 // router.get('/userProfile',userAuth,profileController.userProfile);

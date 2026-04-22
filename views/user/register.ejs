@@ -6,7 +6,6 @@
   <title>Login Page</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<<<<<<< HEAD
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -32,10 +31,6 @@
     z-index: 5;
   }
   </style>
-=======
-  <link href="/css/login.css" rel="stylesheet">
-</head>
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 <body>
 
   <div class="container login-container row">
@@ -54,7 +49,6 @@
       <!-- Divider -->
       <div class="divider">or</div>
 
-<<<<<<< HEAD
       <!-- Server Error Message Display -->
       <% if (typeof message !== 'undefined' && message) { %>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -93,32 +87,6 @@
           <input type="text" id="referralCode" class="form-control" name="referralCode" placeholder="Enter referral code (optional)" value="<%= typeof formData !== 'undefined' ? formData.referralCode || '' : '' %>" />
           <div id="error6" class="error-message"></div>
         </div>
-=======
-      <!-- Email/Password Form -->
-      <form id="signform" method="post" action="/register">
-        <div class="mb-3">
-          <input type="text" id="username" class="form-control" name="username"  placeholder="Username" required />
-        <div id="error1" class="error-message"></div>
-        </div>
-        <div class="mb-3">
-          <input type="email" id="email" class="form-control" name="email" placeholder="Email" required />
-          <div id="error2" class="error-message"></div>
-        </div>
-        <div class="mb-3">
-          <input type="text" id="phone" class="form-control" name="phone" placeholder="Phone Number" required />
-          <div id="error3" class="error-message"></div>
-        </div>
-        <div class="mb-3">
-          <input type="password" id="password" class="form-control" name="password" placeholder="Password" required />
-          <div id="error4" class="error-message"></div>
-        </div>
-        <div class="mb-3">
-          <input type="password" id="cpassword" class="form-control" name="cpassword" placeholder="Confirm Password" required />
-          <div id="error5" class="error-message"></div>
-        </div>
-
-       
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
         <button type="submit" class="login-btn">Register</button>
       </form>
@@ -127,14 +95,6 @@
         Already have an account? <a href="/login">Login now...!</a>
       </div>
 
-<<<<<<< HEAD
-=======
-      <p class=" mt-5 d-flex justify-content-center">Anyone has reffered you? Claim the reward</p>
-      <div class="d-flex justify-content-center">
-        <input type="text" class="form-control w-50 border border-dark" placeholder="Refferal code...">
-      </div>
-
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
       
     </div>
@@ -148,7 +108,6 @@
 </body>
 </html>
 </html>
-<<<<<<< HEAD
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- Display server error message using SweetAlert -->
@@ -163,8 +122,6 @@
 </script>
 <% } %>
 
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 <script>
 
   const nameid = document.getElementById("username");
@@ -209,7 +166,6 @@
 
   }
 
-<<<<<<< HEAD
 function phoneValidateChecking(e) {
   let phoneval = phoneid.value.trim();
 
@@ -270,48 +226,6 @@ function passValidateChecking(e) {
 }
 
 
-=======
-  function phoneValidateChecking(e){
-    const phoneval = phoneid.value;
-
-    if(phoneval.trim() === ""){
-      error3.style.display = "block";
-      error3.innerHTML = "Enter valid phone number"
-    }else if(phoneval.length !==10){
-      error3.style.display = "block";
-      error3.innerHTML="Enter 10 digits"
-    }else{
-      error3.style.display = "none";
-      error3.innerHTML=""
-    }
-  }
-
-  function passValidateChecking(e){
-    const passval = passid.value;
-    const cpassval = cpassid.value;
-    const alpha = /[a-zA-Z]/;
-    const digit = /\d/;
-    
-    if(passval.length<8){
-      error4.style.display="block";
-      error4.innerHTML = "should contain atleast 8 characters"
-    }else if(!alpha.test(passval) || !digit.test(passval)){
-      error4.style.display="block"
-      error4.innerHTML = "Should contain numbers and alphabets"
-    }else{
-      error4.style.display ="none";
-      error4.innerHTML=""
-    }
-
-    if(passval !==cpassval){
-      error5.style.display = "block"
-      error5.innerHTML="password does not match";
-    }else{
-      error5.style.display="none"
-      error5.innerHTML=""
-    }
-  }
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   
 
   document.addEventListener("DOMContentLoaded",function(){
@@ -349,7 +263,6 @@ function passValidateChecking(e) {
     })
   })
 
-<<<<<<< HEAD
   function togglePassword(inputId, icon) {
   const pwd = document.getElementById(inputId);
 
@@ -365,7 +278,3 @@ function passValidateChecking(e) {
 
 </script>
 
-=======
-
-</script>
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2

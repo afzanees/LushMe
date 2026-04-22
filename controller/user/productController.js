@@ -3,17 +3,13 @@ const Category = require("../../models/categorySchema");
 const User = require("../../models/userSchema");
 const Brand = require("../../models/brandSchema")
 const mongoose = require('mongoose');
-<<<<<<< HEAD
 const { getEffectiveOffer, applyOffer } = require('../../utils/offerHelper');
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 const productDetails = async (req,res) => {
 
     try {
         const userId = req.session.user;
         let wishlistIds = [];
-<<<<<<< HEAD
         let userData = null;
         
         if(userId) {
@@ -96,21 +92,6 @@ product.variants = product.variants.map(variant => {
 });
 
         
-=======
-        if(userId) {
-            const userDoc = await User.findById(userId).select('wishlist').lean();
-            wishlistIds = userDoc?.wishlist?.map(id => id.toString()) || [];
-        }
-        const userData =  userId ? await User.findById(userId) : null;
-        const productId = req.query.id;
-        const product = await Product.findOne({ _id: productId, isBlocked: false})
-        .populate('category')
-        .populate({ path: 'ratings.userId', select: 'name profilePicture' })
-        .populate('brand');
-        if (!product) {
-            return res.redirect('/pageNotFound');
-          }
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         const ratingsCount = product?.ratings?.length || 0;  
         let totalQuantity = 0;
         if (product.variants && product.variants.length > 0) {
@@ -151,11 +132,7 @@ product.variants = product.variants.map(variant => {
           }
           
 
-<<<<<<< HEAD
         res.render("user/product-details",{
-=======
-        res.render("product-details",{
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
             user:userData,
             product:product,
             products: relatedProducts,
@@ -163,10 +140,7 @@ product.variants = product.variants.map(variant => {
             category:findCategory,
             wishlistIds,
             ratingsCount,
-<<<<<<< HEAD
             effectiveOffer,
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
            
         })
     } catch (error) {

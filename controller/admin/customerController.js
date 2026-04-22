@@ -3,7 +3,6 @@ const User = require("../../models/userSchema");
 
 const customerInfo = async (req, res) => {
     try {
-<<<<<<< HEAD
         
         let search = req.query.search || '';
         let page = parseInt(req.query.page) || 1;
@@ -14,23 +13,6 @@ const customerInfo = async (req, res) => {
                 { username: { $regex: search, $options: 'i' } },
                 { email: { $regex: search, $options: 'i' } },
             ]}
-=======
-        let search=''
-        if(req.query.search){
-            search = req.query.search
-        }
-        let page=1
-        if(req.query.page){
-            page = req.query.page
-        }
-        const limit = 3;
-        const userData = await User.find({
-            isAdmin:false,
-             $or:[
-                {username:{$regex:".*"+search+".*"}}, 
-                {email:{$regex:".*"+search+".*"}},
-             ]}
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
             )
              .sort({createdAt:-1, _id:1})
              .skip((page-1) * limit)
@@ -53,11 +35,7 @@ const customerInfo = async (req, res) => {
                 data:userData,
                 totalPages:Math.ceil(count/limit),
                 currentPage:page,
-<<<<<<< HEAD
                 searchQuery:search
-=======
-                search
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
              })
              console.log(userData);
         

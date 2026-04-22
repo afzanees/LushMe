@@ -8,28 +8,22 @@ const orderSchema = new Schema ({
         default:()=>uuidv4(),
         unique:true,
     },
-<<<<<<< HEAD
     userId:{
         type: Schema.Types.ObjectId,
         ref:"User",
         required:true,
     },
     
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     orderedItems:[{
         product:{
             type: Schema.Types.ObjectId,
             ref:"Product",
             required:true,
         },
-<<<<<<< HEAD
         variantIndex: {
             type: Number,
             required: true,
         },
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         quantity:{
             type:Number,
             required:true,
@@ -37,7 +31,6 @@ const orderSchema = new Schema ({
         price:{
             type:Number,
             default:0
-<<<<<<< HEAD
         },
         status:{
             type:String,
@@ -59,8 +52,6 @@ const orderSchema = new Schema ({
         returnRejectionReason:{
             type:String,
             default:''
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         }
     }],
     totalPrice:{
@@ -75,7 +66,6 @@ const orderSchema = new Schema ({
         type:Number,
         required:true,
     },
-<<<<<<< HEAD
     deliveryCharge:{
         type:Number,
         default:0
@@ -116,20 +106,10 @@ const orderSchema = new Schema ({
     invoiceDate: {
         type: Date,
         default: Date.now
-=======
-    address:{
-        type:Schema.Types.ObjectId,
-        ref:"User",
-        required:true,
-    },
-    invoiceDate:{
-        type:Date
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     },
     status:{
         type:String,
         required:true,
-<<<<<<< HEAD
         enum:['Pending','Shipped','Delivered','Cancelled', 'Returned']
     },
     paymentMethod:{
@@ -152,9 +132,6 @@ const orderSchema = new Schema ({
         signature: {
             type: String
         }
-=======
-        enum:['Pendings','Shipped','Delivered','Cancelled','Return Request', 'Returned']
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     },
     createdOn:{
         type:Date,
@@ -164,7 +141,6 @@ const orderSchema = new Schema ({
     couponApplied:{
         type:Boolean,
         default:false
-<<<<<<< HEAD
     },
     couponCode: {
         type: String,
@@ -177,10 +153,6 @@ const orderSchema = new Schema ({
     }
 
 
-=======
-    }
-
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 })
 
 const Order = mongoose.model("order",orderSchema);

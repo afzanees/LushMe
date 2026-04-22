@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const mongoose = require('mongoose');
 const {Schema} = mongoose;
 
@@ -93,43 +92,3 @@ couponSchema.pre("validate", function (next) {
 const Coupon = mongoose.model('Coupon', couponSchema);
 
 module.exports = Coupon;
-=======
-const mongoose = require("mongoose");
-const {Schema} = mongoose;
-
-const couponSchema = new mangoose.Schema({
-    name:{
-        type:String,
-        required:true,
-        unique:true,
-    },
-    createdOn:{
-        type:Date,
-        default:Date.now,
-        reqired:true,
-    },
-    expireOn:{
-        type:Date,
-        required:true
-    },
-    offerPrice:{
-        type:Number,
-        required:true
-    },
-    minimumPrice:{
-        type:Number,
-        required:true,
-    },
-    isList:{
-        type:Boolean,
-        default:true
-    },
-    userId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"User"
-    }
-})
-
-const Coupon = mongoose.model('Coupon',couponSchema);
-module.exports = Coupon
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2

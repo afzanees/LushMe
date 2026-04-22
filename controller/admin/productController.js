@@ -7,11 +7,8 @@ const User = require('../../models/userSchema');
 const path = require("path")
 const fs = require("fs")
 const sharp = require("sharp")
-<<<<<<< HEAD
 const slugify = require("slugify");
 
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 const calculateEffectivePrice = async (product) => {
  
@@ -19,18 +16,10 @@ const calculateEffectivePrice = async (product) => {
 
   const categoryOffer = category?.categoryOffer || 0;
 
-<<<<<<< HEAD
   const subcat = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory.toString());
   const subcategoryOffer = subcat?.offer || 0;
 
   const productOffer = product.productOffer || 0; 
-=======
-
-  const subcat = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory.toString());
-  const subcategoryOffer = subcat?.offer || 0;
-
-  const productOffer = product.offer || 0; 
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
   
   const effectiveOffer = Math.max(categoryOffer, subcategoryOffer, productOffer);
@@ -47,11 +36,8 @@ const calculateEffectivePrice = async (product) => {
 
 
 
-<<<<<<< HEAD
 
 
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 const getProductAddPage = async (req, res) => {
   try {
   
@@ -118,18 +104,11 @@ const addProducts = async (req, res) => {
       brand,
       category,
       subcategory,
-<<<<<<< HEAD
-=======
-      regularPrice,
-      finalPrice,
-      color,
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
       status
     } = req.body;
 
     console.log("Received subcategory:", subcategory);
 
-<<<<<<< HEAD
     // ✅ Validate required fields with specific messages
     const missingFields = [];
     if (!name || !name.trim()) missingFields.push("Product Name");
@@ -292,88 +271,24 @@ const addProducts = async (req, res) => {
     category,
     subcategory,
     productImage: [], // Empty array, images will be added via variants
-=======
-    // ✅ Parse numeric fields
-    const price = parseFloat(regularPrice);
-    const salePrice = parseFloat(finalPrice);
-
-    // ✅ Validate required fields
-    if (
-      !name || !description || !brand || !category || !subcategory ||
-      isNaN(price) || isNaN(salePrice)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing or invalid required fields",
-      });
-    }
-
-    // ✅ Ensure upload directory exists
-    const uploadDir = path.join(__dirname, "../../public/uploads/product-images");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const imageFilenames = [];
-    for (let i = 1; i <= 4; i++) {
-      const croppedImageData = req.body[`croppedImage${i}`];
-      if (croppedImageData && croppedImageData.startsWith("data:image")) {
-        const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, "");
-        const imageBuffer = Buffer.from(base64Data, "base64");
-        const filename = `${Date.now()}-image${i}.webp`;
-        const filepath = path.join(uploadDir, filename);
-        await sharp(imageBuffer)
-          .resize(800, 800, { fit: "inside", withoutEnlargement: true })
-          .webp({ quality: 80 })
-          .toFile(filepath);
-        imageFilenames.push(`uploads/product-images/${filename}`);
-      }
-    }
-
-   // ✅ Create new product document
-   const newProduct = new Product({
-    name,
-    description,
-    brand,
-    category,
-    subcategory, // ✅ now it matches
-    regularPrice: price,
-    salePrice: salePrice,
-    color: color || "N/A",
-    productImage: imageFilenames,
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     status: ["Available", "Out Of Stock", "Discontinued"].includes(status)
       ? status
       : "Available",
   });
-<<<<<<< HEAD
     console.log({ name: trimmedName, description: trimmedDescription, brand, category, subcategory, status });
-=======
-    console.log({ name, description, brand, category, subcategory, regularPrice, salePrice, color, imageFilenames, status });
-
-    await newProduct.validate().catch(err => {
-      console.error("❌ Mongoose validation error:", err.message);
-      throw err;
-    });
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
     await newProduct.save();
 
     
-<<<<<<< HEAD
     return res.status(200).json({ 
       success: true, 
       message: "Product added successfully",
       productId: newProduct._id 
     });
-=======
-    return res.status(200).json({ success: true, message: "Product added successfully" });
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   } catch (error) {
     console.error("🔥 ERROR adding product:");
     console.error("Message:", error.message);
     console.error("Stack:", error.stack);
-<<<<<<< HEAD
     
     // Handle specific error types
     if (error.name === 'ValidationError') {
@@ -402,10 +317,6 @@ const addProducts = async (req, res) => {
       success: false, 
       message: error.message || "An unexpected error occurred while adding product" 
     });
-=======
-    console.error("Full error object:", error);
-    return res.status(500).json({ success: false, message: "Server error while adding product" });
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   }
 };
 
@@ -534,12 +445,8 @@ const getEditProduct=async (req,res)=>{
     const categories = await Category.find({isListed: true })
     .select('name subcategories')
     .lean();
-<<<<<<< HEAD
     const brand = await Brand.find({isListed: true}).lean();
     console.log('Brands found:', brand.length, brand.map(b => b.name));
-=======
-    const brand = await Brand.find({isListed:true}).lean();
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     res.render("admin/edit-product", {
       product: product,
       brand:brand,
@@ -562,12 +469,6 @@ const editProduct = async (req, res) => {
       brand,
       category,
       subcategory,
-<<<<<<< HEAD
-=======
-      regularPrice,
-      finalPrice,
-      material,
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
       status
     } = req.body;
     console.log({ category, subcategory });
@@ -578,7 +479,6 @@ const editProduct = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(subcategory)) {
       return res.status(400).json({ success: false, message: "Invalid subcategory id" });
     }
-<<<<<<< HEAD
     
     // ✅ Strong validation for product name
     const trimmedName = name.trim();
@@ -631,11 +531,6 @@ const editProduct = async (req, res) => {
 
     const existingProduct = await Product.findOne({
       name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
-=======
-
-    const existingProduct = await Product.findOne({
-      name: name,
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
       _id: { $ne: id },
     })
 
@@ -644,7 +539,6 @@ const editProduct = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Product with this name already exists. Please try another name." })
     }
-<<<<<<< HEAD
     
     const product = await Product.findById(id)
     if (!product) {
@@ -668,28 +562,12 @@ const editProduct = async (req, res) => {
     
     const updateFields = {
       name: trimmedName,
-=======
-    const updateFields = {
-      name,
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
       description,
       brand,
       category,
       subcategory,
-<<<<<<< HEAD
       status
     }
-=======
-      regularPrice,
-      finalPrice,
-      material,
-      status
-    }
-    const product = await Product.findById(id)
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" })
-    }
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
     
 
@@ -740,14 +618,7 @@ const editProduct = async (req, res) => {
     product.brand = brand;
     product.category = category;
     product.subcategory = subcategory;
-<<<<<<< HEAD
 
-=======
-    product.price = regularPrice;
-    product.finalPrice = finalPrice;
-    product.baseFinalPrice =finalPrice;
-    product.material = material;
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     product.status = status;
     
     await product.save();
@@ -760,7 +631,6 @@ const editProduct = async (req, res) => {
   }
 }
  
-<<<<<<< HEAD
 const deleteSingleVariantImage = async (req, res) => {
   try {
     const { productId, variantId, imageIndex } = req.body;
@@ -802,41 +672,6 @@ const deleteSingleVariantImage = async (req, res) => {
   } catch (error) {
     console.error("Error deleting variant image:", error);
     return res.status(500).json({ status: false, message: "Server error while deleting image" });
-=======
-const deleteSingleImage = async (req, res) => {
-  try {
-    const { imageNameToServer, productIdToServer, imageIndex } = req.body;
-    console.log("Deleting:", imageNameToServer, productIdToServer, imageIndex);
-
-    // Find product
-    const product = await Product.findById(productIdToServer);
-    if (!product) {
-      return res.status(404).json({ status: false, message: "Product not found" });
-    }
-
-    // Make sure productImage array exists
-    if (!Array.isArray(product.productImage)) {
-      return res.status(400).json({ status: false, message: "No images found for this product" });
-    }
-
-    // Delete image from array
-    product.productImage.splice(imageIndex, 1);
-    await product.save();
-
-    // Delete the file from server storage
-    const imagePath = path.join(__dirname, "../../public", imageNameToServer);
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-      console.log(`🗑️ Image ${imageNameToServer} deleted successfully`);
-    } else {
-      console.log(`⚠️ Image file not found: ${imageNameToServer}`);
-    }
-
-    res.json({ status: true, message: "Image deleted successfully" });
-  } catch (error) {
-    console.error("Error in deleteSingleImage:", error);
-    res.status(500).json({ status: false, message: "An error occurred while deleting the image" });
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   }
 };
 
@@ -845,13 +680,9 @@ const showProductVariants=async (req,res)=>{
   const productId=req.params.id;
   try{
     const product=await Product.findById(productId).lean();
-<<<<<<< HEAD
     console.log('Product ID:', product._id);
     console.log('Product variants:', JSON.stringify(product.variants, null, 2));
     
-=======
-    console.log(product._id)
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     if(!product)
     {
       return res.status(404).send('product not found')
@@ -869,7 +700,6 @@ const showProductVariants=async (req,res)=>{
 }
 const addProductVariants=async(req,res)=>{
   try{
-<<<<<<< HEAD
     // ✅ First check if req.body exists
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({ success: false, message: 'No form data received. Make sure form is submitted properly.' });
@@ -994,41 +824,6 @@ const addProductVariants=async(req,res)=>{
       success: false, 
       message: err.message || 'Internal server error while adding variant'
     });
-=======
-    const { color, price,quantity } = req.body;
-    const productId = req.params.productId;
-    if (!color || !price || quantity == null) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
-    }
-    if (quantity < 0) {
-      return res.status(400).json({ success: false, message: 'Quantity cannot be negative' });
-    }
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ success: false, message: 'Invalid product ID' });
-    }
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'product not found' });
-    }
-    const existingVariant = product.variants.find(v =>
-      v.color.toLowerCase() === color.toLowerCase()
-      //  && v.size.toLowerCase() === size.toLowerCase()
-    );
-    if (existingVariant) {
-      return res.status(400).json({ success: false, message: 'Variant with same color and price already exists' });
-    }
-    product.variants.push({
-      color,
-      price,
-      quantity: parseInt(quantity)
-    });
-
-    await product.save();
-    return res.redirect(`/admin/product/${productId}/variants`);
-  } catch (err) {
-    console.error('Add Subcategory Error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   }
 }
 
@@ -1057,7 +852,6 @@ const deleteVariant = async (req, res) => {
 const updateVariant = async (req, res) => {
   try {
     const { productId, variantId } = req.params;
-<<<<<<< HEAD
     const { color, regularPrice, salePrice, quantity } = req.body;
 
     if (!color || typeof color !== 'string' || color.trim().length === 0) {
@@ -1085,41 +879,22 @@ const updateVariant = async (req, res) => {
     
     if (salePriceNum > regularPriceNum) {
       return res.status(400).json({ success: false, message: 'Sale price cannot be greater than regular price' });
-=======
-    const { color, price, quantity } = req.body;
-
-    if (!color || typeof color !== 'string' || color.trim().length === 0) {
-      return res.status(400).send('Invalid color');
-    }
-
-    if (!price || typeof price !== 'string' || price.trim().length === 0) {
-      return res.status(400).send('Invalid price (max 4 chars)');
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     }
 
     const qtyNum = Number(quantity);
     if (!Number.isInteger(qtyNum) || qtyNum < 0) {
-<<<<<<< HEAD
       return res.status(400).json({ success: false, message: 'Quantity must be a non-negative integer' });
-=======
-      return res.status(400).send('Quantity must be a non-negative integer');
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     }
 
   
     const product = await Product.findById(productId);
     if (!product) {
-<<<<<<< HEAD
       return res.status(404).json({ success: false, message: 'Product not found' });
-=======
-      return res.status(404).send('Product not found');
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     }
 
     // Find variant index
     const variantIndex = product.variants.findIndex(v => v._id.toString() === variantId);
     if (variantIndex === -1) {
-<<<<<<< HEAD
       return res.status(404).json({ success: false, message: 'Variant not found' });
     }
     
@@ -1169,20 +944,6 @@ const updateVariant = async (req, res) => {
   } catch (error) {
     console.error('Error updating variant:', error);
     return res.status(500).json({ success: false, message: error.message || 'Internal server error while updating variant' });
-=======
-      return res.status(404).send('Variant not found');
-    }
-    product.variants[variantIndex].color = color;
-    product.variants[variantIndex].price = price;
-    product.variants[variantIndex].quantity = parseInt(quantity);
-
-    
-    await product.save();
-    res.redirect(`/admin/product/${productId}/variants`);
-  } catch (error) {
-    console.error('Error updating variant:', error);
-    res.status(500).send('Internal server error');
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   }
 };
 
@@ -1213,11 +974,7 @@ const addProductOffer = async (req, res) => {
     //   }
     // );
       // product.baseFinalPrice = product.finalPrice; 
-<<<<<<< HEAD
       product.productOffer = parseInt(percentage);
-=======
-      product.offer = parseInt(percentage);
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
       product.offerValidUntil = new Date(validUntil)
       product.finalPrice = await calculateEffectivePrice(product);
       await product.save();
@@ -1244,11 +1001,7 @@ const removeProductOffer = async (req, res) => {
       { _id: productId },
       {
         $unset: {
-<<<<<<< HEAD
           productOffer: "",
-=======
-          offer: "",
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
           offerValidUntil: ""
         }
       }
@@ -1291,11 +1044,7 @@ module.exports={
      deleteProduct,
      getEditProduct,
      editProduct,
-<<<<<<< HEAD
     deleteSingleVariantImage,
-=======
-     deleteSingleImage,
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
      showProductVariants,
      addProductVariants,
      deleteVariant,

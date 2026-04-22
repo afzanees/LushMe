@@ -6,16 +6,11 @@
   <title>Login Page</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<<<<<<< HEAD
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <link href="/css/login.css" rel="stylesheet">
 <!-- <link rel="stylesheet" href="sweetalert2.min.css"> -->
-=======
-  <link href="/css/login.css" rel="stylesheet">
-  <link rel="stylesheet" href="sweetalert2.min.css">
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 
 </head>
@@ -37,11 +32,7 @@
         <div class="signup1 text-left" >
             Please check your mail address for OTP</a>
           </div>
-<<<<<<< HEAD
           <form id="otpForm" action="<%= otpAction %>" method="post" onsubmit="return validateOTPForm()">
-=======
-          <form id="otpForm"  action="/confirmotp" method="post" onsubmit="return validateOTPForm()">
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
             <div class="d-flex justify-content-center mt-3 mb-3">
               <input type="number" maxlength="1" class="form-control otp-input" />
               <input type="number" maxlength="1" class="form-control otp-input" />
@@ -77,10 +68,7 @@
 </html>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<<<<<<< HEAD
 
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 <script>
   let time = 60;       // total time in seconds
   let interval;        // global timer reference
@@ -115,11 +103,7 @@
 
     $.ajax({
       type: "POST",
-<<<<<<< HEAD
       url: document.getElementById("otpForm").action,
-=======
-      url: "/confirmotp",
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
       data: JSON.stringify({ otp: otpInput }),
       contentType: "application/json",
       xhrFields: { withCredentials: true },
@@ -138,7 +122,6 @@
             icon: "error",
             title: "Error",
             text: response.message,
-<<<<<<< HEAD
             returnFocus: false   
           }).then(() => {
 
@@ -170,18 +153,6 @@
        
       },
       
-=======
-          });
-        }
-      },
-      error: function () {
-        Swal.fire({
-          icon: "error",
-          title: "Invalid OTP",
-          text: "Please try again",
-        });
-      },
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     });
 
     return false;
@@ -230,7 +201,6 @@
 
     return false;
   }
-<<<<<<< HEAD
 
   const otpInputs = document.querySelectorAll(".otp-input");
 
@@ -253,8 +223,6 @@ otpInputs.forEach((input, index) => {
 });
 
 
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 </script>
 
 

@@ -16,11 +16,7 @@
   }
   .profile-pic {
     width: 25px;
-<<<<<<< HEAD
     height: 25px;
-=======
-    height: 25Spx;
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     
     object-fit: cover;
     cursor: pointer;
@@ -358,8 +354,4 @@
 .btn-home {
   padding: 10px 25px;
   font-size: 1rem;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2

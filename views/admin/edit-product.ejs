@@ -81,23 +81,7 @@
         </select>
         <div id="brand-error" class="text-danger"></div>
   
-<<<<<<< HEAD
 
-=======
-        <!-- Prices -->
-        <div class="row mt-3">
-          <div class="col-md-6">
-            <label class="form-label">Regular Price</label>
-            <input type="number" id="regularPrice" name="regularPrice" class="form-control" required value="<%=product.regularPrice%>">
-            <div id="regularPrice-error" class="text-danger"></div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Final Price</label>
-            <input type="number" id="finalPrice" name="finalPrice" class="form-control" required value="<%=product.salePrice%>">
-            <div id="finalPrice-error" class="text-danger"></div>
-          </div>
-        </div>
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   
         <label class="form-label mt-3">Status</label>
         <input type="text" id="status" name="status" class="form-control" value="<%=product.status%>">
@@ -106,35 +90,6 @@
     </div>
   
 
-<<<<<<< HEAD
-=======
-    <div class="col-md-6">
-      <h4>Product Images</h4>
-      <div class="image-upload-container">
-        <% for (let i = 0; i < 4; i++) { %>
-          <div class="image-upload-item">
-            <label for="image<%= i+1 %>">Image <%= i+1 %></label>
-            <input type="file" id="image<%= i+1 %>" name="image<%= i+1 %>" class="form-control" accept="image/*" onchange="previewImage(event, <%= i+1 %>)">
-      
-            <div class="preview-container" style="<%= product.productImage && product.productImage[i] ? 'display:block' : 'display:none' %>">
-              <img id="preview<%= i+1 %>" class="image-preview" src="<%= product.productImage && product.productImage[i] ? '/' + product.productImage[i] : '#' %>" alt="Preview">
-            </div>
-      
-            <input type="hidden" id="croppedImage<%= i+1 %>" name="croppedImage<%= i+1 %>">
-      
-            <% if (product.productImage && product.productImage[i]) { %>
-              <input type="hidden" name="oldImage<%= i+1 %>" value="<%= product.productImage[i] %>">
-              <div class="card-body">
-                <button type="button" class="btn btn-danger btn-sm" onclick="deleteSingleImage('<%= product.productImage[i] %>', '<%= product._id %>', <%= i %>)">Delete</button>
-              </div>
-            <% } %>
-      
-            <div id="image<%= i+1 %>-error" class="text-danger"></div>
-          </div>
-        <% } %>
-      </div>
-    </div>
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   
 
     <div class="col-12 d-flex justify-content-end">
@@ -183,40 +138,7 @@
   });
 
   // CropperJS & Image Preview Logic
-<<<<<<< HEAD
  
-=======
-  let croppers = {};
-
-  function previewImage(event, index) {
-    const input = event.target;
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const previewContainer = input.parentElement.querySelector('.preview-container');
-        previewContainer.style.display = 'block';
-
-        const preview = document.getElementById(`preview${index}`);
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-
-        if (croppers[index]) {
-          croppers[index].destroy();
-        }
-
-        croppers[index] = new Cropper(preview, {
-          aspectRatio: 1,
-          viewMode: 1,
-          ready: function() {
-            this.cropper.crop();
-          }
-        });
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   // Form submission & validation
   const form = document.getElementById('editProductForm');
 
@@ -224,11 +146,7 @@
     e.preventDefault();
 
     let isValid = true;
-<<<<<<< HEAD
     const requiredFields = ['name', 'category', 'subcategory', 'brand', 'status'];
-=======
-    const requiredFields = ['name', 'category', 'subcategory', 'brand', 'regularPrice', 'finalPrice', 'material', 'status'];
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
     // Clear errors
     requiredFields.forEach(field => {
@@ -246,7 +164,6 @@
       }
     });
 
-<<<<<<< HEAD
 
     // Check images count (cropped / uploaded / existing)
     // const existingImages = <%- JSON.stringify(product.productImage) %>;
@@ -273,50 +190,6 @@
     //     if (hiddenInput) hiddenInput.value = base64;
     //   }
     // }
-=======
-    // Validate prices
-    const regularPrice = parseFloat(document.querySelector('input[name="regularPrice"]').value);
-    const finalPrice = parseFloat(document.querySelector('input[name="finalPrice"]').value);
-
-    if (isNaN(regularPrice) || regularPrice <= 0) {
-      Swal.fire('Invalid Regular Price!', 'Regular price must be greater than zero', 'error');
-      return;
-    }
-    if (isNaN(finalPrice) || finalPrice <= 0) {
-      Swal.fire('Invalid Final Price!', 'Final price must be greater than zero', 'error');
-      return;
-    }
-    if (finalPrice > regularPrice) {
-      Swal.fire('Invalid Price!', 'Final price cannot be higher than regular price', 'error');
-      return;
-    }
-
-    // Check images count (cropped / uploaded / existing)
-    const existingImages = <%- JSON.stringify(product.productImage) %>;
-    let imageCount = 0;
-    for (let i = 0; i < 4; i++) {
-      const imgInput = document.getElementById(`image${i+1}`);
-      const croppedInput = document.getElementById(`croppedImage${i+1}`);
-      const hasNewUpload = imgInput && imgInput.files.length > 0;
-      const hasCropped = croppedInput && croppedInput.value;
-      const hasExisting = existingImages[i] && existingImages[i] !== "";
-
-      if (hasNewUpload || hasCropped || hasExisting) imageCount++;
-    }
-    if (imageCount < 4) {
-      Swal.fire('Images Required!', 'Please upload all 4 product images', 'error');
-      return;
-    }
-
-    // Assign cropped images base64 to hidden inputs
-    for (let i = 0; i < 4; i++) {
-      if (croppers[i+1]) {
-        const base64 = croppers[i+1].getCroppedCanvas().toDataURL('image/jpeg');
-        const hiddenInput = document.getElementById(`croppedImage${i+1}`);
-        if (hiddenInput) hiddenInput.value = base64;
-      }
-    }
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
     const formData = new FormData(this);
     const productId = this.dataset.productId;
@@ -340,7 +213,6 @@
   });
 
   
-<<<<<<< HEAD
 // function deleteSingleImage(imageName, productId, index) {
 //   Swal.fire({
 //       title: 'Are you sure?',
@@ -392,59 +264,6 @@
 //       }
 //   });
 // }
-=======
-function deleteSingleImage(imageName, productId, index) {
-  Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-  }).then((result) => {
-      if (result.isConfirmed) {
-          fetch('/admin/deleteImage', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                  imageNameToServer: imageName,
-                  productIdToServer: productId,
-                  imageIndex: index
-              }),
-          })
-          .then(response => response.json())
-          .then(data => {
-              if (data.status) {
-                  Swal.fire(
-                      'Deleted!',
-                      'Your image has been deleted.',
-                      'success'
-                  ).then(() => {
-                      location.reload();
-                  });
-              } else {
-                  Swal.fire(
-                      'Error!',
-                      'Failed to delete image',
-                      'error'
-                  );
-              }
-          })
-          .catch(error => {
-              console.error('Error:', error);
-              Swal.fire(
-                  'Error!',
-                  'An error occurred while deleting the image',
-                  'error'
-              );
-          });
-      }
-  });
-}
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 </script>
 
 

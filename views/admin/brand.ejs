@@ -1,7 +1,6 @@
 <%- include('partials/header', { title: 'Dashboard' }) %>
 <%- include('partials/sidebar', { admin }) %>
 
-<<<<<<< HEAD
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet"/>
 
@@ -367,67 +366,11 @@
           <h5 class="modal-title" id="brandModalLabel">
             <i class="fas fa-tag" style="color:var(--primary); margin-right:8px;"></i>Add Brand
           </h5>
-=======
-<div class="container mt-5">
-  <h3>Brand Management</h3>
-  <button class="btn btn-primary mb-3" onclick="openAddModal()">Add Brand</button>
-
-  <table class="table table-bordered text-center">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Brand Name</th>
-        <th>Description</th>
-        <th>Image</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% brands.forEach((brand, i) => { %>
-        <tr>
-          <td><%= i + 1 %></td>
-          <td><%= brand.name %></td>
-          <td><%= brand.description || '-' %></td>
-          <td>
-            <% if (brand.brandImage) { %>
-              <img src="/uploads/brands/<%= brand.brandImage %>" width="60" />
-            <% } else { %>-<% } %>
-          </td>
-          <td>
-            <% if (brand.isListed) { %>
-              <span class="badge bg-success">Listed</span>
-            <% } else { %>
-              <span class="badge bg-danger">Unlisted</span>
-            <% } %>
-          </td>
-          <td>
-            <button class="btn btn-sm btn-info" onclick="openEditModal('<%= brand._id %>', '<%= brand.name %>', '<%= brand.description %>')">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteBrand('<%= brand._id %>')">Delete</button>
-            <button class="btn btn-sm btn-secondary" onclick="toggleBrandStatus('<%= brand._id %>')">
-              <%= brand.isListed ? "Unlist" : "List" %>
-            </button>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-</div>
-
-<!-- Add/Edit Modal -->
-<div class="modal fade" id="brandModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form id="brandForm" enctype="multipart/form-data">
-        <div class="modal-header">
-          <h5 class="modal-title" id="brandModalLabel">Add Brand</h5>
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" id="brandId" name="id">
           <div class="mb-3">
-<<<<<<< HEAD
             <label class="form-label">Brand Name</label>
             <input type="text" id="brandName" name="name" class="form-control" placeholder="e.g. Nike" required>
           </div>
@@ -449,29 +392,11 @@
           <button type="submit" class="btn-modal-save">
             <i class="fas fa-check" style="margin-right:5px;"></i>Save
           </button>
-=======
-            <label>Name</label>
-            <input type="text" id="brandName" name="name" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label>Description</label>
-            <textarea id="brandDesc" name="description" class="form-control"></textarea>
-          </div>
-          <div class="mb-3">
-            <label>Image</label>
-            <input type="file" id="brandImage" name="brandImage" class="form-control">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Save</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         </div>
       </form>
     </div>
   </div>
 </div>
-<<<<<<< HEAD
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -504,85 +429,10 @@
     const url = formData.get("id") ? "/admin/editBrand" : "/admin/addBrand";
     try {
       const res = await fetch(url, { method: "POST", body: formData });
-=======
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-function openAddModal() {
-  document.getElementById("brandForm").reset();
-  document.getElementById("brandModalLabel").innerText = "Add Brand";
-  document.getElementById("brandId").value = "";
-  new bootstrap.Modal(document.getElementById("brandModal")).show();
-}
-
-function openEditModal(id, name, desc) {
-  document.getElementById("brandModalLabel").innerText = "Edit Brand";
-  document.getElementById("brandId").value = id;
-  document.getElementById("brandName").value = name;
-  document.getElementById("brandDesc").value = desc;
-  new bootstrap.Modal(document.getElementById("brandModal")).show();
-}
-
-document.getElementById("brandForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const formData = new FormData(e.target);
-  const url = formData.get("id") ? "/admin/editBrand" : "/admin/addBrand";
-
-  try {
-    const res = await fetch(url, { method: "POST", body: formData });
-    const data = await res.json();
-
-    // ✅ Handle response correctly
-    Swal.fire({
-      icon: data.status ? "success" : "error",
-      title: data.message,
-      timer: 1200,
-      showConfirmButton: false
-    }).then(() => {
-      // ✅ Properly close modal before reload
-      const modalEl = document.getElementById("brandModal");
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-
-      // ✅ Remove backdrop manually to prevent stuck modal
-      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-      document.body.classList.remove('modal-open');
-      document.body.style = "";
-
-      // ✅ Give small delay so backdrop fully disappears before reload
-      setTimeout(() => location.reload(), 500);
-    });
-
-  } catch (err) {
-    console.error(err);
-    Swal.fire({
-      icon: "error",
-      title: "Something went wrong!",
-      text: "Please try again.",
-      timer: 1500,
-      showConfirmButton: false
-    });
-  }
-});
-function deleteBrand(id) {
-  Swal.fire({
-    title: "Are you sure?",
-    text: "This will delete the brand permanently!",
-    icon: "warning",
-    showCancelButton: true
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      const res = await fetch("/admin/deleteBrand", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id })
-      });
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
       const data = await res.json();
       Swal.fire({
         icon: data.status ? "success" : "error",
         title: data.message,
-<<<<<<< HEAD
         timer: 1200,
         showConfirmButton: false
       }).then(() => {
@@ -631,29 +481,6 @@ function deleteBrand(id) {
     Swal.fire({ icon: data.status ? "success" : "error", title: data.message, timer: 1200, showConfirmButton: false })
       .then(() => location.reload());
   }
-=======
-        timer: 1500,
-        showConfirmButton: false
-      }).then(() => location.reload());
-    }
-  });
-}
-
-async function toggleBrandStatus(id) {
-  const res = await fetch("/admin/toggleBrandStatus", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id })
-  });
-  const data = await res.json();
-  Swal.fire({
-    icon: data.status ? "success" : "error",
-    title: data.message,
-    timer: 1200,
-    showConfirmButton: false
-  }).then(() => location.reload());
-}
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 </script>
 
 <%- include('partials/footer') %>

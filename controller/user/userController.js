@@ -2,7 +2,6 @@ const User = require('../../models/userSchema')
 const Category = require('../../models/categorySchema');
 const Product = require('../../models/productSchema');
 const Brand = require('../../models/brandSchema');
-<<<<<<< HEAD
 const Coupon = require('../../models/couponSchema');
 const generateOtp = require('../../utils/otp');
 const sendVerificationEmail = require('../../utils/sendEmail')
@@ -13,18 +12,11 @@ const bcrypt = require('bcrypt')
 const { getEffectiveOffer, applyOffer } = require('../../utils/offerHelper');
 
 
-=======
-
-const nodemailer = require('nodemailer')
-const env = require('dotenv').config()
-const bcrypt = require('bcrypt')
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 const loadHomepage = async (req,res) =>{
     try {
 
         let user = null;
         if (req.session.user) {                        //normal user exist
-<<<<<<< HEAD
             user = await User.findById(req.session.user);  // get data from db
             
             // Check if user is blocked
@@ -48,11 +40,6 @@ const loadHomepage = async (req,res) =>{
                 });
                 return res.redirect("/login?error=blocked");
             }
-=======
-            user = await User.findById(req.session.user);  // get daa from db
-          } else if (req.user) {                      // by google
-            user = req.user; // <-- from Passport Google
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
           }
           console.log("Homepage user:", user);      
           res.render("user/home", { user });
@@ -96,7 +83,6 @@ const loadRegister = async (req,res)=>{
 //     }
 // }
 
-<<<<<<< HEAD
 
 
 const register = async (req, res) => {
@@ -164,78 +150,6 @@ const register = async (req, res) => {
     res.redirect("/pageNotFound");
   }
 };
-=======
-function generateOtp(){
-    return Math.floor(100000 + Math.random()*900000).toString();   // create a random otp
-}
-
-async function sendVerificationEmail(email,otp){
-     try {                        
-
-        const transporter =  nodemailer.createTransport({                 // we set the default email and password , that mail will send otp to user registered mail 
-
-            service:'gmail',
-            port:587,
-            secure:false,
-            requireTLS:true,
-            auth:{
-                user:process.env.NODEMAILER_EMAIL,
-                pass:process.env.NODEMAILER_PASSWORD
-            }
-        })   
-        
-        const info = await transporter.sendMail({     //info of sending mail with otp
-            from:process.env.NODEMAILER_EMAIL,
-            to:email,
-            subject:"Verify your account",
-            text:`Your OTP: ${otp}`,
-            html:`<b>Your OTP: ${otp} </b>,`
-        })
-
-        return info.accepted.length > 0
-        
-     } catch (error) {
-        console.error("Error sending email",error)
-        return false;
-     }
-}
-
-const register = async (req,res) =>{
-    try {
-        
-        const {username,phone,email,password,cpassword} = req.body;
-
-        if(password !== cpassword){
-            return res.render("user/register",{message:"Password does not match"})
-        }
-        const findUser = await User.findOne({email});         // checking email exist
-        if(findUser){
-            return res.render("user/register",{message:"User with this email already existed"})
-        }
-
-        const otp = generateOtp();
-
-        // to send generate otp to user registered mail
-
-        const emailSent = await sendVerificationEmail(email,otp)
-        if(!emailSent){
-            return res.json("email-error")
-        }                                       // after successfully snding otp, we just asign otp to session
-
-        req.session.userOtp = otp;
-        req.session.userData = {username,email,phone,password};
-                                    //a after session stored, we get the message varify otp
-        res.render("user/confirmotp");
-        console.log("Otp Sent",otp)
-
-    } catch (error) {
-        
-        console.error("register error",error)
-        res.redirect("/pageNotFound")
-    }
-
-}
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 const securePassword = async (password)=>{                            //hashing password
     try{
@@ -245,7 +159,6 @@ const securePassword = async (password)=>{                            //hashing 
 
     }
 }
-<<<<<<< HEAD
 const confirmOtp = async (req, res) => {
   try {
     console.log("ðŸ“¦ Session userData in confirmOtp:", req.session.userData);
@@ -379,43 +292,6 @@ delete req.session.otpExpiry;
     });
   }
 };
-=======
-
-const confirmOtp = async (req,res)=> {
-    try {
-        console.log("BODY RECEIVED:", req.body);
-        const { otp } = req.body;
-        console.log("Received OTP:", otp);
-        console.log("Session OTP:", req.session.userOtp);
-
-        if(String(otp) === String(req.session.userOtp)){
-            const user = req.session.userData
-
-            const passwordHash = await securePassword(user.password);
-
-            const savedUserData = new User ({
-                username:user.username,
-                email:user.email,
-                phone:user.phone,
-                password:passwordHash
-            })
-
-            await savedUserData.save();
-            req.session.user = savedUserData._id;
-            req.session.userOtp = null;
-            req.session.userData = null;
-            res.json({success:true, redirectUrl:"/"})
-            
-
-        }else{
-            res.status(400).json({success:false,message:"Invallid OTP, Please try again"})
-        }
-    } catch (error) {
-        console.error("Error verifying OTP",error);
-        res.status(500).json({success:false,message:"An error occured"})
-    }
-}
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 
 const resendOTP = async (req, res) => {
@@ -429,10 +305,7 @@ const resendOTP = async (req, res) => {
   
       const otp = generateOtp();
       req.session.userOtp = otp;
-<<<<<<< HEAD
       req.session.otpExpiry = Date.now() + 60 * 1000; // ⭐ ADD THIS
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   
       req.session.save(async (err) => {
         if (err) {
@@ -459,14 +332,10 @@ const resendOTP = async (req, res) => {
   const loadLogin = async (req,res)=>{
     try {
         if(!req.session.user){
-<<<<<<< HEAD
             const errorMessage = req.query.error === 'blocked' 
                 ? 'Your account has been blocked. Please contact support.' 
                 : null;
             return res.render("user/login", { message: errorMessage })
-=======
-            return res.render("user/login")
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         }else{
             res.redirect('/')
         }
@@ -498,7 +367,6 @@ const login = async (req,res)=>{
             console.log('incorrect password')
             return res.render('user/login',{message: "Incorrect password"})
         }
-<<<<<<< HEAD
         
         // Preserve admin session data if exists
         const adminSessionData = req.session.admin;
@@ -510,19 +378,12 @@ const login = async (req,res)=>{
             req.session.admin = adminSessionData;
         }
         
-=======
-        req.session.user = findUser._id;
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         res.redirect('/')
 
     } catch (error) {
 
         console.log("login error",error)
-<<<<<<< HEAD
         res.render("user/login",{message:"Login failed, Please try again later"})
-=======
-        res.render("login",{message:"Login failed, Plesae try again later"})
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         
     }
 }
@@ -531,18 +392,12 @@ const logout = async (req, res, next) => {
       req.logout(err => {
         if (err) return next(err);
   
-<<<<<<< HEAD
         // Only clear user session, preserve admin session
         delete req.session.user;
         delete req.session.passport;
         
         req.session.save(err => {
           if (err) return res.status(500).send("Error logging out");
-=======
-        req.session.destroy(err => {
-          if (err) return res.status(500).send("Error logging out");
-          res.clearCookie('connect.sid');
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
           res.redirect('/');
         });
       });
@@ -552,7 +407,6 @@ const logout = async (req, res, next) => {
     }
   };
 
-<<<<<<< HEAD
 const loadShoppingPage = async (req, res) => {
     try {
          const user = req.session.user;
@@ -575,17 +429,6 @@ const loadShoppingPage = async (req, res) => {
             wishlistIds = userData?.wishlist?.map(id => id.toString()) || [];
         }
         
-=======
-  const loadShoppingPage = async (req, res) => {
-    try {
-         const user = req.session.user;
-        let wishlistIds = [];
-        if(user) {
-            const userDoc = await User.findById(user).select('wishlist').lean();
-            wishlistIds = userDoc?.wishlist?.map(id => id.toString()) || [];
-        }
-        const userData = user ? await User.findOne({ _id: user }) : null;
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         const categories = await Category.find({ isListed: true });
         const categoryIds = categories.map(category => category._id.toString());
         const page = parseInt(req.query.page) || 1;
@@ -594,7 +437,6 @@ const loadShoppingPage = async (req, res) => {
         const search = req.query.search || null;
         let query = {
             isBlocked: false,
-<<<<<<< HEAD
             category: { $in: categoryIds }
           };
           if (search) {
@@ -642,36 +484,6 @@ const loadShoppingPage = async (req, res) => {
 
         // Get total number of products for pagination
         const totalProducts = await Product.countDocuments({isBlocked:false,category:{$in:categoryIds}});
-=======
-            category: { $in: categoryIds },
-            variants: { $elemMatch: { quantity: { $gt: 0 } } }
-          };
-          if (search) {
-           
-            query.$or = [
-              { name: { $regex: search, $options: 'i' } },
-              { description: { $regex: search, $options: 'i' } }
-            ];
-          }
-        const products = await Product.find(query).sort({createdAt: -1}).skip(skip).limit(limit);
-        
-        products.forEach(product => {
-
-            const category = categories.find(cat => cat._id.toString() === product.category?.toString());
-            const subcategory = category?.subcategories?.find(sc => sc._id.toString() === product.subcategory?.toString());
-        const subcategoryName= subcategory?.name || null;
-        const productOffer = product.offer || 0;
-        const categoryOffer = category?.categoryOffer || 0;
-        const subcategoryOffer = subcategory?.offer || 0;
-      
-        const effectiveOffer = Math.max(productOffer, categoryOffer, subcategoryOffer);
-        product.effectiveOffer = effectiveOffer;
-        product.salePrice = Math.round(product.price * (1 - effectiveOffer / 100) * 100) / 100;
-        product.totalQuantity = product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0);
-          });
-        // Get total number of products for pagination
-        const totalProducts = await Product.countDocuments({isBlocked:false,category:{$in:categoryIds} ,variants:{ $elemMatch: { quantity: { $gt: 0 } } } });
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         const totalPages = Math.ceil(totalProducts / limit);
         const brands= await Brand.find({isListed:true})
         const catgoriesWithIds = categories.map(category=>({_id:category._id,name:category.name,subcategories: category.subcategories || []}))
@@ -726,19 +538,10 @@ const loadShoppingPage = async (req, res) => {
  
         const brands= await Brand.find({}).lean();
          const query={
-<<<<<<< HEAD
             isBlocked :false
          }
          
         if (color) variantQuery.color = color;
-=======
-            isBlocked :false,
-            variants: { $elemMatch: { quantity: { $gt: 0 } } }
-         }
-         
-        if (color) variantQuery.color = color;
-        if (price) variantQuery.price = price;
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
          if (Object.keys(variantQuery).length > 0) {
                 query.variants = { $elemMatch: { ...variantQuery, quantity: { $gt: 0 } } };
@@ -753,7 +556,6 @@ const loadShoppingPage = async (req, res) => {
             query.brand = findBrand._id;
         }
        
-<<<<<<< HEAD
 if (req.query.price) {
   const priceRange = req.query.price;
 
@@ -768,23 +570,10 @@ if (req.query.price) {
     };
   }
 }
-=======
-        if (req.query.price) {
-            const priceRange = req.query.price;
-          
-        if (priceRange === '4000+') {
-              query.salePrice = { $gte: 4000 };
-        } else {
-              const [min, max] = priceRange.split('-').map(Number);
-              query.salePrice = { $gte: min, $lte: max };
-            }
-        }
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
           const sort = req.query.sort || 'default';
         let sortCriteria = {};
         switch (sort) {
-<<<<<<< HEAD
           case 'price_asc':
             sortCriteria = { "variants.salePrice": 1 };
             break;
@@ -801,32 +590,6 @@ if (req.query.price) {
             sortCriteria = { createdAt: -1 };
         }
 
-=======
-            case 'popularity':
-              sortCriteria = { popularity: -1 }; 
-              break;
-            case 'rating':
-              sortCriteria = { averageRating: -1 };
-              break;
-            case 'newest':
-              sortCriteria = { createdAt: -1 };
-              break;
-            case 'price_asc':
-              sortCriteria = { salePrice: 1 };
-              break;
-            case 'price_desc':
-              sortCriteria = { salePrice: -1 };
-              break;
-            case 'name_asc':
-              sortCriteria = { name: 1 };
-              break;
-            case 'name_desc':
-              sortCriteria = { name: -1 };
-              break;
-            default:
-              sortCriteria = { createdAt: -1 };
-          }
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
           
         const allCategories = await Category.find({}, { name: 1, subcategories: 1 }).lean();
         let selectedSubcategoryName = null;
@@ -843,7 +606,6 @@ if (req.query.price) {
             Product.countDocuments(query)
           ]);
         let findProducts = products;
-<<<<<<< HEAD
 
         // âœ… Set display price based on the lowest priced variant
 findProducts.forEach(product => {
@@ -872,8 +634,6 @@ findProducts.forEach(product => {
   }
 });
 
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         const categories = await Category.find({ isListed: true });
         // Pagination setup
         let itemsPerPage = 12;
@@ -914,10 +674,7 @@ findProducts.forEach(product => {
         selectedSort: sort || null,
         selectedSubcategoryName,
         wishlistIds,
-<<<<<<< HEAD
         search: req.query.search || '',
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         query: req.query,
     });
     }catch (error)
@@ -944,9 +701,5 @@ module.exports = {
     loadShoppingPage,
     filterProduct
   
-<<<<<<< HEAD
 } 
 
-=======
-} 
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2

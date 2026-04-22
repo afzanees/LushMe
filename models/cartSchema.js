@@ -13,13 +13,10 @@ const cartSchema = new Schema({
             ref:'Product',
             required:true,
         },
-<<<<<<< HEAD
         variantIndex: { 
             type: Number, 
             required: true 
         },
-=======
->>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         quantity:{
             type:Number,
             default:1
