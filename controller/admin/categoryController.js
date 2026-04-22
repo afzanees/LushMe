@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema")
 const { calculateEffectivePrice } = require("./productController");
 
 const addCategory = async (req, res) => {
+<<<<<<< HEAD
   try {
 
     const { name, description } = req.body;
@@ -57,6 +58,38 @@ const addCategory = async (req, res) => {
   });
 }
 };
+=======
+    try {
+      const { name, description } = req.body;
+      const categoryImage = req.file ? req.file.filename : null;
+
+      console.log('body:', req.body);
+    console.log('file:', req.file);
+  
+      if (!name || !description || !categoryImage) {
+        return res.status(400).json({ success: false, message: "All fields are required" });
+      }
+  
+      const existing = await Category.findOne({ name: new RegExp(`^${name.trim()}$`, "i") });
+      if (existing) {
+        return res.status(400).json({ success: false, message: "Category already exists" });
+      }
+  
+      const newCategory = new Category({
+        name: name.trim(),
+        description,
+        categoryImage
+      });
+  
+      await newCategory.save();
+      return res.status(200).json({ success: true, message: "Category added successfully" });
+
+    } catch (error) {
+      console.error("Add Category Error:", error);
+      res.status(500).json({ message: "Server Error" });
+    }
+  };
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
  
   //Category list
   const categoryInfo = async (req, res) => {
@@ -66,7 +99,11 @@ const addCategory = async (req, res) => {
       const skip = (page - 1) * limit;
   
       const searchQuery = req.query.search ? req.query.search.trim() : '';
+<<<<<<< HEAD
       const query = { isDeleted: { $ne: true } }; // Only show non-deleted categories
+=======
+      const query = {};
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   
       if (searchQuery) {
         // Case-insensitive search for category name
@@ -127,6 +164,7 @@ const addCategory = async (req, res) => {
       };
   
       if (req.file) {
+<<<<<<< HEAD
         // Validate file type
         const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
         if (!allowedTypes.includes(req.file.mimetype)) {
@@ -135,6 +173,8 @@ const addCategory = async (req, res) => {
             message: "Only PNG, JPEG, JPG and WEBP images are allowed"
           });
         }
+=======
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         updateFields.categoryImage = req.file.filename;
       }
   
@@ -153,7 +193,11 @@ const addCategory = async (req, res) => {
   const deleteCategory = async (req, res) => {
     try {
       const categoryId = req.params.id;
+<<<<<<< HEAD
       const deleted = await Category.updateOne({ _id: categoryId }, { isDeleted: true });
+=======
+      const deleted = await Category.findByIdAndDelete(categoryId);
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   
       if (!deleted) {
         return res.status(404).json({ success: false, message: "Category not found" });

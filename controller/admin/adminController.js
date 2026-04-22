@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const User = require('../../models/userSchema');
 const Order = require('../../models/orderSchema');
 const Product = require('../../models/productSchema');
@@ -5,6 +6,10 @@ const {generatePDF, generateExcel } = require('../../utils/makeReport')
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const moment = require('moment')
+=======
+const bcrypt = require("bcrypt");
+const User = require("../../models/userSchema");
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 const pageerror = async (req, res) => {
     try {
@@ -36,6 +41,7 @@ const login = async (req, res) => {
     const match = await bcrypt.compare(password, admin.password);
     if (!match) return res.render("admin/login", { message: "Incorrect password" });
 
+<<<<<<< HEAD
     // Preserve user session data before regeneration
     const userSessionData = req.session.user;
     const passportSessionData = req.session.passport;
@@ -64,6 +70,10 @@ const login = async (req, res) => {
         return res.redirect("/admin/dashboard");
       });
     });
+=======
+    req.session.admin = admin._id;
+    res.redirect("/admin/dashboard");
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   } catch (err) {
     console.error("Admin login error:", err);
     res.render("admin/login", { message: "Server error" });
@@ -94,12 +104,17 @@ const loadDashboard = async (req, res) => {
       res.render("admin/dashboard", { admin, stats });
     } catch (error) {
       console.error("Dashboard load error:", error);
+<<<<<<< HEAD
       res.redirect("/admin/pageerror");
+=======
+      res.redirect("admin/pageerror");
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     }
   };
 
   const logout = async (req, res) => {
     try {
+<<<<<<< HEAD
         // Only clear admin session, preserve user session
         delete req.session.admin;
         
@@ -506,6 +521,18 @@ const getDashboardData = async (req, res) => {
 };
 
 
+=======
+        if (req.session.admin) {
+            delete req.session.admin; 
+        }
+        res.redirect('/admin/login'); 
+    } catch (error) {
+        console.log('Logout Error', error);
+        res.redirect('admin/pageerror');
+    }
+};
+
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 module.exports = { 
     loadLogin, 
@@ -513,6 +540,12 @@ module.exports = {
     loadDashboard,
     pageerror,
     logout,
+<<<<<<< HEAD
     getDashboardData,
     loadSalesPage
 };
+=======
+};
+
+
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2

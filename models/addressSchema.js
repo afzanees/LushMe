@@ -16,10 +16,13 @@ const addressSchema = new Schema({
             type:String,
             required:true,
         },
+<<<<<<< HEAD
         houseNo:{
             type:String,
             required:true,
         },
+=======
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         city:{
             type:String,
             required:true,
@@ -42,7 +45,11 @@ const addressSchema = new Schema({
         },
         altPhone:{
             type:String,
+<<<<<<< HEAD
             required:false,
+=======
+            requiredtrue,
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         }
     }]
 

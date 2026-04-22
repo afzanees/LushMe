@@ -14,7 +14,11 @@ const userSchema = new Schema({       // creating model
     phone: {
         type:String,
         required:false,  // this false because when we do single sighnup there is only useername and password
+<<<<<<< HEAD
        
+=======
+        unique:true,
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
         sparse:true,
         default:null,
        
@@ -23,8 +27,11 @@ const userSchema = new Schema({       // creating model
     googleId:{
         type:String,
         unique:true,
+<<<<<<< HEAD
         sparse: true, 
         
+=======
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     
     },
     password:{
@@ -43,6 +50,7 @@ const userSchema = new Schema({       // creating model
         type:Schema.Types.ObjectId,
         ref:"Cart",
     }],
+<<<<<<< HEAD
     wishlist:[{
         type:Schema.Types.ObjectId,
         ref:"Product"
@@ -73,6 +81,11 @@ const userSchema = new Schema({       // creating model
         description: {
             type: String
         }
+=======
+    wallet:[{
+        type:Schema.Types.ObjectId,
+        ref:"wishlist"
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     }],
     orderHIstory:[{
         type:Schema.Types.ObjectId,
@@ -81,6 +94,7 @@ const userSchema = new Schema({       // creating model
         type:Date,
         default:Date.now,
     }],
+<<<<<<< HEAD
     referralCode:{
         type:String,
     },
@@ -92,6 +106,11 @@ const userSchema = new Schema({       // creating model
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
       },
+=======
+    referalCode:{
+        type:String,
+    },
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     redeemed:{
         type:Boolean,
     },

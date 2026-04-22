@@ -48,10 +48,13 @@ const categorySchema = new mongoose.Schema({
         type: Date,
         default:Date.now
     },
+<<<<<<< HEAD
     isDeleted:{
       type:Boolean,
       default:false
     },
+=======
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
     subcategories: [subcategorySchema]
 
 })

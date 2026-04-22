@@ -2,24 +2,45 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 
-// Step 1: Start Google Login
+function getGoogleCallbackUrl(req) {
+  const configuredCallbackUrl = process.env.GOOGLE_CALLBACK_URL;
+  const requestHost = req.get("host");
+  const isProductionHost = requestHost && !/^localhost(:\d+)?$/i.test(requestHost);
+
+  if (
+    configuredCallbackUrl &&
+    !(isProductionHost && /:\/\/localhost(:\d+)?\//i.test(configuredCallbackUrl))
+  ) {
+    return configuredCallbackUrl;
+  }
+
+  if (process.env.APP_BASE_URL) {
+    return `${process.env.APP_BASE_URL.replace(/\/$/, "")}/auth/google/callback`;
+  }
+
+  return `${req.protocol}://${req.get("host")}/auth/google/callback`;
+}
+
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  (req, res, next) =>
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+      callbackURL: getGoogleCallbackUrl(req),
+    })(req, res, next)
 );
 
-
-// Step 2: Google Redirect URL
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res, next) =>
+    passport.authenticate("google", {
+      failureRedirect: "/login",
+      callbackURL: getGoogleCallbackUrl(req),
+    })(req, res, next),
   (req, res) => {
     const user = req.user;
-
-    // Preserve admin session data before regeneration
     const adminSessionData = req.session.admin;
-    
-    // Regenerate session after authentication to prevent session fixation.
+
     req.session.regenerate((regenErr) => {
       if (regenErr) {
         console.error("Session regeneration failed:", regenErr);
@@ -33,24 +54,22 @@ router.get(
         }
 
         req.session.user = user._id;
-        
-        // Restore admin session data after regeneration
+
         if (adminSessionData) {
           req.session.admin = adminSessionData;
         }
-        
+
         req.session.save((saveErr) => {
           if (saveErr) {
             console.error("Session save failed:", saveErr);
             return res.redirect("/login");
           }
-          res.redirect("/");
+
+          return res.redirect("/");
         });
       });
     });
   }
 );
-
-
 
 module.exports = router;

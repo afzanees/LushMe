@@ -1,10 +1,14 @@
 const multer = require('multer');
 const path = require('path');
+<<<<<<< HEAD
 const fs = require('fs');
+=======
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 
 // Set up storage location and filename
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+<<<<<<< HEAD
     // Determine destination based on fieldname
     let uploadPath;
     if (file.fieldname === 'profileImage') {
@@ -19,6 +23,9 @@ const storage = multer.diskStorage({
     }
     
     cb(null, uploadPath);
+=======
+    cb(null, path.join(__dirname, '../public/uploads/categoryImages'));
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   },
   filename: (req, file, cb) => {
     const uniqueName = Date.now() + '-' + file.originalname;
@@ -35,6 +42,7 @@ const fileFilter = (req, file, cb) => {
   if (extname && mimetype) {
     cb(null, true);
   } else {
+<<<<<<< HEAD
     const error = new Error(`Invalid file type: ${file.mimetype}. Only JPEG, JPG, PNG and WEBP images are allowed`);
     error.code = 'INVALID_FILE_TYPE';
     cb(error, false);
@@ -89,3 +97,16 @@ const handleMulterError = (err, req, res, next) => {
 
 module.exports = upload;
 module.exports.handleMulterError = handleMulterError;
+=======
+    cb(new Error('Only images are allowed'));
+  }
+};
+
+// Create the multer instance
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter
+});
+
+module.exports = upload;
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2

@@ -6,6 +6,7 @@ const variantSchema = new Schema({
     type: String, 
     required: true 
   },
+<<<<<<< HEAD
   regularPrice: {
     type: Number, 
     required: true 
@@ -21,6 +22,16 @@ const variantSchema = new Schema({
     productImage: { 
     type: [String] 
 },
+=======
+  price: { 
+    type: Number, 
+    required: true 
+  },
+  quantity: {
+    type: Number,
+    require:true
+  }
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
 });
 
 const productSchema = new Schema({
@@ -37,11 +48,14 @@ const productSchema = new Schema({
     ref: 'Brand',
     required: true 
 },
+<<<<<<< HEAD
 slug: {
   type: String,
   unique: true,
 },
 
+=======
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   category: { 
     type: Schema.Types.ObjectId, 
     ref: 'Category',
@@ -55,6 +69,7 @@ slug: {
       type: Boolean,
       default: false  
     },
+<<<<<<< HEAD
     ratings: [{
     userId: {
       type: Schema.Types.ObjectId,
@@ -73,16 +88,45 @@ slug: {
   }],
 
 
+=======
+
+  regularPrice: {
+    type: Number, 
+    required: true 
+},
+  salePrice: { 
+    type: Number, 
+    required: true 
+},
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   productOffer: { 
     type: Number, 
     default: 0 
 },
+<<<<<<< HEAD
   offerValidUntil: {
     type: Date
   },
 
 variants: [variantSchema], 
 
+=======
+  quantity: { 
+    type: Number, 
+    default: 0
+ }, // ✅ fixed
+  shade: { 
+    type: String, 
+    required: true 
+},
+  productImage: { 
+    type: [String] 
+},
+variants: [variantSchema], 
+  isBlocked: { 
+    type: Boolean, 
+    default: false },
+>>>>>>> c911a6d6918394adcd05e7b533871a02e448c2e2
   status: {
     type: String,
     enum: ["Available", "Out Of Stock", "Discontinued"],
