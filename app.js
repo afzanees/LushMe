@@ -60,7 +60,11 @@ app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/fonts", express.static(path.join(__dirname, "public/fonts")));
 app.use("/vendor", express.static(path.join(__dirname, "public/vendor")));
 
-app.get("/favicon.ico", (req, res) => res.status(204).end());
+app.get("/favicon.ico", (req, res) => {
+  const faviconPath = path.join(__dirname, "public/images/logo.png");
+  res.type("image/png");
+  return res.sendFile(faviconPath);
+});
 
 app.use(async (req, res, next) => {
   try {
