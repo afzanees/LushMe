@@ -132,7 +132,7 @@ const updatePassword = async (req, res) => {
         req.session.resetOtp = null;
         req.session.resetEmail = null;
 
-        res.redirect("/login");
+        res.redirect("/sign-in");
 
     } catch (error) {
         console.error("Update Password Error:", error);
@@ -145,7 +145,7 @@ const userProfile = async (req,res)=>{
         const sessionUser = req.session.user;
         const userId = req.user?._id || (sessionUser && (sessionUser._id || sessionUser));
         if (!userId) {
-          return res.redirect('/login');
+          return res.redirect('/sign-in');
         }
         const allowedTabs = new Set(['profile', 'orders', 'wallet', 'Wallet-History', 'Referral', 'address']);
         let activeTab = req.query.tab;
@@ -157,7 +157,7 @@ const userProfile = async (req,res)=>{
         const userData = await User.findById(userId)
         if (!userData) {
           delete req.session.user;
-          return res.redirect('/login');
+          return res.redirect('/sign-in');
         }
         const userAddress = await Address.findOne({ userId: userId });
         const addresses = userAddress ? userAddress.address : [];
@@ -223,7 +223,7 @@ const changeEmail = async (req, res) => {
     
     // Check if user is Google login user
     if (!userData.password) {
-      return res.redirect('/profile'); // or show error message
+      return res.redirect('/account'); // or show error message
     }
     
     res.render('user/change-email', {
@@ -243,7 +243,7 @@ const changeEmailValid = async (req, res) => {
     
     // Prevent Google users from changing email
     if (!userData.password) {
-      return res.redirect('/profile');
+      return res.redirect('/account');
     }
     
     const { email } = req.body;
@@ -305,7 +305,7 @@ const verifyEmailOtp = async (req, res) => {
     req.session.emailOtp = null;
     req.session.pendingEmail = null;
 
-    res.redirect('/profile');
+    res.redirect('/account');
 
   } catch (err) {
     console.error(err);
@@ -350,7 +350,7 @@ const updateProfile = async (req, res) => {
 
       console.log('Updated user:', updatedUser);
 
-      return res.redirect('/profile');
+      return res.redirect('/account');
     } catch (error) {
       console.error('Update error:', error);
       return res.status(500).send('Server error');
@@ -612,7 +612,7 @@ const getEditAddress =async (req,res)=>{
       }
 
       // Determine redirect based on parameter
-      const redirectTo = redirect === 'checkout' ? '/checkout' : '/profile';
+      const redirectTo = redirect === 'checkout' ? '/secure-checkout' : '/account';
       return res.redirect(redirectTo);
 
     } catch (error) {

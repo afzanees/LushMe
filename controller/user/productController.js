@@ -22,7 +22,7 @@ const productDetails = async (req,res) => {
                         console.error("Error destroying session:", err);
                     }
                 });
-                return res.redirect("/login?error=blocked");
+                return res.redirect("/sign-in?error=blocked");
             }
             
             wishlistIds = userData?.wishlist?.map(id => id.toString()) || [];
@@ -53,7 +53,7 @@ const productDetails = async (req,res) => {
         }
         if (product.isBlocked) {
             // Product exists but blocked by admin
-            return res.redirect('/shop');
+            return res.redirect('/products');
         }
         
          // Calculate effective offer (product, category, subcategory)

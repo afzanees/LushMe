@@ -1,5 +1,20 @@
 <%- include("../partials/user/header") -%>
 <div><br><br><br></div>
+<%
+  const formatIndianDateTime = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+%>
 
 <style>
   /* All your original styles here (copied from your old profile page) */
@@ -496,8 +511,8 @@ tbody tr:hover {
 
         <div class="buttons">
           <% if (user.password) { %>
-            <a href="/change-email" class="btn btn-dark">Change Email</a>
-            <a href="/change-password" class="btn btn-danger">Change Password</a>
+    <a href="/account/change-email" class="btn btn-dark">Change Email</a>
+    <a href="/account/change-password" class="btn btn-danger">Change Password</a>
           <% } else { %>
             <span class="text-muted" style="font-size: 0.9rem;">
               <i class="fas fa-info-circle"></i> Email and Password are managed by Google
@@ -566,7 +581,7 @@ tbody tr:hover {
                   </td>
                   <td>₹<%= order.finalAmount %></td>
                   <td>
-                    <a href="/viewOrderDetails/<%= order._id %>" class="btn btn-primary btn-small d-block mb-1">View Details</a>
+                    <a href="/orders/<%= order._id %>" class="btn btn-primary btn-small d-block mb-1">View Details</a>
                   </td>
                 </tr>
                 <tr>
@@ -691,7 +706,7 @@ tbody tr:hover {
               <% if (Array.isArray(walletTransactions) && walletTransactions.length) { %>
                 <% walletTransactions.forEach(function(tx) { %>
                   <tr>
-                    <td><%= new Date(tx.date).toLocaleString() %></td>
+                    <td><%= formatIndianDateTime(tx.date) %></td>
                     <td><%= tx.description || tx.method || tx.type %></td>
                     <td style="text-align:right;">
                       <span class="<%= tx.status === 'credited' ? 'txn-credit' : 'txn-debit' %>">
@@ -728,7 +743,7 @@ tbody tr:hover {
               <% if (walletTransactions.length > 0) { %>
                 <% walletTransactions.forEach(txn => { %>
                   <tr>
-                    <td><%= new Date(txn.date).toLocaleString() %></td>
+                    <td><%= formatIndianDateTime(txn.date) %></td>
                     <td>
                       <% if (txn.status === 'credited') { %>
                         <% if (txn.method === 'reward') { %>
@@ -839,7 +854,7 @@ tbody tr:hover {
       <h2>Address</h2>
       <div class="underline"></div>
       <% if (!addresses || addresses.length === 0) { %>
-        <p>No addresses found. <a href="/address?redirect=profile" class="btn btn-primary btn-sm">Add an address</a></p>
+        <p>No addresses found. <a href="/account/address?redirect=profile" class="btn btn-primary btn-sm">Add an address</a></p>
       <% } else { %>
         <div class="address-list">
           <% addresses.forEach((addr) => { %>
@@ -854,12 +869,12 @@ tbody tr:hover {
               Phone: <%= addr.phone %><br>
               Alternate Phone: <%= addr.altPhone || 'N/A' %><br>
               <div style="margin-top:10px; display: flex; justify-content: flex-end; gap: 10px;">
-                <a href="/address/<%= addr._id %>?redirect=profile" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="/account/address/<%= addr._id %>?redirect=profile" class="btn btn-sm btn-outline-primary">Edit</a>
                 <a href="/deleteAddress?id=<%= addr._id %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this address?')">Delete</a>
               </div>
             </div>
           <% }) %>
-          <a href="/address?redirect=profile" class="btn btn-primary mt-3">Add New Address</a>
+          <a href="/account/address?redirect=profile" class="btn btn-primary mt-3">Add New Address</a>
         </div>
       <% } %>
     </div>

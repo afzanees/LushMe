@@ -23,8 +23,8 @@ const addressController = {
       // Decide redirect target
       const redirectTo =
         redirect === 'checkout'
-          ? '/checkout'
-          : '/profile';
+          ? '/secure-checkout'
+          : '/account';
 
       res.render('user/address', {
         address,
@@ -107,7 +107,7 @@ const addressController = {
       }
 
       // Redirect back
-      res.redirect(redirectTo || '/profile');
+      res.redirect(redirectTo || '/account');
 
     } catch (err) {
       console.error(err);

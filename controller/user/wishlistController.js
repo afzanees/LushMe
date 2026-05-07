@@ -128,7 +128,7 @@ const getWishlistPage = async (req, res) => {
     try {
         const userId = req.session.user;
         if (!userId) {
-            return res.redirect('/login');
+            return res.redirect('/sign-in');
         }
 
         const user = await User.findById(userId).populate({
@@ -140,7 +140,7 @@ const getWishlistPage = async (req, res) => {
         });
 
         if (!user) {
-            return res.redirect('/login');
+            return res.redirect('/sign-in');
         }
 
         // Filter out null/deleted products from wishlist

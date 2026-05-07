@@ -177,7 +177,7 @@ const getCartPage = async (req, res) => {
   try {
     const userId = req.session.user?._id || req.session.user;
 
-    if (!userId) return res.redirect('/login');
+    if (!userId) return res.redirect('/sign-in');
     const cart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
       populate: [{ path: 'category' }, { path: 'brand', select: 'name' }]

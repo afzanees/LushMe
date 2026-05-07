@@ -95,7 +95,7 @@
       <i class="fas fa-heart"></i>
       <h3>Your wishlist is empty</h3>
       <p class="text-muted mb-4">Add products you love to your wishlist</p>
-      <a href="/shop" class="btn btn-primary px-5">Continue Shopping</a>
+      <a href="/products" class="btn btn-primary px-5">Continue Shopping</a>
     </div>
   <% } else { %>
     <div class="row">
@@ -108,12 +108,12 @@
                 imgSrc = '/' + product.variants[0].productImage[0];
               }
             %>
-            <a href="/productDetails/<%= product.slug || product._id %>">
+            <a href="/products/<%= product.slug || product._id %>">
               <img src="<%= imgSrc %>" alt="<%= product.name %>" class="product-img">
             </a>
             
             <div class="product-body">
-              <a href="/productDetails/<%= product.slug || product._id %>" style="text-decoration: none; color: inherit;">
+              <a href="/products/<%= product.slug || product._id %>" style="text-decoration: none; color: inherit;">
                 <h5 class="product-name"><%= product.name %></h5>
               </a>
               

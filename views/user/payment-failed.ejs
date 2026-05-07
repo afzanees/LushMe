@@ -40,15 +40,15 @@
             <i class="bi bi-arrow-repeat"></i> Retry Payment
           </button>
 
-          <a href="/viewOrderDetails/<%= order._id %>" class="btn btn-outline-secondary w-100 mb-2">
+          <a href="/orders/<%= order._id %>" class="btn btn-outline-secondary w-100 mb-2">
             View Order Details
           </a>
 
-          <a href="/shop" class="btn btn-outline-primary w-100 mb-2">
+          <a href="/products" class="btn btn-outline-primary w-100 mb-2">
             Continue Shopping
           </a>
 
-          <a href="/profile" class="btn btn-link text-decoration-none">Go to My Orders</a>
+          <a href="/account?tab=orders#orders" class="btn btn-link text-decoration-none">Go to My Orders</a>
         </div>
       </div>
     </div>
@@ -109,7 +109,7 @@
                     text: 'Your order has been confirmed.',
                     confirmButtonText: 'View Order'
                   }).then(() => {
-                    window.location.href = '/order-success/<%= order._id %>';
+                    window.location.href = '/orders/success/<%= order._id %>';
                   });
                 } else {
                   Swal.fire('Payment Verification Failed', verifyData.message || 'Please contact support', 'error');

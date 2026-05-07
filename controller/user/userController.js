@@ -26,7 +26,7 @@ const loadHomepage = async (req,res) =>{
                         console.error("Error destroying session:", err);
                     }
                 });
-                return res.redirect("/login?error=blocked");
+                return res.redirect("/sign-in?error=blocked");
             }
           } else if (req.user) {                      // by google
             user = req.user; // <-- from Passport Google
@@ -38,7 +38,7 @@ const loadHomepage = async (req,res) =>{
                         console.error("Error destroying session:", err);
                     }
                 });
-                return res.redirect("/login?error=blocked");
+                return res.redirect("/sign-in?error=blocked");
             }
           }
           console.log("Homepage user:", user);      
@@ -423,7 +423,7 @@ const loadShoppingPage = async (req, res) => {
                         console.error("Error destroying session:", err);
                     }
                 });
-                return res.redirect("/login?error=blocked");
+                return res.redirect("/sign-in?error=blocked");
             }
             
             wishlistIds = userData?.wishlist?.map(id => id.toString()) || [];

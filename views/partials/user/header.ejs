@@ -57,21 +57,12 @@
       gap: 14px;
     }
 
-    .lush-header .desktop-search {
-      width: 280px;
-    }
-
     .lush-header .desktop-nav .nav-link {
       color: #212529;
     }
 
     .lush-header .desktop-nav .nav-link.active-link {
       color: #6c757d;
-    }
-
-    .lush-header .mobile-search {
-      margin-top: 0.5rem;
-      margin-bottom: 0.75rem;
     }
 
     .lush-header .mobile-actions {
@@ -94,12 +85,8 @@
         </a>
 
         <ul class="nav desktop-nav col-12 col-lg-auto mb-2 mb-md-0 justify-content-center">
-          <li><a href="/shop" class="nav-link px-2">Products</a></li>
+          <li><a href="/products" class="nav-link px-2">Products</a></li>
         </ul>
-
-        <form class="desktop-search me-lg-3" role="search">
-          <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-        </form>
 
         <div class="header-actions">
           <% if (user){ %>
@@ -114,18 +101,18 @@
                 role="button"
               >
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdownDesktop">
-                <li><a class="dropdown-item" href="/profile">My Profile</a></li>
+                <li><a class="dropdown-item" href="/account">My Profile</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="/logout">Logout</a></li>
               </ul>
             </div>
           <% } else { %>
-            <a href="/login" aria-label="Login">
+            <a href="/sign-in" aria-label="Login">
               <img src="/images/profile.png" alt="Login" class="profile-pic">
             </a>
           <% } %>
 
-          <a href="/wishlist" class="icon-btn position-relative" aria-label="Wishlist">
+          <a href="/my-wishlist" class="icon-btn position-relative" aria-label="Wishlist">
             <i class="far fa-heart"></i>
             <% if (wishlistCount > 0) { %>
               <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -134,7 +121,7 @@
             <% } %>
           </a>
 
-          <a href="/cart" class="icon-btn position-relative" aria-label="Cart">
+          <a href="/my-cart" class="icon-btn position-relative" aria-label="Cart">
             <i class="fas fa-shopping-cart"></i>
             <% if (cartCount > 0) { %>
               <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -157,14 +144,10 @@
         <div class="collapse navbar-collapse" id="userHeaderNavMobile">
           <ul class="navbar-nav me-lg-3 mb-2 mb-lg-0">
             <li class="nav-item"><a href="#" class="nav-link">What's new</a></li>
-            <li class="nav-item"><a href="/shop" class="nav-link">Products</a></li>
+            <li class="nav-item"><a href="/products" class="nav-link">Products</a></li>
             <li class="nav-item"><a href="#" class="nav-link">Brands</a></li>
             <li class="nav-item"><a href="#" class="nav-link">Offers</a></li>
           </ul>
-
-          <form class="mobile-search d-flex w-100" role="search">
-            <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-          </form>
 
           <div class="header-actions mobile-actions">
             <% if (user){ %>
@@ -179,19 +162,19 @@
                   role="button"
                 >
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdownMobile">
-                  <li><a class="dropdown-item" href="/profile">My Profile</a></li>
-                  <li><a class="dropdown-item" href="/orders">My Orders</a></li>
+                  <li><a class="dropdown-item" href="/account">My Profile</a></li>
+                  <li><a class="dropdown-item" href="/account?tab=orders#orders">My Orders</a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item" href="/logout">Logout</a></li>
                 </ul>
               </div>
             <% } else { %>
-              <a href="/login" aria-label="Login">
+              <a href="/sign-in" aria-label="Login">
                 <img src="/images/profile.png" alt="Login" class="profile-pic">
               </a>
             <% } %>
 
-            <a href="/wishlist" class="icon-btn position-relative" aria-label="Wishlist">
+            <a href="/my-wishlist" class="icon-btn position-relative" aria-label="Wishlist">
               <i class="far fa-heart"></i>
               <% if (wishlistCount > 0) { %>
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -200,7 +183,7 @@
               <% } %>
             </a>
 
-            <a href="/cart" class="icon-btn position-relative" aria-label="Cart">
+            <a href="/my-cart" class="icon-btn position-relative" aria-label="Cart">
               <i class="fas fa-shopping-cart"></i>
               <% if (cartCount > 0) { %>
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">

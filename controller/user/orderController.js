@@ -68,10 +68,10 @@ const syncCartOfferPrices = async (cartData) => {
 const getCheckoutPage = async (req, res) => {
     try {
       const userId = req.session?.user || (req.user && req.user._id);
-      if (!userId) return res.redirect('/login');
+      if (!userId) return res.redirect('/sign-in');
   
       const findUser = await User.findById(userId);
-      if (!findUser) return res.redirect('/shop');
+      if (!findUser) return res.redirect('/products');
   
       const addressData = await Address.findOne({ userId });
   
@@ -80,7 +80,7 @@ const getCheckoutPage = async (req, res) => {
         populate: [{ path: 'category' }, { path: 'brand' }]
       });
       if (!cartData || !cartData.items || cartData.items.length === 0) {
-        return res.redirect('/shop');
+        return res.redirect('/products');
       }
 
       await syncCartOfferPrices(cartData);
@@ -104,7 +104,7 @@ const getCheckoutPage = async (req, res) => {
 
     if (invalidItem) {
       req.flash('error', 'Your cart contains invalid or unavailable items. Please update your cart.');
-      return res.redirect('/cart');
+      return res.redirect('/my-cart');
     }
      //Calculate total
       let totalPrice = 0;
@@ -596,7 +596,6 @@ const getOrderSuccessPage = async (req, res) => {
  //order details page
  const viewOrderDetails = async (req, res) => {
   try {
-    // 1️⃣ Get orderId from URL parameter (could be _id or orderId)
     const orderIdParam = req.params.orderId;
     const userId = req.session?.user;
 
@@ -604,7 +603,6 @@ const getOrderSuccessPage = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Please login to view order details' });
     }
 
-    // Get user details
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
@@ -613,96 +611,117 @@ const getOrderSuccessPage = async (req, res) => {
     const perPage = 5;
     const currentPage = parseInt(req.query.page) || 1;
 
-    // 2️⃣ Fetch order by _id or orderId
-    let order = await Order.findById(orderIdParam)
-      .populate({
-        path: 'orderedItems.product',
-        select: 'name variants'
-      })
-      .populate('userId', 'name phone');
+    // Try _id first, then orderId field
+    let order = await Order.findById(orderIdParam).catch(() => null);
 
-    // If not found by _id, try by orderId (UUID)
     if (!order) {
-      order = await Order.findOne({ orderId: orderIdParam })
-        .populate({
-          path: 'orderedItems.product',
-          select: 'name variants'
-        })
-        .populate('userId', 'name phone');
+      order = await Order.findOne({ orderId: orderIdParam });
+    }
+
+    if (order) {
+      await order.populate([
+        { path: 'orderedItems.product', select: 'name variants' },
+        { path: 'userId', select: 'username name phone' }
+      ]);
     }
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Verify order belongs to the logged-in user
-    if (order.userId._id.toString() !== userId.toString()) {
+    const orderUserId = order.userId?._id || order.userId;
+    if (orderUserId.toString() !== userId.toString()) {
       return res.status(403).json({ success: false, message: 'Unauthorized access to order' });
     }
 
-    // 3️⃣ 🔥 ATTACH SELECTED VARIANT (THIS IS THE KEY PART)
-    try {
-      order.orderedItems = order.orderedItems.map(item => {
-        const product = item.product;
+    // Map items with variant + image resolution
+    order.orderedItems = order.orderedItems.map((item, idx) => {
+      const product = item.product;
+      const variants = product?.variants;
 
-        // safety check
-        const variant =
-          product &&
-          product.variants &&
-          typeof item.variantIndex === 'number' &&
-          product.variants[item.variantIndex]
-            ? product.variants[item.variantIndex]
-            : null;
+      // Safely resolve variant
+      const variantIndex = parseInt(item.variantIndex, 10);
+      const hasValidIndex = Number.isInteger(variantIndex) && variantIndex >= 0;
+      const variant = hasValidIndex && Array.isArray(variants) && variants[variantIndex]
+        ? variants[variantIndex]
+        : (Array.isArray(variants) && variants.length > 0 ? variants[0] : null);
 
-        // If variant is null, log a warning but don't fail
-        if (!variant) {
-          console.warn(`Variant not found for item in order ${order.orderId}, variantIndex: ${item.variantIndex}`);
+      // Safely resolve image path across different stored formats
+      let productImage = '';
+      if (variant) {
+        const raw = Array.isArray(variant.productImage)
+          ? variant.productImage[0]
+          : variant.productImage;
+
+        if (typeof raw === 'string' && raw.trim()) {
+          const normalizedRaw = raw.trim().replace(/\\/g, '/');
+
+          // Cases handled:
+          // 1) uploads/product-images/a.webp
+          // 2) /uploads/product-images/a.webp
+          // 3) public/uploads/product-images/a.webp
+          // 4) C:/.../public/uploads/product-images/a.webp
+          if (normalizedRaw.includes('/public/uploads/')) {
+            productImage = 'uploads/' + normalizedRaw.split('/public/uploads/')[1].replace(/^\/+/, '');
+          } else if (normalizedRaw.startsWith('public/uploads/')) {
+            productImage = normalizedRaw.replace(/^public\/+/, '');
+          } else if (normalizedRaw.startsWith('/uploads/')) {
+            productImage = normalizedRaw.replace(/^\/+/, '');
+          } else if (normalizedRaw.startsWith('uploads/')) {
+            productImage = normalizedRaw;
+          } else {
+            // fallback for unexpected formats
+            productImage = normalizedRaw.replace(/^\/+/, '');
+          }
         }
+      }
 
-        return {
-          ...item.toObject(),
-          product,                 // keep populated product
-          selectedVariant: variant || { productImage: [], color: 'N/A' } // 👈 fallback if variant missing
-        };
-      });
-    } catch (mapError) {
-      console.error('Error mapping order items with variants:', mapError);
-      console.error('Map error stack:', mapError.stack);
-      // Don't fail the whole request, just use items as-is
-      order.orderedItems = order.orderedItems.map(item => ({
+      if (!productImage) {
+        console.warn(`[OrderDetails] Missing image — orderId: ${order.orderId}, itemIdx: ${idx}, variantIndex: ${item.variantIndex}, productId: ${product?._id}`);
+      } else {
+        const absImagePath = path.join(__dirname, '../../public', productImage.replace(/^\/+/, ''));
+        const existsOnDisk = fs.existsSync(absImagePath);
+        console.log(`[OrderDetails] Image debug — orderId: ${order.orderId}, itemIdx: ${idx}, rawVariantImage: ${
+          Array.isArray(variant?.productImage) ? variant?.productImage?.[0] : variant?.productImage
+        }, mapped: ${productImage}, publicUrl: /${productImage}, existsOnDisk: ${existsOnDisk}`);
+      }
+
+      if (!variant) {
+        console.log(`[OrderDetails] Variant debug — orderId: ${order.orderId}, itemIdx: ${idx}, variantIndex: ${item.variantIndex}, variantsCount: ${Array.isArray(variants) ? variants.length : 0}`);
+      }
+
+      return {
         ...item.toObject(),
-        product: item.product,
-        selectedVariant: { productImage: [], color: 'N/A' }
-      }));
-    }
+        product,
+        selectedVariant: variant || { productImage: [], color: 'N/A' },
+        productName: product?.name || 'Product',
+        productImage,                                   // always a clean '/...' string or ''
+        color: variant?.color || 'N/A',
+        finalPrice: Number(item.price || 0),
+        originalIndex: idx
+      };
+    });
 
-    // 4️⃣ Pagination (after variant mapping)
+    // Paginate
     const totalItems = order.orderedItems.length;
     const totalPages = Math.ceil(totalItems / perPage);
 
-    const paginatedItems = order.orderedItems.slice(
+    order.orderedItems = order.orderedItems.slice(
       (currentPage - 1) * perPage,
       currentPage * perPage
     );
 
-    order.orderedItems = paginatedItems;
-
-    // 5️⃣ Render page
     res.render('user/order-details', {
-      user: user,  // Pass full user object with name, phone, etc.
-      orderObj: order,
+      user,
+      order,
       totalPages,
       currentPage
     });
 
   } catch (error) {
-    console.error('========== viewOrderDetails ERROR ==========');
-    console.error('Error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Order ID param:', req.params.orderId);
-    console.error('User ID:', req.session?.user);
-    console.error('==========================================');
+    console.error('[viewOrderDetails] Error:', error.message);
+    console.error('[viewOrderDetails] Stack:', error.stack);
+    console.error('[viewOrderDetails] orderId param:', req.params.orderId, '| userId:', req.session?.user);
     res.status(500).json({ success: false, message: 'Something went wrong!', error: error.message });
   }
 };
@@ -1183,7 +1202,7 @@ const deleteCoupon=async (req, res) => {
 const retryPayment = async (req, res) => {
   try {
     const userId = req.session.user;
-    if (!userId) return res.redirect('/login');
+    if (!userId) return res.redirect('/sign-in');
 
     const orderId = req.params.orderId;
     const order = await Order.findById(orderId);
@@ -1198,13 +1217,13 @@ const retryPayment = async (req, res) => {
 
     // Can retry payment for Razorpay orders that are not yet paid
     if (order.paymentMethod !== 'razorpay') {
-      return res.redirect(`/viewOrderDetails/${orderId}`);
+      return res.redirect(`/orders/${orderId}`);
     }
 
     // Allow retry if payment status is not 'paid'
     const paymentStatus = (order.paymentStatus || '').toLowerCase();
     if (paymentStatus === 'paid') {
-      return res.redirect(`/viewOrderDetails/${orderId}`);
+      return res.redirect(`/orders/${orderId}`);
     }
 
     // Persist failed state so it appears correctly in order listings.

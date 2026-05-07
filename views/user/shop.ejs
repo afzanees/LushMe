@@ -99,7 +99,7 @@
           </select>
         </div>
 
-        <a href="/shop" class="btn btn-outline-secondary w-100">Clear All</a>
+        <a href="/products" class="btn btn-outline-secondary w-100">Clear All</a>
       </form>
     </div>
 
@@ -110,7 +110,7 @@
 
       <!-- SEARCH + SORT TOP BAR -->
 <div class="top-bar">
-<form action="/shop" method="GET" class="d-flex gap-2" style="max-width:350px;">
+<form action="/products" method="GET" class="d-flex gap-2" style="max-width:350px;">
   
   <input 
     type="text" 
@@ -123,7 +123,7 @@
   <button type="submit" class="btn btn-dark">Search</button>
 
   <% if(search && search.trim() !== '') { %>
-    <a href="/shop" class="btn btn-outline-secondary">Clear</a>
+    <a href="/products" class="btn btn-outline-secondary">Clear</a>
   <% } %>
 
 </form>
@@ -278,7 +278,7 @@ Sort: <%= selectedSort %> &times;
                   <p class="text-muted">Price not available</p>
                 <% } %>
                 
-                <a href="/productDetails/<%= product.slug %>" class="btn btn-dark btn-sm mt-2">View</a>
+                <a href="/products/<%= product.slug %>" class="btn btn-dark btn-sm mt-2">View</a>
               </div>
             </div>
           </div>
@@ -291,7 +291,7 @@ Sort: <%= selectedSort %> &times;
         <ul class="pagination">
           <% for(let i=1;i<=totalPages;i++){ %>
             <li class="page-item <%= i===currentPage ? 'active':'' %>">
-              <a class="page-link" href="/shop?page=<%= i %>"><%= i %></a>
+              <a class="page-link" href="/products?page=<%= i %>"><%= i %></a>
             </li>
           <% } %>
         </ul>
@@ -323,7 +323,7 @@ Sort: <%= selectedSort %> &times;
   if(clearBtn){
     clearBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "/shop";
+      window.location.href = "/products";
     });
   }
 
@@ -382,7 +382,7 @@ Sort: <%= selectedSort %> &times;
             text: 'You need to login to add items to wishlist',
             confirmButtonText: 'Go to Login'
           }).then(() => {
-            window.location.href = '/login';
+            window.location.href = '/sign-in';
           });
         } else {
           Swal.fire({
